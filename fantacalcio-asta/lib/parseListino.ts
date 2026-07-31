@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { Player, Ruolo } from "./types";
+import { Player, Ruolo, RuoloMantra, playerKey } from "./types";
 
 const ROLE_ALIASES: Record<string, Ruolo> = {
   P: "P",
@@ -16,6 +16,22 @@ const ROLE_ALIASES: Record<string, Ruolo> = {
   ATTACCANTE: "A",
 };
 
+const ROLE_MANTRA_ALIASES: Record<string, RuoloMantra> = {
+  POR: "Por",
+  PO: "Por",
+  DC: "Dc",
+  DD: "Dd",
+  DS: "Ds",
+  B: "B",
+  E: "E",
+  M: "M",
+  C: "C",
+  W: "W",
+  T: "T",
+  A: "A",
+  PC: "Pc",
+};
+
 function normalizeHeader(cell: unknown): string {
   return String(cell ?? "")
     .trim()
@@ -30,10 +46,20 @@ function findColumn(header: string[], candidates: string[]): number {
   return -1;
 }
 
+function parseRuoliMantra(raw: string): RuoloMantra[] | undefined {
+  const tokens = raw
+    .split(/[;,/]/)
+    .map((t) => t.trim().toUpperCase())
+    .filter(Boolean);
+  const ruoli = tokens.map((t) => ROLE_MANTRA_ALIASES[t]).filter((r): r is RuoloMantra => Boolean(r));
+  return ruoli.length > 0 ? Array.from(new Set(ruoli)) : undefined;
+}
+
 /**
  * Parses the classic "listone" quotazioni Fantacalcio (xlsx or csv) into Player[].
  * Scans the first rows to find the header row (contains a "Nome" column), since
- * the official export has a title row above the real header.
+ * the official export has a title row above the real header. Legge anche la
+ * colonna RM (ruoli Mantra) se presente, per supportare entrambe le modalita'.
  */
 export function parseListino(fileBuffer: ArrayBuffer): Player[] {
   const workbook = XLSX.read(fileBuffer, { type: "array" });
@@ -63,6 +89,7 @@ export function parseListino(fileBuffer: ArrayBuffer): Player[] {
   }
 
   const idxRuolo = findColumn(header, ["R", "RUOLO"]);
+  const idxRuoloMantra = findColumn(header, ["RM"]);
   const idxNome = findColumn(header, ["NOME"]);
   const idxSquadra = findColumn(header, ["SQUADRA"]);
   const idxQuotazione = findColumn(header, ["QT.A", "QTA", "QUOTAZIONE"]);
@@ -90,10 +117,13 @@ export function parseListino(fileBuffer: ArrayBuffer): Player[] {
     const quotazione = Number(row[idxQuotazione]) || 0;
     const squadra = idxSquadra !== -1 ? String(row[idxSquadra] ?? "").trim() : "";
     const fvm = idxFvm !== -1 ? Number(row[idxFvm]) || undefined : undefined;
+    const ruoliMantra =
+      idxRuoloMantra !== -1 ? parseRuoliMantra(String(row[idxRuoloMantra] ?? "")) : undefined;
 
     players.push({
-      id: `${nome}-${squadra}-${i}`,
+      id: playerKey(nome, ruolo),
       ruolo,
+      ruoliMantra,
       nome,
       squadra,
       quotazione,

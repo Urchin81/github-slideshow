@@ -1,6 +1,6 @@
 "use client";
 
-import { RUOLI, RUOLO_LABEL } from "@/lib/types";
+import { RUOLI, RUOLI_MANTRA, RUOLO_LABEL, RUOLO_MANTRA_LABEL } from "@/lib/types";
 import { computeBudgetResiduoTotale, computeRoleStats } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 
@@ -10,6 +10,9 @@ export function BudgetPanel() {
 
   const budgetResiduo = computeBudgetResiduoTotale(players, settings);
   const roleStats = computeRoleStats(players, settings);
+  const isMantra = settings.modalita === "mantra";
+  const ruoli: string[] = isMantra ? RUOLI_MANTRA : RUOLI;
+  const label = (r: string) => (isMantra ? RUOLO_MANTRA_LABEL[r as keyof typeof RUOLO_MANTRA_LABEL] : RUOLO_LABEL[r as keyof typeof RUOLO_LABEL]);
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -30,11 +33,13 @@ export function BudgetPanel() {
           </tr>
         </thead>
         <tbody>
-          {RUOLI.map((ruolo) => {
+          {ruoli.map((ruolo) => {
             const s = roleStats[ruolo];
             return (
               <tr key={ruolo} className="border-t border-slate-100">
-                <td className="py-1">{RUOLO_LABEL[ruolo]}</td>
+                <td className="py-1" title={label(ruolo)}>
+                  {isMantra ? ruolo : label(ruolo)}
+                </td>
                 <td className="py-1 text-right">
                   {s.slotOccupati}/{s.slotTotali}
                 </td>

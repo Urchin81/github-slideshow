@@ -5,6 +5,7 @@ import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlayerTable } from "@/components/PlayerTable";
+import { NewsUpdatePanel } from "@/components/NewsUpdatePanel";
 
 export default function Home() {
   const players = useAuctionStore((s) => s.players);
@@ -24,10 +25,13 @@ export default function Home() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4 max-w-7xl mx-auto">
-      <BudgetPanel />
-      <PlayerTable />
-      <RosterPanel />
+    <div className="max-w-7xl mx-auto space-y-4">
+      <NewsUpdatePanel />
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
+        <BudgetPanel />
+        <PlayerTable />
+        <RosterPanel />
+      </div>
     </div>
   );
 }
