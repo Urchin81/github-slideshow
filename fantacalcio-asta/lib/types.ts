@@ -51,8 +51,6 @@ export interface Player {
   fvm?: number;
   stato: StatoGiocatore;
   prezzoPagato?: number;
-  /** Ruolo/slot effettivamente occupato in rosa (rilevante in Mantra, dove un giocatore puo' avere piu' ruoli idonei). */
-  slotRuolo?: Ruolo | RuoloMantra;
   rigorista?: boolean;
   tiratorePunizioni?: boolean;
   tiratoreAngoli?: boolean;
@@ -67,11 +65,17 @@ export interface RoleConfig {
   percentualeBudget: number;
 }
 
+/** In Mantra non ci sono slot fissi per ruolo: solo un numero minimo/massimo di giocatori totali. */
+export interface MantraConfig {
+  minGiocatori: number;
+  maxGiocatori: number;
+}
+
 export interface Settings {
   modalita: Modalita;
   budgetTotale: number;
   ruoli: Record<Ruolo, RoleConfig>;
-  ruoliMantra: Record<RuoloMantra, RoleConfig>;
+  mantra: MantraConfig;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -83,19 +87,9 @@ export const DEFAULT_SETTINGS: Settings = {
     C: { slot: 8, percentualeBudget: 30 },
     A: { slot: 6, percentualeBudget: 50 },
   },
-  ruoliMantra: {
-    Por: { slot: 3, percentualeBudget: 5 },
-    Dc: { slot: 2, percentualeBudget: 3.75 },
-    Dd: { slot: 2, percentualeBudget: 3.75 },
-    Ds: { slot: 2, percentualeBudget: 3.75 },
-    B: { slot: 2, percentualeBudget: 3.75 },
-    M: { slot: 2, percentualeBudget: 7.5 },
-    C: { slot: 2, percentualeBudget: 7.5 },
-    E: { slot: 2, percentualeBudget: 7.5 },
-    W: { slot: 2, percentualeBudget: 7.5 },
-    T: { slot: 2, percentualeBudget: 16.67 },
-    A: { slot: 2, percentualeBudget: 16.67 },
-    Pc: { slot: 2, percentualeBudget: 16.66 },
+  mantra: {
+    minGiocatori: 25,
+    maxGiocatori: 30,
   },
 };
 

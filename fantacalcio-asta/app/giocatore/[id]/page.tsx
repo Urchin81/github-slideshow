@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
+import { getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 
 function Flag({ attivo, label }: { attivo?: boolean; label: string }) {
@@ -20,8 +21,13 @@ function Flag({ attivo, label }: { attivo?: boolean; label: string }) {
 export default function GiocatorePage() {
   const params = useParams<{ id: string }>();
   const id = decodeURIComponent(params.id);
-  const player = useAuctionStore((s) => s.players.find((p) => p.id === id));
+  const players = useAuctionStore((s) => s.players);
+  const player = players.find((p) => p.id === id);
   const settings = useAuctionStore((s) => s.settings);
+  const moduliUtili =
+    settings.modalita === "mantra" && player?.stato === "disponibile"
+      ? getSuggestions(players, settings).find((s) => s.player.id === id)?.moduliUtili ?? []
+      : [];
 
   if (!player) {
     return (
@@ -82,17 +88,30 @@ export default function GiocatorePage() {
                 <span className="text-slate-400 text-sm">Non specificato nel listino</span>
               )}
               {(player.ruoliMantra ?? []).map((r: RuoloMantra) => (
-                <span
-                  key={r}
-                  className={`text-xs rounded px-2 py-1 ${
-                    player.slotRuolo === r ? "bg-slate-900 text-white" : "bg-slate-100"
-                  }`}
-                  title={RUOLO_MANTRA_LABEL[r]}
-                >
+                <span key={r} className="text-xs rounded px-2 py-1 bg-slate-100" title={RUOLO_MANTRA_LABEL[r]}>
                   {r}
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {settings.modalita === "mantra" && player.stato === "disponibile" && (
+          <div className="mb-4">
+            <div className="text-xs text-slate-400 mb-1">Utile per completare i moduli</div>
+            {moduliUtili.length === 0 ? (
+              <p className="text-slate-400 text-sm">
+                Non risulta decisivo per i moduli più vicini al completamento in questo momento.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {moduliUtili.map((m) => (
+                  <span key={m} className="text-xs rounded px-2 py-1 bg-green-50 text-green-700 border border-green-100">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

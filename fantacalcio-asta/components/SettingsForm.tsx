@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RUOLI, RUOLI_MANTRA, RUOLO_LABEL, RUOLO_MANTRA_LABEL, Settings } from "@/lib/types";
+import { RUOLI, RUOLO_LABEL, Settings } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 
 export function SettingsForm() {
@@ -18,10 +18,6 @@ export function SettingsForm() {
   }, [settings]);
 
   const totalePercentualeClassic = RUOLI.reduce((sum, r) => sum + local.ruoli[r].percentualeBudget, 0);
-  const totalePercentualeMantra = RUOLI_MANTRA.reduce(
-    (sum, r) => sum + local.ruoliMantra[r].percentualeBudget,
-    0
-  );
 
   function handleSave() {
     setSettings(local);
@@ -122,73 +118,49 @@ export function SettingsForm() {
           </p>
         </>
       ) : (
-        <>
-          <table className="w-full text-sm mb-2">
-            <thead>
-              <tr className="text-left text-slate-400">
-                <th className="pb-1">Ruolo Mantra</th>
-                <th className="pb-1">Slot in rosa</th>
-                <th className="pb-1">% budget</th>
-              </tr>
-            </thead>
-            <tbody>
-              {RUOLI_MANTRA.map((ruolo) => (
-                <tr key={ruolo}>
-                  <td className="py-1">
-                    {ruolo} <span className="text-slate-400">({RUOLO_MANTRA_LABEL[ruolo]})</span>
-                  </td>
-                  <td className="py-1">
-                    <input
-                      type="number"
-                      min={0}
-                      value={local.ruoliMantra[ruolo].slot}
-                      onChange={(e) =>
-                        setLocal({
-                          ...local,
-                          ruoliMantra: {
-                            ...local.ruoliMantra,
-                            [ruolo]: { ...local.ruoliMantra[ruolo], slot: Number(e.target.value) || 0 },
-                          },
-                        })
-                      }
-                      className="border border-slate-200 rounded px-2 py-1 w-20"
-                    />
-                  </td>
-                  <td className="py-1">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.01}
-                      value={local.ruoliMantra[ruolo].percentualeBudget}
-                      onChange={(e) =>
-                        setLocal({
-                          ...local,
-                          ruoliMantra: {
-                            ...local.ruoliMantra,
-                            [ruolo]: {
-                              ...local.ruoliMantra[ruolo],
-                              percentualeBudget: Number(e.target.value) || 0,
-                            },
-                          },
-                        })
-                      }
-                      className="border border-slate-200 rounded px-2 py-1 w-20"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p
-            className={`text-xs mb-4 ${
-              Math.round(totalePercentualeMantra) === 100 ? "text-slate-400" : "text-amber-600"
-            }`}
-          >
-            Totale percentuali: {totalePercentualeMantra.toFixed(2)}%{" "}
-            {Math.round(totalePercentualeMantra) !== 100 && "(consigliato: 100%)"}
+        <div className="mb-4">
+          <p className="text-sm text-slate-500 mb-3">
+            In Mantra non ci sono slot fissi per ruolo: puoi prendere tutti i giocatori che vuoi in ogni
+            ruolo. Imposta solo quanti giocatori totali vuoi/puoi acquistare; l&apos;app userà budget
+            residuo e posti rimanenti per calcolare quanto spendere in media e quali ruoli servono di più
+            in base ai moduli tattici.
           </p>
-        </>
+          <div className="flex gap-4">
+            <label className="block text-sm">
+              Numero minimo di giocatori
+              <input
+                type="number"
+                min={1}
+                value={local.mantra.minGiocatori}
+                onChange={(e) =>
+                  setLocal({
+                    ...local,
+                    mantra: { ...local.mantra, minGiocatori: Number(e.target.value) || 0 },
+                  })
+                }
+                className="block mt-1 border border-slate-200 rounded px-3 py-1.5 w-32"
+              />
+            </label>
+            <label className="block text-sm">
+              Numero massimo di giocatori
+              <input
+                type="number"
+                min={1}
+                value={local.mantra.maxGiocatori}
+                onChange={(e) =>
+                  setLocal({
+                    ...local,
+                    mantra: { ...local.mantra, maxGiocatori: Number(e.target.value) || 0 },
+                  })
+                }
+                className="block mt-1 border border-slate-200 rounded px-3 py-1.5 w-32"
+              />
+            </label>
+          </div>
+          {local.mantra.minGiocatori > local.mantra.maxGiocatori && (
+            <p className="text-xs text-amber-600 mt-2">Il minimo non dovrebbe superare il massimo.</p>
+          )}
+        </div>
       )}
 
       <div className="flex items-center gap-3">

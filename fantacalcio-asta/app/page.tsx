@@ -6,6 +6,7 @@ import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlayerTable } from "@/components/PlayerTable";
 import { NewsUpdatePanel } from "@/components/NewsUpdatePanel";
+import { ResetButton } from "@/components/ResetButton";
 
 export default function Home() {
   const players = useAuctionStore((s) => s.players);
@@ -26,7 +27,12 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      <NewsUpdatePanel />
+      <div className="flex flex-wrap gap-4 items-start">
+        <div className="flex-1 min-w-[280px]">
+          <NewsUpdatePanel />
+        </div>
+        <ResetButton />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
         <BudgetPanel />
         <PlayerTable />

@@ -2,19 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  RUOLI,
-  RUOLI_MANTRA,
-  RUOLO_LABEL,
-  RUOLO_MANTRA_LABEL,
-  RuoloMantra,
-  Ruolo,
-  StatoGiocatore,
-} from "@/lib/types";
-import { getSuggestions, RoleKey } from "@/lib/suggestions";
+import { RUOLI, RUOLI_MANTRA, RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra, Ruolo, StatoGiocatore } from "@/lib/types";
+import { computeMantraStato, getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
+type RoleKey = Ruolo | RuoloMantra;
 
 export function PlayerTable() {
   const players = useAuctionStore((s) => s.players);
@@ -24,6 +17,12 @@ export function PlayerTable() {
   const resetPlayer = useAuctionStore((s) => s.resetPlayer);
   const isMantra = settings.modalita === "mantra";
   const ruoliAttivi: RoleKey[] = isMantra ? RUOLI_MANTRA : RUOLI;
+  const statoMantra = useMemo(() => (isMantra ? computeMantraStato(players, settings) : null), [
+    isMantra,
+    players,
+    settings,
+  ]);
+  const rosaPiena = statoMantra !== null && statoMantra.postiRimanenti <= 0;
 
   const [ruoloFiltro, setRuoloFiltro] = useState<RoleKey | "tutti">("tutti");
   const [statoFiltro, setStatoFiltro] = useState<FiltroStato>("disponibile");
@@ -31,7 +30,6 @@ export function PlayerTable() {
   const [soloConsigliati, setSoloConsigliati] = useState(false);
   const [assignId, setAssignId] = useState<string | null>(null);
   const [prezzoInput, setPrezzoInput] = useState("1");
-  const [ruoloScelto, setRuoloScelto] = useState<RoleKey | "">("");
 
   const suggestions = useMemo(() => getSuggestions(players, settings), [players, settings]);
   const suggestionById = useMemo(() => {
@@ -43,11 +41,9 @@ export function PlayerTable() {
     let base = statoFiltro === "tutti" ? players : players.filter((p) => p.stato === statoFiltro);
 
     if (ruoloFiltro !== "tutti") {
-      base = base.filter((p) => {
-        if (!isMantra) return p.ruolo === ruoloFiltro;
-        if (p.stato === "mia") return p.slotRuolo === ruoloFiltro;
-        return (p.ruoliMantra ?? []).includes(ruoloFiltro as RuoloMantra);
-      });
+      base = base.filter((p) =>
+        isMantra ? (p.ruoliMantra ?? []).includes(ruoloFiltro as RuoloMantra) : p.ruolo === ruoloFiltro
+      );
     }
     if (ricerca.trim()) {
       const q = ricerca.trim().toLowerCase();
@@ -68,25 +64,21 @@ export function PlayerTable() {
   function apriAssegnazione(id: string, quotazione: number) {
     setAssignId(id);
     setPrezzoInput(String(quotazione || 1));
-    const suggestion = suggestionById.get(id);
-    setRuoloScelto(suggestion?.ruoloUsato ?? "");
   }
 
   function handleConferma(id: string) {
     const prezzo = Math.max(1, Number(prezzoInput) || 1);
-    assignToMe(id, prezzo, isMantra ? (ruoloScelto || undefined) : undefined);
+    assignToMe(id, prezzo);
     setAssignId(null);
     setPrezzoInput("1");
-    setRuoloScelto("");
   }
 
   function ruoloLabel(r: RoleKey) {
     return isMantra ? RUOLO_MANTRA_LABEL[r as RuoloMantra] : RUOLO_LABEL[r as Ruolo];
   }
 
-  function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined, slotRuolo: RoleKey | undefined) {
+  function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined) {
     if (!isMantra) return playerRuolo;
-    if (slotRuolo) return <span className="font-semibold">{slotRuolo}</span>;
     if (!ruoliMantra || ruoliMantra.length === 0) return <span className="text-slate-300">—</span>;
     return (
       <span className="flex gap-1 flex-wrap">
@@ -143,6 +135,13 @@ export function PlayerTable() {
         <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
       </div>
 
+      {rosaPiena && (
+        <p className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded p-2 mb-3">
+          Hai raggiunto il numero massimo di giocatori acquistabili ({statoMantra?.max}): &quot;Preso da me&quot; è
+          disabilitato.
+        </p>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -158,10 +157,9 @@ export function PlayerTable() {
           <tbody>
             {righe.map((p) => {
               const suggestion = suggestionById.get(p.id);
-              const opzioniRuolo = isMantra ? p.ruoliMantra ?? [] : [];
               return (
                 <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
-                  <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra, p.slotRuolo)}</td>
+                  <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra)}</td>
                   <td className="py-1.5 font-medium">
                     <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
                       {p.nome}
@@ -178,25 +176,15 @@ export function PlayerTable() {
                       ) : (
                         <span className="text-slate-400">{Math.round(suggestion?.punteggio ?? 0)}</span>
                       )}
+                      {suggestion?.moduliUtili && suggestion.moduliUtili.length > 0 && (
+                        <div className="text-[10px] text-slate-400">utile: {suggestion.moduliUtili.join(", ")}</div>
+                      )}
                     </td>
                   )}
                   <td className="py-1.5 text-right">
                     {p.stato === "disponibile" ? (
                       assignId === p.id ? (
                         <span className="inline-flex items-center gap-1">
-                          {isMantra && opzioniRuolo.length > 1 && (
-                            <select
-                              value={ruoloScelto}
-                              onChange={(e) => setRuoloScelto(e.target.value as RoleKey)}
-                              className="border border-slate-200 rounded px-1 py-0.5 text-xs"
-                            >
-                              {opzioniRuolo.map((r) => (
-                                <option key={r} value={r}>
-                                  {r}
-                                </option>
-                              ))}
-                            </select>
-                          )}
                           <input
                             type="number"
                             min={1}
@@ -219,7 +207,9 @@ export function PlayerTable() {
                         <span className="inline-flex gap-2">
                           <button
                             onClick={() => apriAssegnazione(p.id, p.quotazione)}
-                            className="text-xs bg-slate-900 text-white rounded px-2 py-1"
+                            disabled={rosaPiena}
+                            title={rosaPiena ? "Numero massimo di giocatori raggiunto" : undefined}
+                            className="text-xs bg-slate-900 text-white rounded px-2 py-1 disabled:opacity-40"
                           >
                             Preso da me
                           </button>
