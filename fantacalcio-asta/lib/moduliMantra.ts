@@ -7,14 +7,17 @@ export interface Modulo {
   nome: string;
   /** Tutti gli slot del modulo, portiere incluso, nell'ordine portiere -> difesa -> centrocampo -> attacco. */
   slot: SlotModulo[];
+  /** Indici di `slot` raggruppati in righe (dal portiere in alto all'attacco in basso), solo per il disegno del campo. */
+  righe: number[][];
 }
 
 /**
  * Moduli Mantra "Edizione 2026/2027" trascritti dallo schema fornito
- * dall'utente. Trascrizione a mano da un'immagine: i moduli piu' densi (3-5-2,
- * 3-5-1-1, 4-1-4-1, 4-4-1-1, 4-2-3-1) potrebbero contenere qualche imprecisione
- * nei ruoli esatti di 1-2 slot. Se noti un modulo che non corrisponde al tuo
- * schema, correggi pure l'array `slot` qui sotto: e' l'unico posto da modificare.
+ * dall'utente. Ogni modulo somma esattamente 11 slot (portiere incluso),
+ * coerenti con il nome (es. 4-2-3-1 = 4 difensori + 2 mediani + 3 trequartisti
+ * /ali + 1 punta). Se un modulo non corrisponde esattamente al tuo schema,
+ * correggi pure l'array `slot`/`righe` qui sotto: e' l'unico posto da
+ * modificare, sia per l'algoritmo che per il disegno del campo in /moduli.
  */
 export const MODULI_MANTRA: Modulo[] = [
   {
@@ -22,49 +25,54 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E"], ["M", "C"], ["C"],
+      ["E"], ["M", "C"], ["C"], ["E"],
       ["W", "A"], ["W", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3], [4, 5, 6, 7], [8, 9], [10]],
   },
   {
     nome: "3-4-1-2",
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E"], ["M", "C"], ["C"],
+      ["E"], ["M", "C"], ["C"], ["E"],
       ["T"],
       ["A", "Pc"], ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3], [4, 5, 6, 7], [8], [9, 10]],
   },
   {
     nome: "3-4-2-1",
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["M"], ["C"], ["E"],
+      ["E"], ["M", "C"], ["C"], ["E"],
       ["T", "A"], ["T", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3], [4, 5, 6, 7], [8, 9], [10]],
   },
   {
     nome: "3-5-2",
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E"], ["M", "C"], ["M"], ["C"], ["E"],
+      ["E", "W"], ["M"], ["M"], ["C"], ["E", "W"],
       ["A", "Pc"], ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3], [4, 5, 6, 7, 8], [9, 10]],
   },
   {
     nome: "3-5-1-1",
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E"], ["M", "C"], ["M"], ["C"], ["E"],
+      ["E", "W"], ["M"], ["M"], ["C"], ["E", "W"],
       ["T", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3], [4, 5, 6, 7, 8], [9], [10]],
   },
   {
     nome: "4-3-3",
@@ -75,6 +83,7 @@ export const MODULI_MANTRA: Modulo[] = [
       ["W", "A"], ["W", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5, 6, 7], [8, 9], [10]],
   },
   {
     nome: "4-3-1-2",
@@ -83,8 +92,9 @@ export const MODULI_MANTRA: Modulo[] = [
       ["Dd"], ["Dc"], ["Dc"], ["Ds"],
       ["M", "C"], ["M"], ["C"],
       ["T"],
-      ["A", "Pc"], ["A", "Pc"],
+      ["T", "A", "Pc"], ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5, 6, 7], [8], [9, 10]],
   },
   {
     nome: "4-4-2",
@@ -94,6 +104,7 @@ export const MODULI_MANTRA: Modulo[] = [
       ["E"], ["M", "C"], ["C"], ["E"],
       ["A", "Pc"], ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5, 6, 7, 8], [9, 10]],
   },
   {
     nome: "4-1-4-1",
@@ -104,16 +115,18 @@ export const MODULI_MANTRA: Modulo[] = [
       ["E"], ["C", "T"], ["C", "T"], ["W"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5], [6, 7, 8, 9], [10]],
   },
   {
     nome: "4-4-1-1",
     slot: [
       ["Por"],
       ["Dd"], ["Dc"], ["Dc"], ["Ds"],
-      ["E"], ["M", "C"], ["C"], ["W"],
+      ["E"], ["M", "C"], ["C"], ["E", "W"],
       ["T", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5, 6, 7, 8], [9], [10]],
   },
   {
     nome: "4-2-3-1",
@@ -124,5 +137,6 @@ export const MODULI_MANTRA: Modulo[] = [
       ["W", "T"], ["T"], ["W", "A"],
       ["A", "Pc"],
     ],
+    righe: [[0], [1, 2, 3, 4], [5, 6], [7, 8, 9], [10]],
   },
 ];

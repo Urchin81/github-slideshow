@@ -19,6 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/" className="hover:underline">
                 Asta
               </a>
+              <a href="/moduli" className="hover:underline">
+                Moduli
+              </a>
               <a href="/setup" className="hover:underline">
                 Setup
               </a>
