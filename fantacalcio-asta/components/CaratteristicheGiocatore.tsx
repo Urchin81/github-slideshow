@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Player } from "@/lib/types";
 
-interface Caratteristica {
+export interface Caratteristica {
   chiave: string;
   Icona: LucideIcon;
   label: string;
@@ -40,7 +40,9 @@ function haTag(p: Player, label: string): boolean {
 
 // Icone rapide per riconoscere a colpo d'occhio le caratteristiche di un giocatore:
 // verdi quelle positive (dedotte dalle notizie o dai tag FPEDIA), rosse quelle negative.
-const CARATTERISTICHE: Caratteristica[] = [
+// Esportato cosi' la tabella puo' riusare le stesse definizioni per filtrare la lista
+// quando si clicca su un'icona.
+export const CARATTERISTICHE: Caratteristica[] = [
   { chiave: "rigorista", Icona: Target, label: "Rigorista", positiva: true, presente: (p) => !!p.rigorista || haTag(p, "Rigorista") },
   { chiave: "punizioni", Icona: Footprints, label: "Tiratore punizioni", positiva: true, presente: (p) => !!p.tiratorePunizioni },
   { chiave: "angoli", Icona: Flag, label: "Tiratore angoli", positiva: true, presente: (p) => !!p.tiratoreAngoli },
@@ -62,16 +64,47 @@ const CARATTERISTICHE: Caratteristica[] = [
   },
 ];
 
-export function CaratteristicheGiocatore({ player, className = "" }: { player: Player; className?: string }) {
+interface Props {
+  player: Player;
+  className?: string;
+  caratteristicaAttiva?: string | null;
+  onSelezionaCaratteristica?: (chiave: string) => void;
+}
+
+export function CaratteristicheGiocatore({
+  player,
+  className = "",
+  caratteristicaAttiva = null,
+  onSelezionaCaratteristica,
+}: Props) {
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       {CARATTERISTICHE.map((c) => {
         const attiva = c.presente(player);
+        const selezionata = caratteristicaAttiva === c.chiave;
         const colore = attiva ? (c.positiva ? "text-green-600" : "text-red-600") : "text-slate-400";
+        const icona = (
+          <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />
+        );
+        if (!onSelezionaCaratteristica) {
+          return (
+            <span key={c.chiave} title={c.label} className="inline-flex">
+              {icona}
+            </span>
+          );
+        }
         return (
-          <span key={c.chiave} title={c.label} className="inline-flex">
-            <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />
-          </span>
+          <button
+            key={c.chiave}
+            type="button"
+            title={`Filtra per "${c.label}"`}
+            onClick={() => onSelezionaCaratteristica(c.chiave)}
+            className={`inline-flex rounded-full p-0.5 ${
+              selezionata ? "bg-white ring-2 ring-slate-900" : "hover:bg-white/70"
+            }`}
+          >
+            {icona}
+          </button>
         );
       })}
     </div>

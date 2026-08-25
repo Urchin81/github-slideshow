@@ -17,7 +17,7 @@ import {
 import { computeMantraStato, getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
-import { CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
+import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
@@ -47,6 +47,11 @@ export function PlayerTable() {
   const [modificaId, setModificaId] = useState<string | null>(null);
   const [modificaInput, setModificaInput] = useState("1");
   const [inAstaId, setInAstaId] = useState<string | null>(null);
+  const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
+
+  function toggleCaratteristicaFiltro(chiave: string) {
+    setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
+  }
 
   const suggestions = useMemo(() => getSuggestions(players, settings), [players, settings]);
   const suggestionById = useMemo(() => {
@@ -93,6 +98,10 @@ export function PlayerTable() {
     if (soloPreferiti) {
       base = base.filter((p) => p.preferito);
     }
+    if (caratteristicaFiltro) {
+      const caratteristica = CARATTERISTICHE.find((c) => c.chiave === caratteristicaFiltro);
+      if (caratteristica) base = base.filter((p) => caratteristica.presente(p));
+    }
 
     return [...base].sort((a, b) => {
       if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
@@ -100,7 +109,18 @@ export function PlayerTable() {
       const sb = suggestionById.get(b.id)?.punteggio ?? 0;
       return sb - sa;
     });
-  }, [players, statoFiltro, ruoloFiltro, ricerca, soloConsigliati, soloPreferiti, suggestionById, isMantra, inAstaPlayer]);
+  }, [
+    players,
+    statoFiltro,
+    ruoloFiltro,
+    ricerca,
+    soloConsigliati,
+    soloPreferiti,
+    caratteristicaFiltro,
+    suggestionById,
+    isMantra,
+    inAstaPlayer,
+  ]);
 
   const mostraPunteggio = statoFiltro === "disponibile" || !!inAstaPlayer;
 
@@ -227,6 +247,18 @@ export function PlayerTable() {
             <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
             Solo preferiti ★
           </label>
+          {caratteristicaFiltro && (
+            <span className="inline-flex items-center gap-1.5 text-xs bg-slate-900 text-white rounded-full pl-2.5 pr-1 py-1">
+              {CARATTERISTICHE.find((c) => c.chiave === caratteristicaFiltro)?.label ?? caratteristicaFiltro}
+              <button
+                onClick={() => setCaratteristicaFiltro(null)}
+                title="Rimuovi il filtro per caratteristica"
+                className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-slate-700"
+              >
+                ✕
+              </button>
+            </span>
+          )}
           <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
         </div>
       )}
@@ -387,7 +419,12 @@ export function PlayerTable() {
                   <td />
                   <td />
                   <td colSpan={2} className="pb-1.5">
-                    <CaratteristicheGiocatore player={p} className="justify-between w-full bg-slate-100 rounded px-2 py-1" />
+                    <CaratteristicheGiocatore
+                      player={p}
+                      className="justify-between w-full bg-slate-100 rounded px-2 py-1"
+                      caratteristicaAttiva={caratteristicaFiltro}
+                      onSelezionaCaratteristica={toggleCaratteristicaFiltro}
+                    />
                   </td>
                   <td />
                   {mostraPunteggio && <td />}

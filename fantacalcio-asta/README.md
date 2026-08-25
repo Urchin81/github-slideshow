@@ -126,16 +126,22 @@ ruoli ancora da coprire nella tua squadra.
   - **Aggiornamento singolo**: nella scheda giocatore, il pulsante "Aggiorna
     da FPEDIA" rifà la ricerca e lo scraping solo per quel giocatore, senza
     dover lanciare un giro su tutto il listino da Settings.
-  - **Caratteristiche a colpo d'occhio in tabella**: sotto il nome di ogni
-    giocatore nella tabella compare sempre la stessa fila di icone lineari
-    (rigorista, tiratore di punizioni/angoli, titolare, goleador, assistman,
-    buona media, piazzati, outsider, giovane talento, panchinaro, falloso,
-    rischio infortuni), dedotte dalle notizie e dai tag FPEDIA — tutte le
-    icone compaiono sempre, ma restano grigio spento finché il giocatore non
-    ha quella caratteristica: si "accendono" verdi quando è positiva e
-    presente, rosse quando è negativa e presente, cosí il confronto a colpo
-    d'occhio tra giocatori resta immediato anche quando mancano dati (icone
-    lineari via `lucide-react`, vedi `components/CaratteristicheGiocatore.tsx`).
+  - **Caratteristiche a colpo d'occhio in tabella**: sotto nome e squadra di
+    ogni giocatore nella tabella compare sempre, su sfondo grigio chiaro, la
+    stessa fila di icone lineari (rigorista, tiratore di punizioni/angoli,
+    titolare, goleador, assistman, buona media, piazzati, outsider, giovane
+    talento, panchinaro, falloso, rischio infortuni), dedotte dalle notizie e
+    dai tag FPEDIA — tutte le icone compaiono sempre, ma restano grigio
+    spento finché il giocatore non ha quella caratteristica: si "accendono"
+    verdi quando è positiva e presente, rosse quando è negativa e presente
+    (icone lineari via `lucide-react`, vedi
+    `components/CaratteristicheGiocatore.tsx`). Cliccando su un'icona la
+    tabella si filtra mostrando solo i giocatori con quella caratteristica
+    attiva; l'icona cliccata resta evidenziata e appare una etichetta
+    "‹caratteristica› ✕" tra i filtri per rimuoverlo in un tocco (o si
+    toglie ricliccando la stessa icona). Nella scheda giocatore la stessa
+    fila di icone (non cliccabile) sostituisce l'indicazione testuale dello
+    stato d'asta.
   - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il
     cognome (con l'iniziale del nome quando serve a distinguere omonimi, es.
     "Adekunle A.") mentre FPEDIA usa nome+cognome (es. conosce "Scamacca" come

@@ -7,6 +7,7 @@ import { FpediaStats, LivelloFpedia, RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COL
 import { computeLivelliRelativiFpedia } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
+import { CaratteristicheGiocatore } from "@/components/CaratteristicheGiocatore";
 
 // Semaforo a 5 colori (stesse fasce mostrate in legenda sotto le pillole): un
 // livello non calcolabile (troppo pochi altri giocatori da confrontare)
@@ -88,9 +89,6 @@ export default function GiocatorePage() {
       </div>
     );
   }
-
-  const statoLabel =
-    player.stato === "mia" ? "Nella tua rosa" : player.stato === "altrui" ? "Preso da altri" : "Disponibile";
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -175,10 +173,7 @@ export default function GiocatorePage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-slate-500">
-          {statoLabel}
-          {player.stato === "mia" && player.prezzoPagato !== undefined && ` · pagato ${player.prezzoPagato}`}
-        </p>
+        <CaratteristicheGiocatore player={player} className="justify-between w-full bg-slate-100 rounded px-2 py-1" />
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
