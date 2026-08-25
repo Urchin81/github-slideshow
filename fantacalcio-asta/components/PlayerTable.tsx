@@ -309,7 +309,7 @@ export function PlayerTable() {
                               <span className="text-xs text-slate-500">{p.prezzoPagato}</span>
                               <button
                                 onClick={() => apriModifica(p.id, p.prezzoPagato)}
-                                className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 hover:bg-amber-600"
+                                className="text-sm px-1"
                                 title="Modifica prezzo"
                               >
                                 ✏️
@@ -319,7 +319,7 @@ export function PlayerTable() {
                         {modificaId !== p.id && (
                           <button
                             onClick={() => confermaRimozione(p.nome, p.prezzoPagato, p.id)}
-                            className="text-xs bg-red-600 text-white rounded px-1.5 py-0.5 hover:bg-red-700"
+                            className="text-sm text-red-600 hover:text-red-700 px-1"
                             title="Rimuovi dalla rosa"
                           >
                             ✕

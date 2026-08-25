@@ -79,16 +79,12 @@ function RigaGiocatore({
         ) : (
           <>
             <span className="font-medium">{prezzoPagato}</span>
-            <button
-              onClick={() => setModifica(true)}
-              className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 hover:bg-amber-600"
-              title="Modifica prezzo"
-            >
+            <button onClick={() => setModifica(true)} className="text-sm px-1" title="Modifica prezzo">
               ✏️
             </button>
             <button
               onClick={confermaRimozione}
-              className="text-xs bg-red-600 text-white rounded px-1.5 py-0.5 hover:bg-red-700"
+              className="text-sm text-red-600 hover:text-red-700 px-1"
               title="Rimuovi dalla rosa"
             >
               ✕
