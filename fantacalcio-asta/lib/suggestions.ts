@@ -1,14 +1,4 @@
-import {
-  LINEE_MANTRA,
-  LineaMantra,
-  Player,
-  RUOLI,
-  RUOLO_MANTRA_LINEA,
-  Ruolo,
-  RuoloMantra,
-  Settings,
-  lineaMantraGiocatore,
-} from "./types";
+import { LivelloFpedia, Player, RUOLI, RUOLI_MANTRA, Ruolo, RuoloMantra, Settings } from "./types";
 import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
 
@@ -295,40 +285,48 @@ export function computeScarsitaClassic(players: Player[], settings: Settings): S
   });
 }
 
-/** Quanti slot occupa in media, per ognuna delle 4 linee, uno degli 11 moduli Mantra. */
-function bisognoMedioPerLineaMantra(): Record<LineaMantra, number> {
-  const somme: Record<LineaMantra, number> = { Portieri: 0, Difensori: 0, Centrocampisti: 0, Attaccanti: 0 };
+/**
+ * Quanto "conta" in media, per ognuno dei 12 ruoli Mantra, un modulo su 11.
+ * Uno slot con piu' ruoli alternativi (es. "W/A") divide il credito tra le
+ * alternative invece di contare per intero su ciascuna: un ruolo che e' solo
+ * una tra piu' opzioni possibili per uno slot ha una "titolarita' limitata"
+ * su quello slot, non una richiesta piena.
+ */
+function bisognoMedioPerRuoloMantra(): Record<RuoloMantra, number> {
+  const somme = {} as Record<RuoloMantra, number>;
+  for (const ruolo of RUOLI_MANTRA) somme[ruolo] = 0;
   for (const modulo of MODULI_MANTRA) {
     for (const slot of modulo.slot) {
-      const linea = LINEE_MANTRA.find((l) => slot.some((r) => RUOLO_MANTRA_LINEA[r] === l));
-      if (linea) somme[linea]++;
+      const credito = 1 / slot.length;
+      for (const ruolo of slot) somme[ruolo] += credito;
     }
   }
-  const media = {} as Record<LineaMantra, number>;
-  for (const linea of LINEE_MANTRA) media[linea] = somme[linea] / MODULI_MANTRA.length;
+  const media = {} as Record<RuoloMantra, number>;
+  for (const ruolo of RUOLI_MANTRA) media[ruolo] = somme[ruolo] / MODULI_MANTRA.length;
   return media;
 }
 
 /**
- * Mantra: niente slot fissi per ruolo, quindi la scarsita' si calcola per
- * linea (Portieri/Difensori/Centrocampisti/Attaccanti) invece che per i 12
- * ruoli singoli, usando quanti slot di quella linea occupa in media un
- * modulo come stima di "titolari serviti per squadra".
+ * Mantra: niente slot fissi per ruolo, quindi la scarsita' si stima per
+ * ognuno dei 12 ruoli singoli (Por, Dc, Dd, ...) in base a quanto quel ruolo
+ * e' richiesto in media dagli 11 moduli tattici (con "titolarita' limitata"
+ * per i ruoli che sono solo una tra piu' alternative di uno slot, vedi
+ * bisognoMedioPerRuoloMantra), moltiplicato per il numero di partecipanti.
  */
 export function computeScarsitaMantra(players: Player[], settings: Settings): ScarsitaRuolo[] {
   const partecipanti = Math.max(1, settings.numeroPartecipanti);
-  const bisognoMedio = bisognoMedioPerLineaMantra();
+  const bisognoMedio = bisognoMedioPerRuoloMantra();
 
-  return LINEE_MANTRA.map((linea) => {
-    const dellaLinea = [...players.filter((p) => lineaMantraGiocatore(p.ruoliMantra) === linea)].sort(
+  return RUOLI_MANTRA.map((ruolo) => {
+    const delRuolo = [...players.filter((p) => (p.ruoliMantra ?? []).includes(ruolo))].sort(
       (a, b) => b.quotazione - a.quotazione
     );
-    const titolariTotali = Math.round(bisognoMedio[linea] * partecipanti);
-    const titolari = dellaLinea.slice(0, titolariTotali);
+    const titolariTotali = Math.round(bisognoMedio[ruolo] * partecipanti);
+    const titolari = delRuolo.slice(0, titolariTotali);
     const titolariDisponibili = titolari.filter((p) => p.stato === "disponibile").length;
     return {
-      chiave: linea,
-      label: linea,
+      chiave: ruolo,
+      label: ruolo,
       titolariTotali,
       titolariDisponibili,
       allerta: titolariTotali > 0 && titolariDisponibili > 0 && titolariDisponibili <= partecipanti,
@@ -338,4 +336,73 @@ export function computeScarsitaMantra(players: Player[], settings: Settings): Sc
 
 export function computeScarsitaRuoli(players: Player[], settings: Settings): ScarsitaRuolo[] {
   return settings.modalita === "classic" ? computeScarsitaClassic(players, settings) : computeScarsitaMantra(players, settings);
+}
+
+// ---------------------------------------------------------------------------
+// Livello relativo delle statistiche FPEDIA: invece di fidarsi del colore
+// che assegna il sito (che potrebbe non essere sempre presente/coerente), lo
+// calcoliamo confrontando ogni valore con lo stesso dato ("Presenze
+// 2025-2026", "Algoritmo Fantacalciopedia", ecc.) di tutti gli altri
+// giocatori con statistiche FPEDIA: i migliori del gruppo sono "super", i
+// peggiori "negativo".
+// ---------------------------------------------------------------------------
+
+function numeroPillola(valoreTesto: string): number | undefined {
+  const m = valoreTesto.replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!m) return undefined;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+const SOGLIE_PERCENTILE: [number, LivelloFpedia][] = [
+  [0.8, "super"],
+  [0.6, "buono"],
+  [0.4, "sufficiente"],
+  [0.2, "mediocre"],
+];
+
+function livelloDaPercentile(percentile: number): LivelloFpedia {
+  for (const [soglia, livello] of SOGLIE_PERCENTILE) {
+    if (percentile >= soglia) return livello;
+  }
+  return "negativo";
+}
+
+/**
+ * Costruisce, dalla rosa di tutti i giocatori con dati FPEDIA, una funzione
+ * che restituisce il livello relativo (super/buono/.../negativo) di un
+ * singolo valore per una data etichetta. Se per quell'etichetta ci sono
+ * troppo pochi altri valori numerici da confrontare, restituisce null
+ * (grigio neutro) invece di un giudizio poco significativo.
+ */
+export function computeLivelliRelativiFpedia(players: Player[]): (label: string, valoreTesto: string) => LivelloFpedia {
+  const MINIMO_CAMPIONE = 3;
+  const valoriPerLabel = new Map<string, number[]>();
+
+  for (const p of players) {
+    for (const pillola of p.fpedia?.pillole ?? []) {
+      const n = numeroPillola(pillola.valore);
+      if (n === undefined) continue;
+      const arr = valoriPerLabel.get(pillola.label);
+      if (arr) arr.push(n);
+      else valoriPerLabel.set(pillola.label, [n]);
+    }
+  }
+  for (const arr of valoriPerLabel.values()) arr.sort((a, b) => a - b);
+
+  return (label, valoreTesto) => {
+    const valore = numeroPillola(valoreTesto);
+    if (valore === undefined) return null;
+    const arr = valoriPerLabel.get(label);
+    if (!arr || arr.length < MINIMO_CAMPIONE) return null;
+
+    let sotto = 0;
+    let uguali = 0;
+    for (const v of arr) {
+      if (v < valore) sotto++;
+      else if (v === valore) uguali++;
+    }
+    const percentile = (sotto + (uguali - 1) / 2) / (arr.length - 1);
+    return livelloDaPercentile(percentile);
+  };
 }

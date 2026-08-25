@@ -33,13 +33,17 @@ ruoli ancora da coprire nella tua squadra.
   partecipanti all'asta** (default 8): serve solo per l'allerta scarsità
   titolari qui sotto.
 - **Allerta scarsità titolari**: nel pannello Budget, un avviso "⚠️ Ruoli in
-  esaurimento" elenca i ruoli (Classic) o le linee Portieri/Difensori/
-  Centrocampisti/Attaccanti (Mantra) i cui migliori giocatori per quotazione
-  stanno per finire sul mercato. La stima di "quanti titolari servono in
-  totale" si basa su slot-per-ruolo × numero di partecipanti in Classic, e
-  sulla media di quanti slot di quella linea occupa un modulo Mantra × numero
-  di partecipanti in Mantra; scatta quando ne restano disponibili non più di
-  uno a partecipante.
+  esaurimento" elenca i ruoli (Classic: Portiere/Difensore/Centrocampista/
+  Attaccante; Mantra: i 12 ruoli singoli Por/Dc/Dd/Ds/B/E/M/C/W/T/A/Pc) i cui
+  migliori giocatori per quotazione stanno per finire sul mercato. La stima
+  di "quanti titolari servono in totale" si basa su slot-per-ruolo × numero
+  di partecipanti in Classic; in Mantra su quanto quel ruolo è richiesto in
+  media dagli 11 moduli tattici × numero di partecipanti, dando credito
+  frazionato quando un ruolo è solo una delle alternative di uno slot (es. in
+  "W/A" il credito si divide a metà tra W e A) invece che pieno, cosí un
+  ruolo con titolarità solo parziale in un modulo non gonfia la stima.
+  Scatta quando i titolari disponibili scendono a non più di uno a
+  partecipante.
 - **Moduli tattici (Mantra)**: la dashboard calcola, con un algoritmo di
   matching (non un modello AI/LLM: deterministico e istantaneo, vedi sotto),
   quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa attuale riesce
@@ -95,15 +99,22 @@ ruoli ancora da coprire nella tua squadra.
     voto delle ultime stagioni, previsionali, ecc. — qualunque cosa il sito
     mostri, senza un elenco fisso di campi), i tag di scouting, l'immagine del
     giocatore e lo stemma della squadra, e la nota di scouting.
-  - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori FPEDIA
-    con lo stesso semaforo a 5 colori del sito (Super azzurro, Buono verde,
+  - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori
+    numerici FPEDIA con un semaforo a 5 colori (Super azzurro, Buono verde,
     Sufficiente giallo, Mediocre arancione, Negativo rosso — legenda sotto le
-    pillole) **letto direttamente dalla classe CSS che il sito assegna a ogni
-    valore**, non calcolato da noi: se una pillola non ha una classe
-    riconosciuta resta grigio neutro invece di inventare un giudizio. Solo
-    due classi sono state confermate contro un campione HTML reale; le altre
-    seguono lo stesso schema di nome ma potrebbero non corrispondere — vedi
-    `LIVELLO_PER_CLASSE` in `lib/fpedia.ts`.
+    pillole), calcolato confrontando ogni valore con lo stesso dato (es.
+    "Presenze 2025-2026") di **tutti gli altri giocatori del tuo listino con
+    dati FPEDIA**: i migliori del gruppo sono "super", i peggiori "negativo"
+    (vedi `computeLivelliRelativiFpedia` in `lib/suggestions.ts`). Se per
+    quel dato ci sono ancora troppo pochi altri giocatori da confrontare
+    (serve un campione minimo), la pillola resta grigio neutro invece di dare
+    un giudizio poco significativo — più aggiorni giocatori, più il confronto
+    diventa affidabile. I tag di scouting (Panchinaro, Titolare, ecc.), non
+    essendo valori numerici confrontabili, restano invece colorati secondo il
+    semaforo che assegna direttamente il sito.
+  - **Aggiornamento singolo**: nella scheda giocatore, il pulsante "Aggiorna
+    da FPEDIA" rifà la ricerca e lo scraping solo per quel giocatore, senza
+    dover lanciare un giro su tutto il listino da Settings.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto il nome di ogni
     giocatore nella tabella compare una fila di icone (rigorista, tiratore di
     punizioni/angoli, titolare, goleador, assistman, ecc. in verde; panchinaro,
@@ -125,8 +136,11 @@ ruoli ancora da coprire nella tua squadra.
     sui giri completi, i giocatori non trovati restano elencati (fino a 30)
     con il motivo, invece di sparire in un conteggio aggregato.
 - **Scheda giocatore**: nome, ruolo (Classic e/o Mantra), quotazione, FVM,
-  trend, flag rigorista/punizioni/angoli, statistiche FPEDIA e ultime notizie
-  con data e fonte.
+  trend, statistiche FPEDIA (con foto del giocatore e stemma della squadra
+  quando disponibili) e ultime notizie con data e fonte. I flag rigorista/
+  tiratore punizioni/angoli dedotti dalle notizie non sono più mostrati qui
+  (restano visibili come icone nella tabella giocatori, vedi sopra) per
+  tenere la scheda più semplice da leggere.
 - **Persistenza locale**: lo stato (listino, configurazione, assegnazioni,
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.
