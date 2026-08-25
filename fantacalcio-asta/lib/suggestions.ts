@@ -1,6 +1,10 @@
 import { LivelloFpedia, Player, RUOLI, RUOLI_MANTRA, Ruolo, RuoloMantra, Settings } from "./types";
 import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
+import { livelloRelativoInCampione } from "./percentile";
+import { computeContestoValoreAtteso, computeLivelloValoreAtteso, computeValoreAtteso, ValoreAtteso } from "./valoreAtteso";
+
+export { livelloRelativoInCampione } from "./percentile";
 
 // ---------------------------------------------------------------------------
 // Comune (Classic + Mantra)
@@ -13,22 +17,100 @@ export function computeBudgetResiduoTotale(players: Player[], settings: Settings
   return settings.budgetTotale - speso;
 }
 
+/** Sopra questo rapporto (quotazione / prezzo medio disponibile) un giocatore smette di essere "consigliato": stesso limite usato per il prezzo massimo. */
+export const SOGLIA_RAPPORTO_CONSIGLIATO = 1.3;
+
+export interface PrezzoMassimo {
+  /** Oltre questo prezzo, agli slot/posti rimanenti non basterebbe almeno 1 a testa: limite aritmetico, non un consiglio. */
+  tettoSicurezza: number;
+  /** Prudente: soglia "consigliato" (prezzoMedioDisponibile * SOGLIA_RAPPORTO_CONSIGLIATO) + bonus se l'FVM supera la quotazione, mai oltre il tetto di sicurezza. */
+  massimoConsigliato: number;
+}
+
+/**
+ * Calcola il prezzo massimo per un giocatore dato quanto budget/slot restano
+ * ancora nel suo ruolo (Classic) o nel pool (Mantra). Riusa lo stesso bonus
+ * FVM di scoreValoreForBudget cosi' il "massimo consigliato" e' coerente con
+ * la soglia che gia' determina "consigliato" in tabella, non un numero
+ * inventato a parte.
+ */
+export function computePrezzoMassimo(
+  quotazione: number,
+  fvm: number | undefined,
+  budgetResiduoDisponibile: number,
+  slotRimanenti: number,
+  prezzoMedioDisponibile: number
+): PrezzoMassimo {
+  if (slotRimanenti <= 0) return { tettoSicurezza: 0, massimoConsigliato: 0 };
+  const tettoSicurezza = budgetResiduoDisponibile - (slotRimanenti - 1);
+  const bonusFvm = fvm && fvm > quotazione ? (fvm - quotazione) * 0.5 : 0;
+  const soft = prezzoMedioDisponibile * SOGLIA_RAPPORTO_CONSIGLIATO + bonusFvm;
+  return { tettoSicurezza, massimoConsigliato: Math.min(tettoSicurezza, Math.round(soft)) };
+}
+
+export type LivelloRischioSforamento = "ok" | "attenzione" | "sforamento";
+
+export interface RischioSforamento {
+  livello: LivelloRischioSforamento;
+  messaggio: string;
+}
+
+/**
+ * Valuta se un prezzo (anche solo ipotizzato mentre si digita) rischia di
+ * compromettere il resto della rosa: "sforamento" se supera il tetto
+ * aritmetico (non resterebbe abbastanza per gli slot ancora da riempire),
+ * "attenzione" se supera solo la soglia prudente.
+ */
+export function valutaRischioSforamento(prezzo: number, massimo: PrezzoMassimo): RischioSforamento {
+  if (prezzo > massimo.tettoSicurezza) {
+    return {
+      livello: "sforamento",
+      messaggio: `A ${prezzo} rischi di non avere più budget sufficiente per completare la rosa nei posti rimanenti (tetto: ${Math.round(massimo.tettoSicurezza)}).`,
+    };
+  }
+  if (prezzo > massimo.massimoConsigliato) {
+    return {
+      livello: "attenzione",
+      messaggio: `Sopra il massimo consigliato (${Math.round(massimo.massimoConsigliato)}): valuta se vale la pena a scapito degli altri slot.`,
+    };
+  }
+  return { livello: "ok", messaggio: "Nel budget consigliato." };
+}
+
 export interface PlayerSuggestion {
   player: Player;
   prezzoMedioDisponibile: number;
   rapporto: number;
   punteggio: number;
   consigliato: boolean;
+  prezzoMassimo: PrezzoMassimo;
   /** Solo Classic: il ruolo su cui e' stato calcolato il punteggio. */
   ruoloUsato?: Ruolo;
   /** Solo Mantra: nomi dei moduli (tra i piu' vicini al completamento) che questo giocatore aiuterebbe a completare. */
   moduliUtili?: string[];
+  /**
+   * Stima dei punti fantacalcio attesi in stagione (gol/assist/media voto/malus
+   * previsti da FPEDIA): dimensione puramente informativa, aggiunta qui solo
+   * per comodita' di lookup — NON influenza punteggio/consigliato/rapporto
+   * sopra, che restano basati solo su quotazione/FVM/budget come prima,
+   * perche' funzionano per ogni giocatore mentre il valore atteso esiste solo
+   * per chi e' gia' stato aggiornato da FPEDIA.
+   */
+  valoreAtteso?: ValoreAtteso | null;
+  livelloValoreAtteso?: LivelloFpedia;
 }
 
 export function getSuggestions(players: Player[], settings: Settings): PlayerSuggestion[] {
-  return settings.modalita === "classic"
-    ? getSuggestionsClassic(players, settings)
-    : getSuggestionsMantra(players, settings);
+  const base =
+    settings.modalita === "classic" ? getSuggestionsClassic(players, settings) : getSuggestionsMantra(players, settings);
+
+  const contestoValoreAtteso = computeContestoValoreAtteso(players);
+  const livelloValoreAttesoDi = computeLivelloValoreAtteso(players, settings);
+  return base.map((s) => ({
+    ...s,
+    valoreAtteso: computeValoreAtteso(s.player, contestoValoreAtteso),
+    livelloValoreAtteso: livelloValoreAttesoDi(s.player),
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -101,13 +183,21 @@ function getSuggestionsClassic(players: Player[], settings: Settings): PlayerSug
         player.fvm,
         stats.prezzoMedioDisponibile
       );
-      const consigliato = stats.slotRimanenti > 0 && rapporto <= 1.3;
+      const consigliato = stats.slotRimanenti > 0 && rapporto <= SOGLIA_RAPPORTO_CONSIGLIATO;
+      const prezzoMassimo = computePrezzoMassimo(
+        player.quotazione,
+        player.fvm,
+        stats.budgetResiduoRuolo,
+        stats.slotRimanenti,
+        stats.prezzoMedioDisponibile
+      );
       return {
         player,
         prezzoMedioDisponibile: stats.prezzoMedioDisponibile,
         rapporto,
         punteggio,
         consigliato,
+        prezzoMassimo,
         ruoloUsato: player.ruolo,
       };
     })
@@ -203,6 +293,37 @@ export function computeRuoliNecessari(coperture: ModuloCoverage[], topN = MODULI
     .sort((a, b) => b.punteggio - a.punteggio);
 }
 
+export interface VoceSpesaMantra {
+  ruolo: RuoloMantra;
+  punteggioNecessita: number;
+  /** Quota del budget residuo suggerita per questo ruolo, proporzionale alla sua necessità nei moduli più vicini al completamento. */
+  quotaBudgetSuggerita: number;
+}
+
+/**
+ * In Mantra non ci sono slot fissi per ruolo, quindi un piano di spesa non
+ * puo' essere una partizione rigida del budget come in Classic: qui si
+ * distribuisce il budget residuo proporzionalmente a quanto ogni ruolo e'
+ * richiesto dai moduli piu' vicini al completamento (computeRuoliNecessari).
+ * E' volutamente una guida approssimativa, non una prenotazione — i ruoli
+ * Mantra si sovrappongono (un W puo' riempire anche uno slot W/A), quindi le
+ * quote non sommano necessariamente al budget residuo.
+ */
+export function computePianoSpesaMantra(players: Player[], settings: Settings, topN = 5): VoceSpesaMantra[] {
+  const stato = computeMantraStato(players, settings);
+  if (stato.postiRimanenti <= 0 || stato.budgetResiduo <= 0) return [];
+
+  const necessari = computeRuoliNecessari(computeCoperturaModuli(players)).filter((r) => r.punteggio > 0);
+  const totale = necessari.reduce((sum, r) => sum + r.punteggio, 0);
+  if (totale === 0) return [];
+
+  return necessari.slice(0, topN).map((r) => ({
+    ruolo: r.ruolo,
+    punteggioNecessita: r.punteggio,
+    quotaBudgetSuggerita: Math.round((r.punteggio / totale) * stato.budgetResiduo),
+  }));
+}
+
 const PESO_NECESSITA = 10;
 
 function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSuggestion[] {
@@ -215,7 +336,14 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
     .map((player) => {
       const ruoli = player.ruoliMantra ?? [];
       if (ruoli.length === 0) {
-        return { player, prezzoMedioDisponibile: 0, rapporto: 0, punteggio: 0, consigliato: false };
+        return {
+          player,
+          prezzoMedioDisponibile: 0,
+          rapporto: 0,
+          punteggio: 0,
+          consigliato: false,
+          prezzoMassimo: { tettoSicurezza: 0, massimoConsigliato: 0 },
+        };
       }
 
       const { rapporto, punteggio: scoreValore } = scoreValoreForBudget(
@@ -229,7 +357,15 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
         .map((modulo) => modulo.nome);
 
       const punteggio = scoreValore + moduliUtili.length * PESO_NECESSITA;
-      const consigliato = stato.postiRimanenti > 0 && (rapporto <= 1.3 || moduliUtili.length > 0);
+      const consigliato =
+        stato.postiRimanenti > 0 && (rapporto <= SOGLIA_RAPPORTO_CONSIGLIATO || moduliUtili.length > 0);
+      const prezzoMassimo = computePrezzoMassimo(
+        player.quotazione,
+        player.fvm,
+        stato.budgetResiduo,
+        stato.postiRimanenti,
+        stato.prezzoMedioDisponibile
+      );
 
       return {
         player,
@@ -237,10 +373,64 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
         rapporto,
         punteggio,
         consigliato,
+        prezzoMassimo,
         moduliUtili,
       };
     })
     .sort((a, b) => b.punteggio - a.punteggio);
+}
+
+// ---------------------------------------------------------------------------
+// Simulatore "cosa succede se": prova un prezzo ipotetico su un giocatore
+// senza assegnarlo davvero, riusando le stesse aggregazioni di sopra su un
+// dataset ipotetico invece di duplicarne la logica.
+// ---------------------------------------------------------------------------
+
+export interface SimulazioneAcquisto {
+  prezzo: number;
+  budgetResiduoAttuale: number;
+  budgetResiduoSimulato: number;
+  // Classic
+  roleStatsAttuale?: RoleStats;
+  roleStatsSimulato?: RoleStats;
+  // Mantra
+  mantraStatoAttuale?: MantraStato;
+  mantraStatoSimulato?: MantraStato;
+}
+
+export function simulaAcquisto(
+  players: Player[],
+  settings: Settings,
+  playerId: string,
+  prezzoIpotetico: number
+): SimulazioneAcquisto | null {
+  const player = players.find((p) => p.id === playerId);
+  if (!player) return null;
+
+  const prezzo = Math.max(1, Math.round(prezzoIpotetico) || 1);
+  const playersSimulati = players.map((p) =>
+    p.id === playerId ? { ...p, stato: "mia" as const, prezzoPagato: prezzo } : p
+  );
+  const budgetResiduoAttuale = computeBudgetResiduoTotale(players, settings);
+  const budgetResiduoSimulato = computeBudgetResiduoTotale(playersSimulati, settings);
+
+  if (settings.modalita === "classic") {
+    return {
+      prezzo,
+      budgetResiduoAttuale,
+      budgetResiduoSimulato,
+      roleStatsAttuale: computeRoleStats(players, settings)[player.ruolo],
+      roleStatsSimulato: computeRoleStats(playersSimulati, settings)[player.ruolo],
+    };
+  }
+
+  return {
+    prezzo,
+    budgetResiduoAttuale,
+    budgetResiduoSimulato,
+    mantraStatoAttuale: computeMantraStato(players, settings),
+    mantraStatoSimulato: computeMantraStato(playersSimulati, settings),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -354,20 +544,6 @@ function numeroPillola(valoreTesto: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-const SOGLIE_PERCENTILE: [number, LivelloFpedia][] = [
-  [0.8, "super"],
-  [0.6, "buono"],
-  [0.4, "sufficiente"],
-  [0.2, "mediocre"],
-];
-
-function livelloDaPercentile(percentile: number): LivelloFpedia {
-  for (const [soglia, livello] of SOGLIE_PERCENTILE) {
-    if (percentile >= soglia) return livello;
-  }
-  return "negativo";
-}
-
 /**
  * Costruisce, dalla rosa di tutti i giocatori con dati FPEDIA, una funzione
  * che restituisce il livello relativo (super/buono/.../negativo) di un
@@ -376,7 +552,6 @@ function livelloDaPercentile(percentile: number): LivelloFpedia {
  * (grigio neutro) invece di un giudizio poco significativo.
  */
 export function computeLivelliRelativiFpedia(players: Player[]): (label: string, valoreTesto: string) => LivelloFpedia {
-  const MINIMO_CAMPIONE = 3;
   const valoriPerLabel = new Map<string, number[]>();
 
   for (const p of players) {
@@ -394,15 +569,7 @@ export function computeLivelliRelativiFpedia(players: Player[]): (label: string,
     const valore = numeroPillola(valoreTesto);
     if (valore === undefined) return null;
     const arr = valoriPerLabel.get(label);
-    if (!arr || arr.length < MINIMO_CAMPIONE) return null;
-
-    let sotto = 0;
-    let uguali = 0;
-    for (const v of arr) {
-      if (v < valore) sotto++;
-      else if (v === valore) uguali++;
-    }
-    const percentile = (sotto + (uguali - 1) / 2) / (arr.length - 1);
-    return livelloDaPercentile(percentile);
+    if (!arr) return null;
+    return livelloRelativoInCampione(valore, arr);
   };
 }

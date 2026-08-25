@@ -80,6 +80,43 @@ ruoli ancora da coprire nella tua squadra.
   Un banner sostituisce i filtri normali con un pulsante "Torna alla lista
   completa"; la modalità si chiude anche da sola non appena il giocatore
   fissato viene assegnato (a te o ad altri).
+- **Prezzo massimo e rischio sforamento**: mentre un giocatore è "in asta",
+  il banner mostra un "Max consigliato" (la stessa soglia usata per il segno
+  ✓ "consigliato" in tabella, +30% del budget medio ancora disponibile per
+  quel ruolo/posto, con un bonus se l'FVM supera la quotazione) e un "tetto"
+  aritmetico (oltre il quale non resterebbe almeno 1 credito per ognuno degli
+  altri slot/posti ancora da riempire). Aprendo "Preso da me", digitando un
+  prezzo che supera una delle due soglie compare un avviso live (ambra =
+  attenzione, rosso = sforamento) insieme a un simulatore "cosa succede se"
+  che mostra, prima di confermare, come cambierebbero budget residuo,
+  slot/posti rimanenti e media/slot dopo l'acquisto (in Mantra, anche quali
+  moduli aiuterebbe a sbloccare). Nel pannello Budget, un "Piano di spesa per
+  ruolo residuo" mostra lo stesso tetto prudente per ogni ruolo (Classic) o
+  una ripartizione approssimativa del budget residuo tra i ruoli Mantra più
+  richiesti dai moduli vicini al completamento (Mantra) — una guida, non una
+  prenotazione rigida.
+- **Valore atteso fantacalcistico**: quando un giocatore ha statistiche
+  FPEDIA, la tabella mostra (colonna "Valore atteso", accanto al Punteggio) e
+  la scheda giocatore mostrano una stima dei punti fantacalcio attesi in
+  stagione — media voto attesa × presenze attese, + bonus gol/assist previsti
+  (6 punti a gol per i portieri, 3 per gli altri ruoli, 1 per assist), −
+  malus ammonizioni/espulsioni (proiettate sul rateo presenze attese/già
+  giocate) — colorata con lo stesso semaforo a 5 fasce (relativo, per
+  ruolo/linea) usato per le statistiche FPEDIA. È **una dimensione separata
+  dal Punteggio/consigliato**, che restano basati solo su quotazione/FVM/
+  budget: funzionano sempre, mentre il valore atteso esiste solo per chi è
+  già stato aggiornato da FPEDIA (mostra "—" per gli altri). Il menu "Ordina
+  per" in tabella permette di ordinare per Convenienza (default, invariato),
+  Valore atteso, o — solo in Mantra — Bilanciato (70% valore atteso relativo
+  + 30% se aiuta a completare un modulo vicino, sempre spiegato nel
+  tooltip). Nella colonna destra, il pannello "Valore atteso rosa" somma i
+  punti attesi dei giocatori già presi (con indicazione di quanti hanno dati
+  FPEDIA) e aggiunge una stima approssimativa per gli slot ancora vuoti,
+  basata sulla mediana del valore atteso tra i disponibili dello stesso
+  ruolo/linea — una proiezione, non un vincolo di budget. Nota: per i
+  portieri il valore atteso pesa solo la media voto (FPEDIA non espone gol
+  subiti/rigori parati), quindi tende a essere sottostimato rispetto al
+  punteggio reale del gioco.
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,

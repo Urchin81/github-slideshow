@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
+import { ValoreRosaPanel } from "@/components/ValoreRosaPanel";
 import { PlayerTable } from "@/components/PlayerTable";
 import { ResetButton } from "@/components/ResetButton";
 
@@ -32,7 +33,10 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
         <BudgetPanel />
         <PlayerTable />
-        <RosterPanel />
+        <div className="space-y-4">
+          <RosterPanel />
+          <ValoreRosaPanel />
+        </div>
       </div>
     </div>
   );

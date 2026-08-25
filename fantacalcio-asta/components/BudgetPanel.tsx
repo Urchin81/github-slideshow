@@ -1,14 +1,16 @@
 "use client";
 
-import { RUOLI, RUOLO_LABEL } from "@/lib/types";
+import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
   computeCoperturaModuli,
   computeMantraStato,
+  computePianoSpesaMantra,
   computeRoleStats,
   computeScarsitaClassic,
   computeScarsitaMantra,
   ScarsitaRuolo,
+  SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 
@@ -48,6 +50,7 @@ function PannelloClassic() {
           {budgetResiduo} <span className="text-sm font-normal text-slate-400">/ {settings.budgetTotale}</span>
         </span>
       </div>
+      <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
       <table className="w-full text-sm mb-4">
         <thead>
           <tr className="text-left text-slate-400">
@@ -55,6 +58,7 @@ function PannelloClassic() {
             <th className="pb-1 text-right">Slot</th>
             <th className="pb-1 text-right">Budget res.</th>
             <th className="pb-1 text-right">Media/slot</th>
+            <th className="pb-1 text-right">Tetto prudente</th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +76,9 @@ function PannelloClassic() {
                 <td className="py-1 text-right font-medium">
                   {s.slotRimanenti > 0 ? Math.round(s.prezzoMedioDisponibile) : "—"}
                 </td>
+                <td className="py-1 text-right text-slate-500">
+                  {s.slotRimanenti > 0 ? Math.round(s.prezzoMedioDisponibile * SOGLIA_RAPPORTO_CONSIGLIATO) : "—"}
+                </td>
               </tr>
             );
           })}
@@ -88,6 +95,7 @@ function PannelloMantra() {
   const stato = computeMantraStato(players, settings);
   const coperture = computeCoperturaModuli(players);
   const scarsita = computeScarsitaMantra(players, settings);
+  const pianoSpesa = computePianoSpesaMantra(players, settings);
 
   return (
     <>
@@ -110,6 +118,36 @@ function PannelloMantra() {
       )}
 
       <AllertaScarsita scarsita={scarsita} numeroPartecipanti={settings.numeroPartecipanti} />
+
+      {pianoSpesa.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
+          <ul className="text-sm space-y-1 mb-4">
+            {pianoSpesa.map((v) => (
+              <li key={v.ruolo} className="flex items-center justify-between">
+                <span
+                  className="text-white rounded px-1 text-xs"
+                  style={{ backgroundColor: RUOLO_MANTRA_COLORE[v.ruolo] }}
+                >
+                  {v.ruolo}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <span
+                      className="block h-full"
+                      style={{
+                        width: `${Math.min(100, (v.quotaBudgetSuggerita / stato.budgetResiduo) * 100)}%`,
+                        backgroundColor: RUOLO_MANTRA_COLORE[v.ruolo],
+                      }}
+                    />
+                  </span>
+                  <span className="text-slate-400 text-xs">{v.quotaBudgetSuggerita}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli più vicini al completamento</h3>
       <ul className="text-sm space-y-1">
