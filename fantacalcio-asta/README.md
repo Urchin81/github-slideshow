@@ -79,12 +79,25 @@ ruoli ancora da coprire nella tua squadra.
     fantacalciopedia.com tramite un indice nome→pagina costruito da 4
     richieste totali (una per ruolo: portieri/difensori/centrocampisti/
     attaccanti — le pagine elenco del sito riportano tutti i giocatori di quel
-    ruolo con nome e link gia' nel markup, senza paginazione), poi importa ALG
-    FCP, punteggio FCP, solidità investimento, resistenza infortuni,
-    presenze/gol/assist/media voto/ammonizioni/espulsioni, presenze/gol/assist
-    previsti, i tag (Panchinaro, Buona Media, Goleador, Assistman, Giovane
-    talento) e la nota di scouting. Mostrate nella scheda giocatore insieme
-    alla media fantavoto delle 2 stagioni precedenti.
+    ruolo con nome e link gia' nel markup, senza paginazione), poi importa
+    **tutte** le "pillole" colorate della pagina (ALG FCP, presenze, medie
+    voto delle ultime stagioni, previsionali, ecc. — qualunque cosa il sito
+    mostri, senza un elenco fisso di campi), i tag di scouting, l'immagine del
+    giocatore e lo stemma della squadra, e la nota di scouting.
+  - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori FPEDIA
+    con lo stesso semaforo a 5 colori del sito (Super azzurro, Buono verde,
+    Sufficiente giallo, Mediocre arancione, Negativo rosso — legenda sotto le
+    pillole) **letto direttamente dalla classe CSS che il sito assegna a ogni
+    valore**, non calcolato da noi: se una pillola non ha una classe
+    riconosciuta resta grigio neutro invece di inventare un giudizio. Solo
+    due classi sono state confermate contro un campione HTML reale; le altre
+    seguono lo stesso schema di nome ma potrebbero non corrispondere — vedi
+    `LIVELLO_PER_CLASSE` in `lib/fpedia.ts`.
+  - **Caratteristiche a colpo d'occhio in tabella**: sotto il nome di ogni
+    giocatore nella tabella compare una fila di icone (rigorista, tiratore di
+    punizioni/angoli, titolare, goleador, assistman, ecc. in verde; panchinaro,
+    falloso, rischio infortuni in rosso), dedotte dalle notizie e dai tag
+    FPEDIA — vedi `components/CaratteristicheGiocatore.tsx`.
   - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il
     cognome (con l'iniziale del nome quando serve a distinguere omonimi, es.
     "Adekunle A.") mentre FPEDIA usa nome+cognome (es. conosce "Scamacca" come

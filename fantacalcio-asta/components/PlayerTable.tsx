@@ -16,6 +16,7 @@ import {
 import { computeMantraStato, getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
+import { CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
@@ -216,6 +217,7 @@ export function PlayerTable() {
                     <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
                       {p.nome}
                     </Link>
+                    <CaratteristicheGiocatore player={p} className="mt-0.5" />
                   </td>
                   <td className="py-1.5 text-slate-500">{p.squadra}</td>
                   <td className="py-1.5 text-right">{p.quotazione}</td>

@@ -1,6 +1,33 @@
 import * as cheerio from "cheerio";
-import { FpediaStagionePrecedente, FpediaStats } from "./types";
+import { FpediaPillola, FpediaStagionePrecedente, FpediaStats, FpediaTag, LivelloFpedia } from "./types";
 import { VoceIndiceGiocatore } from "./indiceGiocatori";
+
+// FPEDIA colora "pillole" e tag con una classe "fondoXXX" che riflette un
+// semaforo a 5 livelli (mostrato nella legenda del sito: super=azzurro,
+// buono=verde, sufficiente=giallo, mediocre=arancione, negativo=rosso, usato
+// anche per "nd"). Solo "fondorouge" e "fondoverdegiallo" sono confermate da
+// un campione HTML reale (lib/__fixtures__/fpedia-sample.html); le altre
+// seguono lo stesso schema di nome ma non sono ancora state viste in un
+// campione — correggile qui se non corrispondono a quanto vedi sul sito.
+const LIVELLO_PER_CLASSE: Record<string, LivelloFpedia> = {
+  fondorouge: "negativo",
+  fondorosso: "negativo",
+  fondoverdegiallo: "sufficiente",
+  fondoazzurro: "super",
+  fondoblu: "super",
+  fondoverde: "buono",
+  fondogiallo: "sufficiente",
+  fondoarancio: "mediocre",
+  fondoarancione: "mediocre",
+};
+
+function livelloDaClasse(classAttr: string | undefined): LivelloFpedia {
+  if (!classAttr) return null;
+  for (const classe of classAttr.split(/\s+/)) {
+    if (classe in LIVELLO_PER_CLASSE) return LIVELLO_PER_CLASSE[classe];
+  }
+  return null;
+}
 
 function numeroPulito(testo: string | undefined): number | undefined {
   if (!testo) return undefined;
@@ -99,11 +126,27 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     else if (/Resistenza infortuni/i.test(label)) resistenzaInfortuni = Math.round(percent / 20);
   });
 
-  const tags: string[] = [];
+  const tags: FpediaTag[] = [];
   $(".mc_hookEvolution span.stickdanpic").each((_, el) => {
-    const t = $(el).text().trim();
-    if (t) tags.push(t);
+    const label = $(el).text().trim();
+    if (label) tags.push({ label, livello: livelloDaClasse($(el).attr("class")) });
   });
+
+  // Tutte le "pillole" colorate della pagina (span.stickdan, non stickdanpic che sono i tag):
+  // ognuna e' etichettata dal <strong> che la precede tra i fratelli piu' vicini, non dal
+  // primo del contenitore, perche' piu' pillole possono condividere lo stesso blocco
+  // (es. Presenze/FantaMedia/FM su tot gare sono tre span nello stesso div.label12).
+  const pillole: FpediaPillola[] = [];
+  $("span.stickdan").each((_, el) => {
+    const $el = $(el);
+    const valore = $el.text().replace(/\s+/g, " ").trim();
+    if (!valore) return;
+    const label = $el.prevAll("strong").first().text().replace(/:\s*$/, "").trim();
+    pillole.push({ label: label || "—", valore, livello: livelloDaClasse($el.attr("class")) });
+  });
+
+  const immagineUrl = $('img[alt^="disegno di"]').first().attr("src");
+  const squadraLogoUrl = $('img[alt^="maglia di"]').first().attr("src");
 
   const descrizione = $("div.font18.mc_hookEvolution p").first().text().trim() || undefined;
 
@@ -115,6 +158,8 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     altezzaCm,
     pesoKg,
     nazionalita,
+    immagineUrl,
+    squadraLogoUrl,
     algFcp,
     punteggioFcp,
     soliditaInvestimento,
@@ -128,6 +173,7 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     presenzePreviste,
     golPrevisti,
     assistPrevisti,
+    pillole,
     tags,
     descrizione,
     stagioniPrecedenti,

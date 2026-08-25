@@ -56,6 +56,26 @@ export interface FpediaStagionePrecedente {
   presenze?: number;
 }
 
+/**
+ * Livello del semaforo a 5 colori che FPEDIA stessa assegna ad alcuni valori
+ * (super=azzurro, buono=verde, sufficiente=giallo, mediocre=arancione,
+ * negativo=rosso, incluso "nd"): letto direttamente dalla classe CSS del
+ * sito, non calcolato da noi (vedi lib/fpedia.ts).
+ */
+export type LivelloFpedia = "super" | "buono" | "sufficiente" | "mediocre" | "negativo" | null;
+
+/** Una "pillola" colorata della scheda giocatore FPEDIA (es. "Presenze 2025-2026: 34"). */
+export interface FpediaPillola {
+  label: string;
+  valore: string;
+  livello: LivelloFpedia;
+}
+
+export interface FpediaTag {
+  label: string;
+  livello: LivelloFpedia;
+}
+
 /** Statistiche stagione corrente recuperate da fantacalciopedia.com. */
 export interface FpediaStats {
   url: string;
@@ -65,6 +85,10 @@ export interface FpediaStats {
   altezzaCm?: number;
   pesoKg?: number;
   nazionalita?: string;
+  /** URL dell'immagine/disegno del giocatore sul sito. */
+  immagineUrl?: string;
+  /** URL dello stemma/maglia della squadra sul sito. */
+  squadraLogoUrl?: string;
   algFcp?: number;
   punteggioFcp?: number;
   soliditaInvestimento?: number;
@@ -78,7 +102,9 @@ export interface FpediaStats {
   presenzePreviste?: [number, number];
   golPrevisti?: [number, number];
   assistPrevisti?: [number, number];
-  tags: string[];
+  /** Tutte le "pillole" colorate della pagina (ALG FCP, presenze, previsionali, ...), nell'ordine del sito. */
+  pillole: FpediaPillola[];
+  tags: FpediaTag[];
   descrizione?: string;
   stagioniPrecedenti: FpediaStagionePrecedente[];
   aggiornatoIl: string;
