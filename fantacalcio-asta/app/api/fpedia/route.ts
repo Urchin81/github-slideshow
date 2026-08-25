@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseFpediaHtml, risolviGiocatoreFpedia, urlRicercaFpedia } from "@/lib/fpedia";
+import { estraiIndiceGiocatori, FPEDIA_RUOLI_ELENCO, parseFpediaHtml } from "@/lib/fpedia";
+import { trovaUrlGiocatoreInIndice, VoceIndiceGiocatore } from "@/lib/indiceGiocatori";
 
 export const dynamic = "force-dynamic";
 
 const USER_AGENT =
   "Mozilla/5.0 (compatible; AssistenteAstaFantacalcio/1.0; uso personale, non massivo)";
-// Configurabile solo per i test locali (server RSS/HTML finto); in produzione resta il sito reale.
+// Configurabile solo per i test locali (server HTML finto); in produzione resta il sito reale.
 const FPEDIA_BASE_URL = process.env.FPEDIA_BASE_URL ?? "https://www.fantacalciopedia.com";
-
-interface Tentativo {
-  url: string;
-  esito: "trovato" | "nessuna-corrispondenza" | "http-error";
-  candidatiTotali?: number;
-  candidatiConCognome?: number;
-  usataIniziale?: boolean;
-  dettaglio?: string;
-}
 
 async function fetchTesto(url: string): Promise<string> {
   const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
@@ -23,13 +15,31 @@ async function fetchTesto(url: string): Promise<string> {
   return res.text();
 }
 
+let indiceCache: { voci: VoceIndiceGiocatore[]; scaricatoIl: number } | null = null;
+const INDICE_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * Il motore di ricerca del sito non e' richiamabile lato server: si
+ * scaricano invece UNA VOLTA le pagine elenco dei 4 ruoli (che riportano
+ * TUTTI i giocatori di quel ruolo senza paginazione, con nome e link alla
+ * scheda gia' nel markup) e si costruisce un indice nome -> pagina, tenuto
+ * in cache per la durata di un giro di aggiornamento.
+ */
+async function otteniIndice(): Promise<VoceIndiceGiocatore[]> {
+  if (indiceCache && Date.now() - indiceCache.scaricatoIl < INDICE_TTL_MS) {
+    return indiceCache.voci;
+  }
+  const pagine = await Promise.all(
+    FPEDIA_RUOLI_ELENCO.map((ruolo) => fetchTesto(`${FPEDIA_BASE_URL}/lista-calciatori-serie-a/${ruolo}/`))
+  );
+  const voci = pagine.flatMap((html) => estraiIndiceGiocatori(html));
+  indiceCache = { voci, scaricatoIl: Date.now() };
+  return voci;
+}
+
 /**
  * Risolve e recupera le statistiche stagione corrente di UN giocatore da
- * fantacalciopedia.com: prova in sequenza i percorsi di ricerca del sito
- * (vedi lib/fpedia.ts) e per ognuno richiede una corrispondenza esatta col
- * cognome; se non trova nulla in nessun tentativo restituisce un errore con
- * il dettaglio di cosa e' successo per ogni tentativo (utile per il "test su
- * campione" nella pagina Settings). Un giocatore per richiesta (il client
+ * fantacalciopedia.com (FPEDIA). Un giocatore per richiesta (il client
  * chiama in sequenza con una pausa) per non sovraccaricare il sito.
  */
 export async function POST(request: NextRequest) {
@@ -38,54 +48,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errore: "Nome giocatore mancante." }, { status: 400 });
   }
 
-  const tentativi: Tentativo[] = [];
-
   try {
-    for (const urlRicerca of urlRicercaFpedia(FPEDIA_BASE_URL, nome)) {
-      let risultatiRicerca: string;
-      try {
-        risultatiRicerca = await fetchTesto(urlRicerca);
-      } catch (err) {
-        tentativi.push({
-          url: urlRicerca,
-          esito: "http-error",
-          dettaglio: err instanceof Error ? err.message : "Errore di rete.",
-        });
-        continue;
-      }
-
-      const risoluzione = risolviGiocatoreFpedia(risultatiRicerca, nome);
-      if (!risoluzione.url) {
-        tentativi.push({
-          url: urlRicerca,
-          esito: "nessuna-corrispondenza",
-          candidatiTotali: risoluzione.candidatiTotali,
-          candidatiConCognome: risoluzione.candidatiConCognome,
-        });
-        continue;
-      }
-
-      tentativi.push({
-        url: urlRicerca,
-        esito: "trovato",
-        candidatiTotali: risoluzione.candidatiTotali,
-        candidatiConCognome: risoluzione.candidatiConCognome,
-        usataIniziale: risoluzione.usataIniziale,
+    const indice = await otteniIndice();
+    const url = trovaUrlGiocatoreInIndice(indice, nome, FPEDIA_BASE_URL);
+    if (!url) {
+      return NextResponse.json({
+        stats: null,
+        errore: "Nessuna corrispondenza esatta trovata su FPEDIA.",
+        debug: { indiceDimensione: indice.length },
       });
-
-      const html = await fetchTesto(risoluzione.url);
-      const stats = parseFpediaHtml(html, risoluzione.url);
-      return NextResponse.json({ stats, debug: { tentativi } });
     }
 
-    return NextResponse.json({
-      stats: null,
-      errore: "Nessuna corrispondenza esatta trovata su FPEDIA.",
-      debug: { tentativi },
-    });
+    const html = await fetchTesto(url);
+    const stats = parseFpediaHtml(html, url);
+    return NextResponse.json({ stats, debug: { indiceDimensione: indice.length, url } });
   } catch (err) {
     return NextResponse.json(
-      { stats: null, errore: err instanceof Error ? err.message : "Errore imprevisto.", debug: { tentativi } },
+      {
+        stats: null,
+        errore: err instanceof Error ? err.message : "Errore imprevisto.",
+        debug: { indiceDimensione: indiceCache?.voci.length ?? 0 },
+      },
       { status: 200 }
     );
   }

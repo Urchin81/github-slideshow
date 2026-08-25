@@ -1,14 +1,21 @@
 import { MODULI_MANTRA, SlotModulo } from "@/lib/moduliMantra";
+import { RUOLO_MANTRA_COLORE } from "@/lib/types";
 
 const RUOLI_DIFESA = ["Por", "Dc", "Dd", "Ds", "B"];
+const RUOLI_TREQUARTISTI_ALI = ["T", "W"];
 const RUOLI_ATTACCO = ["A", "Pc"];
 
+// Uno slot elenca ruoli alternativi per lo stesso posto in campo: il colore
+// dell'etichetta segue la stessa mappa usata per i singoli ruoli altrove
+// nell'app (rosa, tabella, scheda giocatore), con questa priorita' quando lo
+// slot mescola ruoli di categorie diverse (es. "W/A" resta viola, non rosso).
 function coloreSlot(slot: SlotModulo): string {
   if (slot.every((r) => RUOLI_DIFESA.includes(r))) {
-    return slot.includes("Por") ? "bg-amber-500" : "bg-sky-500";
+    return slot.includes("Por") ? RUOLO_MANTRA_COLORE.Por : RUOLO_MANTRA_COLORE.Dc;
   }
-  if (slot.some((r) => RUOLI_ATTACCO.includes(r))) return "bg-red-600";
-  return "bg-blue-600";
+  if (slot.some((r) => RUOLI_TREQUARTISTI_ALI.includes(r))) return RUOLO_MANTRA_COLORE.T;
+  if (slot.some((r) => RUOLI_ATTACCO.includes(r))) return RUOLO_MANTRA_COLORE.A;
+  return RUOLO_MANTRA_COLORE.E;
 }
 
 function Badge({ slot }: { slot: SlotModulo }) {

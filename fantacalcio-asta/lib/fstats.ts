@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import { FstatsStats, normalizeText, scomponiNomeListino } from "./types";
+import { FstatsStats } from "./types";
+import { trovaUrlGiocatoreInIndice, VoceIndiceGiocatore } from "./indiceGiocatori";
 
 function numeroPulito(testo: string | undefined): number | undefined {
   if (!testo) return undefined;
@@ -15,10 +16,7 @@ function estraiCampo(html: string, label: string): string | undefined {
   return m ? m[1].replace(/\s+/g, " ").trim() : undefined;
 }
 
-export interface VoceIndiceFstats {
-  nome: string;
-  url: string;
-}
+export type VoceIndiceFstats = VoceIndiceGiocatore;
 
 // Non ancorato al dominio: qualsiasi link a "/players/<paese>/<slug>" con il nome
 // del giocatore come testo, cosi' funziona anche con un server locale nei test.
@@ -30,7 +28,7 @@ const LINK_GIOCATORE_REGEX =
  * giocatori di una lega (es. footystats.org/italy/serie-a/players). Una sola
  * richiesta per l'intero elenco, invece di una ricerca per ogni giocatore (il
  * motore di ricerca del sito e' basato su JS/AJAX e non e' utilizzabile lato
- * server come quello di FPEDIA).
+ * server).
  */
 export function estraiIndiceGiocatori(html: string): VoceIndiceFstats[] {
   const voci: VoceIndiceFstats[] = [];
@@ -42,41 +40,8 @@ export function estraiIndiceGiocatori(html: string): VoceIndiceFstats[] {
   return voci;
 }
 
-/**
- * Trova nell'indice l'URL del giocatore cercato. Il listino ha solo il
- * cognome (con l'iniziale del nome se serve a distinguere omonimi, es.
- * "Adekunle A."): richiede che TUTTE le parole del cognome compaiano nel
- * nome candidato (l'indice contiene tutti i giocatori del campionato, quindi
- * niente match parziali per evitare falsi positivi), e se più giocatori
- * condividono lo stesso cognome usa l'iniziale per scegliere quello giusto.
- */
-export function trovaUrlGiocatore(
-  indice: VoceIndiceFstats[],
-  nomeCercato: string,
-  baseUrl: string
-): string | null {
-  const { cognome, iniziale } = scomponiNomeListino(nomeCercato);
-  const cognomeParti = normalizeText(cognome).split(/\s+/).filter(Boolean);
-  if (cognomeParti.length === 0) return null;
-
-  const conCognome = indice.filter((voce) => {
-    const normalizzato = normalizeText(voce.nome);
-    return cognomeParti.every((parte) => normalizzato.includes(parte));
-  });
-  if (conCognome.length === 0) return null;
-
-  if (iniziale && conCognome.length > 1) {
-    const inizialeNorm = normalizeText(iniziale);
-    const conIniziale = conCognome.filter((voce) => {
-      const partiNome = normalizeText(voce.nome).split(/\s+/).filter(Boolean);
-      const restanti = partiNome.filter((p) => !cognomeParti.some((c) => p === c || p.includes(c)));
-      return restanti.some((p) => p.startsWith(inizialeNorm));
-    });
-    if (conIniziale.length > 0) return new URL(conIniziale[0].url, baseUrl).toString();
-  }
-
-  return new URL(conCognome[0].url, baseUrl).toString();
-}
+/** Vedi lib/indiceGiocatori.ts: stessa logica di corrispondenza esatta usata anche da FPEDIA. */
+export const trovaUrlGiocatore = trovaUrlGiocatoreInIndice;
 
 export function parseFstatsHtml(html: string, url: string): FstatsStats {
   const $ = cheerio.load(html);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
+import { RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
 import { getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
@@ -94,7 +94,11 @@ export default function GiocatorePage() {
                 <span className="text-slate-400 text-sm">Non specificato nel listino</span>
               )}
               {(player.ruoliMantra ?? []).map((r: RuoloMantra) => (
-                <span key={r} className="text-xs rounded px-2 py-1 bg-slate-100" title={RUOLO_MANTRA_LABEL[r]}>
+                <span
+                  key={r}
+                  className={`text-xs text-white rounded px-2 py-1 ${RUOLO_MANTRA_COLORE[r]}`}
+                  title={RUOLO_MANTRA_LABEL[r]}
+                >
                   {r}
                 </span>
               ))}

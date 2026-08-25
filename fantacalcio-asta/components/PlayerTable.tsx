@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { RUOLI, RUOLI_MANTRA, RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra, Ruolo, StatoGiocatore } from "@/lib/types";
+import {
+  RUOLI,
+  RUOLI_MANTRA,
+  RUOLO_LABEL,
+  RUOLO_MANTRA_COLORE,
+  RUOLO_MANTRA_LABEL,
+  RuoloMantra,
+  Ruolo,
+  StatoGiocatore,
+} from "@/lib/types";
 import { computeMantraStato, getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
@@ -88,7 +97,7 @@ export function PlayerTable() {
     return (
       <span className="flex gap-1 flex-wrap">
         {ruoliMantra.map((r) => (
-          <span key={r} className="bg-slate-100 rounded px-1 text-xs">
+          <span key={r} className={`text-white rounded px-1 text-xs ${RUOLO_MANTRA_COLORE[r]}`}>
             {r}
           </span>
         ))}

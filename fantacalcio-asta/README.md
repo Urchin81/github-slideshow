@@ -63,14 +63,16 @@ ruoli ancora da coprire nella tua squadra.
     (es. "Infortunato", "Titolare fisso"). "Aggiorna tutti" è pensato per il
     primo giro dopo un import; "Top 200 per valore" per aggiornamenti rapidi
     successivi.
-  - **FPEDIA (stagione corrente)**: cerca ogni giocatore su
-    fantacalciopedia.com (una richiesta a giocatore, con una pausa tra l'una e
-    l'altra) e importa ALG FCP, punteggio FCP, solidità investimento,
-    resistenza infortuni, presenze/gol/assist/media voto/ammonizioni/
-    espulsioni, presenze/gol/assist previsti, i tag (Panchinaro, Buona Media,
-    Goleador, Assistman, Giovane talento) e la nota di scouting. Mostrate
-    nella scheda giocatore insieme alla media fantavoto delle 2 stagioni
-    precedenti.
+  - **FPEDIA (stagione corrente)**: risolve ogni giocatore su
+    fantacalciopedia.com tramite un indice nome→pagina costruito da 4
+    richieste totali (una per ruolo: portieri/difensori/centrocampisti/
+    attaccanti — le pagine elenco del sito riportano tutti i giocatori di quel
+    ruolo con nome e link gia' nel markup, senza paginazione), poi importa ALG
+    FCP, punteggio FCP, solidità investimento, resistenza infortuni,
+    presenze/gol/assist/media voto/ammonizioni/espulsioni, presenze/gol/assist
+    previsti, i tag (Panchinaro, Buona Media, Goleador, Assistman, Giovane
+    talento) e la nota di scouting. Mostrate nella scheda giocatore insieme
+    alla media fantavoto delle 2 stagioni precedenti.
   - **FSTATS (stagione precedente)**: recupera da footystats.org presenze/
     gol/assist/ammonizioni/espulsioni/minuti della stagione precedente, più
     posizione, nazionalità, piede preferito ed età. Il motore di ricerca del
@@ -145,19 +147,21 @@ pagina principale per seguire l'asta.
   senza fix upstream al momento; il parsing avviene comunque interamente nel
   browser su un file che carichi tu stesso, quindi il rischio pratico per un
   uso personale è limitato.
-- **FPEDIA è scraping, non un'API ufficiale**: `lib/fpedia.ts` interroga il
-  motore di ricerca del sito e analizza l'HTML della pagina giocatore. Prova
-  in sequenza la ricerca standard di WordPress (`/?s=...`, il più probabile
-  per come è fatto il sito) e un vecchio percorso (`/ricerca.php?s=...`) come
-  riserva — se anche questi dovessero cambiare, usa il pulsante "Testa su un
-  campione" in Settings per vedere subito quanti giocatori vengono trovati
-  prima di lanciare l'aggiornamento su tutto il listino. Il parser è stato
-  scritto e verificato contro un campione reale (in
-  `lib/__fixtures__/fpedia-sample.html`), ma se il sito cambia markup alcuni
-  campi potrebbero smettere di essere trovati (in quel caso torneranno `—`,
-  non un errore che blocca il resto). Uso personale, non massivo: c'è già una
-  pausa tra le richieste, ma resta scraping di un sito di terzi — verifica i
-  loro termini d'uso se ne fai un uso intensivo o ripetuto.
+- **FPEDIA è scraping, non un'API ufficiale**: `lib/fpedia.ts` non usa il
+  motore di ricerca del sito (un primo tentativo basato su un endpoint di
+  ricerca indovinato non trovava nulla sul sito reale) ma le pagine elenco
+  per ruolo, la cui struttura è confermata da due scraper indipendenti dello
+  stesso sito (github.com/protti/ScraperFantacalcio e
+  github.com/DrElegantia/fanta-app). Se il sito cambia quella struttura, usa
+  il pulsante "Testa su un campione" in Settings per vedere subito quanti
+  giocatori vengono trovati prima di lanciare l'aggiornamento su tutto il
+  listino. Il parser della pagina giocatore è stato scritto e verificato
+  contro un campione reale (in `lib/__fixtures__/fpedia-sample.html`), ma se
+  il sito cambia markup alcuni campi potrebbero smettere di essere trovati
+  (in quel caso torneranno `—`, non un errore che blocca il resto). Uso
+  personale, non massivo: c'è già una pausa tra le richieste, ma resta
+  scraping di un sito di terzi — verifica i loro termini d'uso se ne fai un
+  uso intensivo o ripetuto.
 - **FSTATS è scraping, non un'API ufficiale**: `lib/fstats.ts` scarica una
   volta per giro la pagina elenco giocatori di footystats.org, ci costruisce
   un indice nome→pagina e richiede un match completo di tutte le parole del

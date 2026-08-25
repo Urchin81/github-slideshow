@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LINEE_MANTRA, lineaMantraGiocatore, RUOLI, RUOLO_LABEL } from "@/lib/types";
+import { LINEE_MANTRA, lineaMantraGiocatore, RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 
@@ -100,7 +100,10 @@ function RosterMantra() {
         extra={
           <span className="ml-1">
             {(p.ruoliMantra ?? []).map((r) => (
-              <span key={r} className="text-[10px] bg-slate-100 rounded px-1 mr-0.5">
+              <span
+                key={r}
+                className={`text-[10px] text-white rounded px-1 mr-0.5 ${RUOLO_MANTRA_COLORE[r]}`}
+              >
                 {r}
               </span>
             ))}

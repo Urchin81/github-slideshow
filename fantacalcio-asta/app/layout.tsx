@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Asta
               </a>
               <a href="/moduli" className="hover:underline">
-                Moduli
+                Moduli Mantra
               </a>
               <a href="/settings" className="hover:underline">
                 ⚙️ Settings

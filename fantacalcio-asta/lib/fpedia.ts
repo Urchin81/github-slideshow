@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import { FpediaStagionePrecedente, FpediaStats, normalizeText, scomponiNomeListino } from "./types";
+import { FpediaStagionePrecedente, FpediaStats } from "./types";
+import { VoceIndiceGiocatore } from "./indiceGiocatori";
 
 function numeroPulito(testo: string | undefined): number | undefined {
   if (!testo) return undefined;
@@ -134,81 +135,30 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
   };
 }
 
-// Non ancorato al dominio (solo al pattern di percorso), cosi' funziona anche
-// se il sito passa a un altro host/sottodominio o durante i test con un server locale.
-const URL_GIOCATORE_REGEX = /https?:\/\/[^\s"'<>]+\/lista-calciatori-serie-a\/[a-z]+\/\d+\/[a-z0-9-]+\.html/gi;
-
-function partiSlug(url: string): string[] {
-  const slug = url.split("/").pop()?.replace(/\.html$/i, "") ?? "";
-  return normalizeText(slug).split("-").filter(Boolean);
-}
-
-/** Il listino ha solo il cognome: e' incluso in una parte dello slug se coincide o ne e' una sottostringa. */
-function coincideConCognome(partiCandidato: string[], cognomeParti: string[]): boolean {
-  return cognomeParti.every((parte) => partiCandidato.some((p) => p === parte || p.includes(parte)));
-}
-
-export interface RisultatoRicercaFpedia {
-  url: string | null;
-  /** Quanti link a pagine giocatore sono stati trovati nella pagina di ricerca (0 = la ricerca stessa non ha funzionato). */
-  candidatiTotali: number;
-  /** Quanti di quei link contenevano per intero il cognome cercato (0 = nessuna corrispondenza esatta). */
-  candidatiConCognome: number;
-  usataIniziale: boolean;
-}
+/**
+ * Ruoli con una pagina elenco separata su FPEDIA (usati nell'URL, in minuscolo):
+ * https://www.fantacalciopedia.com/lista-calciatori-serie-a/{ruolo}/ elenca
+ * TUTTI i giocatori di quel ruolo, senza paginazione, con nome e link alla
+ * scheda gia' nel markup — a differenza del motore di ricerca del sito (che
+ * si e' rivelato non richiamabile lato server), qui basta una richiesta a
+ * ruolo. Struttura confermata da due scraper indipendenti che leggono questo
+ * stesso sito: github.com/protti/ScraperFantacalcio e
+ * github.com/DrElegantia/fanta-app.
+ */
+export const FPEDIA_RUOLI_ELENCO = ["portieri", "difensori", "centrocampisti", "attaccanti"];
 
 /**
- * Risolve l'URL della pagina di un giocatore su FPEDIA a partire dall'HTML
- * di una pagina di ricerca. Il listino Fantacalcio.it riporta solo il
- * cognome (con l'iniziale del nome se serve a distinguere omonimi, es.
- * "Adekunle A."), mentre FPEDIA usa slug "cognome-nome" (es.
- * "scamacca-gianluca"): per una corrispondenza esatta si richiede che TUTTE
- * le parole del cognome compaiano nello slug, e se ci sono più candidati con
- * lo stesso cognome si usa l'iniziale del nome per scegliere quello giusto.
- * Non dipende dal markup esatto della pagina risultati: estrae con una
- * regex qualsiasi link che segua il formato delle pagine giocatore, cosi'
- * resta valido anche se il template dei risultati cambia.
+ * Estrae dalla pagina elenco di un ruolo la lista di giocatori (nome + URL
+ * della scheda), per costruire un indice nome -> pagina senza dover indovinare
+ * un endpoint di ricerca.
  */
-export function risolviGiocatoreFpedia(html: string, nomeCercato: string): RisultatoRicercaFpedia {
-  const { cognome, iniziale } = scomponiNomeListino(nomeCercato);
-  const cognomeParti = normalizeText(cognome).split(/\s+/).filter(Boolean);
-
-  const urlCandidati = Array.from(new Set(html.match(URL_GIOCATORE_REGEX) ?? []));
-  const candidati = urlCandidati.map((url) => ({ url, parti: partiSlug(url) }));
-  const conCognome = candidati.filter(({ parti }) => coincideConCognome(parti, cognomeParti));
-
-  if (conCognome.length === 0) {
-    return { url: null, candidatiTotali: urlCandidati.length, candidatiConCognome: 0, usataIniziale: false };
-  }
-
-  if (iniziale && conCognome.length > 1) {
-    const inizialeNorm = normalizeText(iniziale);
-    const conIniziale = conCognome.filter(({ parti }) => {
-      // Il nome proprio nello slug segue le parti del cognome (es. "scamacca-gianluca" -> "gianluca" dopo "scamacca").
-      const restanti = parti.filter((p) => !cognomeParti.some((c) => p === c || p.includes(c)));
-      return restanti.some((p) => p.startsWith(inizialeNorm));
-    });
-    if (conIniziale.length > 0) {
-      return {
-        url: conIniziale[0].url,
-        candidatiTotali: urlCandidati.length,
-        candidatiConCognome: conCognome.length,
-        usataIniziale: true,
-      };
-    }
-  }
-
-  return {
-    url: conCognome[0].url,
-    candidatiTotali: urlCandidati.length,
-    candidatiConCognome: conCognome.length,
-    usataIniziale: false,
-  };
-}
-
-/** Percorsi di ricerca da provare in ordine: il sito e' su WordPress (ricerca standard "?s="), con un vecchio percorso come riserva. */
-export function urlRicercaFpedia(baseUrl: string, nomeCercato: string): string[] {
-  const { cognome } = scomponiNomeListino(nomeCercato);
-  const q = encodeURIComponent(cognome);
-  return [`${baseUrl}/?s=${q}`, `${baseUrl}/ricerca.php?s=${q}`];
+export function estraiIndiceGiocatori(html: string): VoceIndiceGiocatore[] {
+  const $ = cheerio.load(html);
+  const voci: VoceIndiceGiocatore[] = [];
+  $("div.col_full.giocatore").each((_, el) => {
+    const nome = $(el).find("h3.tit_calc").first().text().replace(/\s+/g, " ").trim();
+    const url = $(el).find("a.label.label-default.fondoindaco").first().attr("href");
+    if (nome && url) voci.push({ nome, url });
+  });
+  return voci;
 }

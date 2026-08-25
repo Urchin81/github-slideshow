@@ -147,6 +147,28 @@ export function lineaMantraGiocatore(ruoliMantra: RuoloMantra[] | undefined): Li
   return LINEE_MANTRA.find((linea) => ruoliMantra.some((r) => RUOLO_MANTRA_LINEA[r] === linea));
 }
 
+/**
+ * Colore per ruolo Mantra, usato ovunque compaiano le etichette dei ruoli
+ * (rosa, tabella, moduli) cosi' che lo stesso ruolo sia sempre riconoscibile
+ * allo stesso colore: portiere ambra, resto della difesa azzurro,
+ * centrocampo puro blu, trequartisti/ali viola (distinti dal rosso dei puri
+ * attaccanti anche quando compaiono insieme in uno slot dei moduli).
+ */
+export const RUOLO_MANTRA_COLORE: Record<RuoloMantra, string> = {
+  Por: "bg-amber-500",
+  Dc: "bg-sky-500",
+  Dd: "bg-sky-500",
+  Ds: "bg-sky-500",
+  B: "bg-sky-500",
+  E: "bg-blue-600",
+  M: "bg-blue-600",
+  C: "bg-blue-600",
+  W: "bg-purple-600",
+  T: "bg-purple-600",
+  A: "bg-red-600",
+  Pc: "bg-red-600",
+};
+
 export interface RoleConfig {
   slot: number;
   percentualeBudget: number;
