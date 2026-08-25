@@ -6,6 +6,7 @@ import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlayerTable } from "@/components/PlayerTable";
 import { NewsUpdatePanel } from "@/components/NewsUpdatePanel";
+import { StatsUpdatePanel } from "@/components/StatsUpdatePanel";
 import { ResetButton } from "@/components/ResetButton";
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
         </div>
         <ResetButton />
       </div>
+      <StatsUpdatePanel />
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
         <BudgetPanel />
         <PlayerTable />

@@ -40,6 +40,40 @@ export interface NewsItem {
   fonte: string;
 }
 
+export interface FpediaStagionePrecedente {
+  stagione: string;
+  mediaVoto?: number;
+  presenze?: number;
+}
+
+/** Statistiche stagione corrente recuperate da fantacalciopedia.com. */
+export interface FpediaStats {
+  url: string;
+  ruolo?: string;
+  squadra?: string;
+  dataNascita?: string;
+  altezzaCm?: number;
+  pesoKg?: number;
+  nazionalita?: string;
+  algFcp?: number;
+  punteggioFcp?: number;
+  soliditaInvestimento?: number;
+  resistenzaInfortuni?: number;
+  presenze?: number;
+  gol?: number;
+  assist?: number;
+  mediaVoto?: number;
+  ammonizioni?: number;
+  espulsioni?: number;
+  presenzePreviste?: [number, number];
+  golPrevisti?: [number, number];
+  assistPrevisti?: [number, number];
+  tags: string[];
+  descrizione?: string;
+  stagioniPrecedenti: FpediaStagionePrecedente[];
+  aggiornatoIl: string;
+}
+
 export interface Player {
   id: string;
   ruolo: Ruolo;
@@ -58,6 +92,7 @@ export interface Player {
   trendVoti?: string;
   notizie?: NewsItem[];
   notizieAggiornateIl?: string;
+  fpedia?: FpediaStats;
 }
 
 export interface RoleConfig {

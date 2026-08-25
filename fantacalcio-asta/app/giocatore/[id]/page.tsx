@@ -127,6 +127,117 @@ export default function GiocatorePage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-lg">Statistiche stagione corrente (FPEDIA)</h2>
+          {player.fpedia && (
+            <a href={player.fpedia.url} target="_blank" rel="noreferrer" className="text-xs text-slate-400 hover:underline">
+              Aggiornate il {new Date(player.fpedia.aggiornatoIl).toLocaleString("it-IT")} · fonte
+            </a>
+          )}
+        </div>
+        {!player.fpedia ? (
+          <p className="text-slate-400 text-sm">
+            Nessun dato. Usa il pulsante &quot;Aggiorna statistiche FPEDIA&quot; nella dashboard.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
+              <div>
+                <div className="text-xs text-slate-400">Presenze</div>
+                <div className="font-semibold">{player.fpedia.presenze ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Gol</div>
+                <div className="font-semibold">{player.fpedia.gol ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Assist</div>
+                <div className="font-semibold">{player.fpedia.assist ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Media voto</div>
+                <div className="font-semibold">{player.fpedia.mediaVoto ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Ammonizioni</div>
+                <div className="font-semibold">{player.fpedia.ammonizioni ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Espulsioni</div>
+                <div className="font-semibold">{player.fpedia.espulsioni ?? "—"}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div>
+                <div className="text-xs text-slate-400">ALG FCP</div>
+                <div className="font-semibold">{player.fpedia.algFcp ?? "—"}/100</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Punteggio FCP</div>
+                <div className="font-semibold">{player.fpedia.punteggioFcp ?? "—"}/100</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Solidità investimento</div>
+                <div className="font-semibold">{player.fpedia.soliditaInvestimento ?? "—"}/5</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Resistenza infortuni</div>
+                <div className="font-semibold">{player.fpedia.resistenzaInfortuni ?? "—"}/5</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div>
+                <div className="text-xs text-slate-400">Presenze previste</div>
+                <div className="font-semibold">
+                  {player.fpedia.presenzePreviste ? player.fpedia.presenzePreviste.join("–") : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Gol previsti</div>
+                <div className="font-semibold">
+                  {player.fpedia.golPrevisti ? player.fpedia.golPrevisti.join("–") : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Assist previsti</div>
+                <div className="font-semibold">
+                  {player.fpedia.assistPrevisti ? player.fpedia.assistPrevisti.join("–") : "—"}
+                </div>
+              </div>
+            </div>
+
+            {player.fpedia.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-4">
+                {player.fpedia.tags.map((t) => (
+                  <span key={t} className="text-xs rounded px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {player.fpedia.stagioniPrecedenti.length > 0 && (
+              <div className="mb-4">
+                <div className="text-xs text-slate-400 mb-1">Media fantavoto stagioni precedenti</div>
+                <div className="flex gap-4 text-sm">
+                  {player.fpedia.stagioniPrecedenti.map((s) => (
+                    <span key={s.stagione}>
+                      {s.stagione}: <span className="font-semibold">{s.mediaVoto ?? "nd"}</span>
+                      {s.presenze !== undefined && <span className="text-slate-400"> ({s.presenze} pres.)</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {player.fpedia.descrizione && <p className="text-sm text-slate-600">{player.fpedia.descrizione}</p>}
+          </>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-lg">Ultime notizie</h2>
           {player.notizieAggiornateIl && (
             <span className="text-xs text-slate-400">
