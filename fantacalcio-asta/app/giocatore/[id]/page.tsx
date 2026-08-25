@@ -8,6 +8,7 @@ import { computeLivelliRelativiFpedia } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
 import { CaratteristicheGiocatore } from "@/components/CaratteristicheGiocatore";
+import { isSafeHttpUrl } from "@/lib/url";
 
 // Semaforo a 5 colori (stesse fasce mostrate in legenda sotto le pillole): un
 // livello non calcolabile (troppo pochi altri giocatori da confrontare)
@@ -99,10 +100,10 @@ export default function GiocatorePage() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex gap-4">
           <div className="shrink-0">
-            {player.fpedia?.immagineUrl ? (
+            {isSafeHttpUrl(player.fpedia?.immagineUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={player.fpedia.immagineUrl}
+                src={player.fpedia?.immagineUrl}
                 alt={`Disegno di ${player.nome}`}
                 className="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded bg-slate-50 border border-slate-100"
               />
@@ -158,11 +159,11 @@ export default function GiocatorePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {player.fpedia?.squadraLogoUrl && (
+              {isSafeHttpUrl(player.fpedia?.squadraLogoUrl) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={player.fpedia.squadraLogoUrl}
-                  alt={`Maglia ${player.fpedia.squadra ?? player.squadra}`}
+                  src={player.fpedia?.squadraLogoUrl}
+                  alt={`Maglia ${player.fpedia?.squadra ?? player.squadra}`}
                   className="w-7 h-7 object-contain"
                 />
               )}
@@ -180,11 +181,11 @@ export default function GiocatorePage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-lg">Statistiche stagione corrente (FPEDIA)</h2>
           <div className="flex items-center gap-2">
-            {player.fpedia && (
+            {player.fpedia && isSafeHttpUrl(player.fpedia.url) && (
               <a
                 href={player.fpedia.url}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="text-xs text-slate-400 hover:underline"
               >
                 Aggiornate il {new Date(player.fpedia.aggiornatoIl).toLocaleString("it-IT")} · fonte
@@ -312,9 +313,13 @@ export default function GiocatorePage() {
         <ul className="space-y-3">
           {(player.notizie ?? []).map((n, i) => (
             <li key={i} className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
-              <a href={n.link} target="_blank" rel="noreferrer" className="font-medium hover:underline">
-                {n.titolo}
-              </a>
+              {isSafeHttpUrl(n.link) ? (
+                <a href={n.link} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
+                  {n.titolo}
+                </a>
+              ) : (
+                <span className="font-medium">{n.titolo}</span>
+              )}
               <div className="text-xs text-slate-400">
                 {n.fonte}
                 {n.data && ` · ${new Date(n.data).toLocaleDateString("it-IT")}`}

@@ -167,6 +167,47 @@ ruoli ancora da coprire nella tua squadra.
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.
 
+## Sicurezza
+
+L'app non ha autenticazione né un backend con dati condivisi (tutto resta nel
+browser di chi la usa), quindi gran parte della superficie OWASP classica
+(controllo accessi, gestione sessioni, dati sensibili) non si applica. I punti
+concreti irrobustiti, mappati sulle categorie OWASP Top 10:
+
+- **SSRF (A10)**: `POST /api/news` accettava in passato un elenco di feed RSS
+  dal body della richiesta e li scaricava lato server con nessuna verifica —
+  chiunque avesse chiamato l'endpoint direttamente avrebbe potuto far
+  effettuare al server richieste verso qualunque destinazione (rete interna
+  inclusa). L'interfaccia non ha mai usato quel parametro: è stato rimosso,
+  l'endpoint usa sempre e solo i feed fissi di `lib/newsSources.ts`.
+  Analogamente, `POST /api/fpedia` verifica (in `assicuraHostFpedia`, dentro
+  `app/api/fpedia/route.ts`) che ogni URL recuperato dallo scraping abbia
+  l'host di fantacalciopedia.com prima di scaricarlo, cosi' un link alterato
+  nella pagina sorgente non puo' trasformare l'endpoint in un proxy verso
+  altri indirizzi.
+- **Injection/XSS (A03)**: i link mostrati in pagina che arrivano da fonti
+  esterne non fidate (notizie RSS, foto/stemma/URL scheda da FPEDIA) passano
+  ora da `isSafeHttpUrl` (`lib/url.ts`), che accetta solo `http:`/`https:`:
+  un feed con un link `javascript:...` viene mostrato come testo semplice
+  invece che come link cliccabile.
+- **Misconfigurazione (A05)**: `next.config.js` imposta ora header di
+  sicurezza su tutte le risposte — Content-Security-Policy, `X-Frame-Options:
+  DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
+  `Permissions-Policy`, `Strict-Transport-Security` — e le API restituiscono
+  messaggi d'errore generici al client (il dettaglio tecnico, incluse le
+  cause di rete, va solo nei log server).
+- **Insecure design / limiti di risorse (A04)**: l'import del listino
+  rifiuta file oltre 20MB prima di avviare il parsing xlsx, e le richieste
+  server verso FPEDIA hanno un timeout di 15s (il `fetch` di Node non ne ha
+  uno di default).
+- **Componenti vulnerabili (A06)**: `npm audit` segnala vulnerabilità note su
+  `xlsx` (nessuna versione corretta pubblicata su npm da SheetJS — il fix
+  esiste solo sulla loro CDN) e su `next`/`postcss` (fix disponibile solo con
+  un aggiornamento di `next` a una major successiva, 14→16, che è una
+  migrazione rischiosa e volutamente non applicata in automatico). Il rischio
+  pratico di `xlsx` è limitato: il parsing avviene nel browser su un file che
+  scegli tu stesso, non su dati multi-utente o lato server.
+
 ## Avvio in locale
 
 ```bash
@@ -203,10 +244,8 @@ principale per seguire l'asta.
   semplici euristiche testuali sulle notizie trovate: possono contenere falsi
   negativi (nessuna menzione recente) o imprecisioni, e vanno usati come
   spunto, non come dato certo.
-- La libreria di parsing Excel (`xlsx`/SheetJS) ha alcune vulnerabilità note
-  senza fix upstream al momento; il parsing avviene comunque interamente nel
-  browser su un file che carichi tu stesso, quindi il rischio pratico per un
-  uso personale è limitato.
+- Vulnerabilità note nelle dipendenze (`xlsx`, `next`/`postcss`): vedi
+  sezione "Sicurezza" sopra.
 - **FPEDIA è scraping, non un'API ufficiale**: `lib/fpedia.ts` non usa il
   motore di ricerca del sito (un primo tentativo basato su un endpoint di
   ricerca indovinato non trovava nulla sul sito reale) ma le pagine elenco

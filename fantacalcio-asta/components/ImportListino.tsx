@@ -6,6 +6,11 @@ import { diffListino, ImportDiff } from "@/lib/mergeListino";
 import { Player } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 
+// Limite prudenziale per evitare che un file enorme (per errore o per abuso)
+// blocchi il browser durante il parsing xlsx (OWASP A04 - Insecure Design,
+// mancanza di limiti sulle risorse consumate da un input).
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+
 interface PendingImport {
   /** Il listino appena letto dal file, cosi' com'e' (per l'opzione "aggiorna tutto"). */
   parsed: Player[];
@@ -28,6 +33,13 @@ export function ImportListino() {
     setErrore(null);
     setCaricato(false);
     setPending(null);
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setErrore(
+        `Il file è troppo grande (${Math.round(file.size / 1024 / 1024)} MB, limite ${MAX_FILE_SIZE_BYTES / 1024 / 1024} MB). Controlla di aver selezionato il file giusto.`
+      );
+      resetInput();
+      return;
+    }
     try {
       const buffer = await file.arrayBuffer();
       const parsed = parseListino(buffer);
