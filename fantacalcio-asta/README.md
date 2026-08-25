@@ -69,6 +69,17 @@ ruoli ancora da coprire nella tua squadra.
   pulsante "Azzera chiamate" in dashboard (o "Azzera asta" in Settings)
   rimette tutti i giocatori disponibili senza toccare il listino importato
   **né i preferiti** (vedi sotto) — entrambi chiedono conferma prima di agire.
+- **Giocatore in asta (martello 🔨)**: nella tabella, ogni giocatore
+  disponibile mostra solo l'icona del martello d'asta al posto dei due
+  pulsanti "Preso da me"/"Preso da altri". Cliccandoci sopra si entra in
+  modalità "focus": quel giocatore resta fissato in cima alla tabella — con i
+  veri pulsanti di assegnazione — mentre sotto compaiono, ordinati per
+  punteggio, solo gli altri giocatori ancora disponibili con ruolo
+  compatibile (stesso ruolo in Classic; almeno un ruolo Mantra in comune in
+  Mantra), utile per confrontare al volo le alternative durante il rilancio.
+  Un banner sostituisce i filtri normali con un pulsante "Torna alla lista
+  completa"; la modalità si chiude anche da sola non appena il giocatore
+  fissato viene assegnato (a te o ad altri).
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
@@ -116,10 +127,15 @@ ruoli ancora da coprire nella tua squadra.
     da FPEDIA" rifà la ricerca e lo scraping solo per quel giocatore, senza
     dover lanciare un giro su tutto il listino da Settings.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto il nome di ogni
-    giocatore nella tabella compare una fila di icone (rigorista, tiratore di
-    punizioni/angoli, titolare, goleador, assistman, ecc. in verde; panchinaro,
-    falloso, rischio infortuni in rosso), dedotte dalle notizie e dai tag
-    FPEDIA — vedi `components/CaratteristicheGiocatore.tsx`.
+    giocatore nella tabella compare sempre la stessa fila di icone lineari
+    (rigorista, tiratore di punizioni/angoli, titolare, goleador, assistman,
+    buona media, piazzati, outsider, giovane talento, panchinaro, falloso,
+    rischio infortuni), dedotte dalle notizie e dai tag FPEDIA — tutte le
+    icone compaiono sempre, ma restano grigio spento finché il giocatore non
+    ha quella caratteristica: si "accendono" verdi quando è positiva e
+    presente, rosse quando è negativa e presente, cosí il confronto a colpo
+    d'occhio tra giocatori resta immediato anche quando mancano dati (icone
+    lineari via `lucide-react`, vedi `components/CaratteristicheGiocatore.tsx`).
   - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il
     cognome (con l'iniziale del nome quando serve a distinguere omonimi, es.
     "Adekunle A.") mentre FPEDIA usa nome+cognome (es. conosce "Scamacca" come

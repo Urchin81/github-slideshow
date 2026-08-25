@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Gavel } from "lucide-react";
 import {
   RUOLI,
   RUOLI_MANTRA,
@@ -45,6 +46,7 @@ export function PlayerTable() {
   const [prezzoInput, setPrezzoInput] = useState("1");
   const [modificaId, setModificaId] = useState<string | null>(null);
   const [modificaInput, setModificaInput] = useState("1");
+  const [inAstaId, setInAstaId] = useState<string | null>(null);
 
   const suggestions = useMemo(() => getSuggestions(players, settings), [players, settings]);
   const suggestionById = useMemo(() => {
@@ -52,7 +54,28 @@ export function PlayerTable() {
     return map;
   }, [suggestions]);
 
+  // Giocatore attualmente "sotto il martello": resta valido solo finché è ancora
+  // disponibile (appena viene assegnato o rimosso si torna automaticamente alla lista intera).
+  const inAstaPlayer = useMemo(() => {
+    if (!inAstaId) return null;
+    const p = players.find((pl) => pl.id === inAstaId);
+    return p && p.stato === "disponibile" ? p : null;
+  }, [inAstaId, players]);
+
+  function ruoliCompatibili(a: typeof players[number], b: typeof players[number]) {
+    return isMantra
+      ? (a.ruoliMantra ?? []).some((r) => (b.ruoliMantra ?? []).includes(r))
+      : a.ruolo === b.ruolo;
+  }
+
   const righe = useMemo(() => {
+    if (inAstaPlayer) {
+      const compatibili = players
+        .filter((p) => p.id !== inAstaPlayer.id && p.stato === "disponibile" && ruoliCompatibili(p, inAstaPlayer))
+        .sort((a, b) => (suggestionById.get(b.id)?.punteggio ?? 0) - (suggestionById.get(a.id)?.punteggio ?? 0));
+      return [inAstaPlayer, ...compatibili];
+    }
+
     let base = statoFiltro === "tutti" ? players : players.filter((p) => p.stato === statoFiltro);
 
     if (ruoloFiltro !== "tutti") {
@@ -77,7 +100,9 @@ export function PlayerTable() {
       const sb = suggestionById.get(b.id)?.punteggio ?? 0;
       return sb - sa;
     });
-  }, [players, statoFiltro, ruoloFiltro, ricerca, soloConsigliati, soloPreferiti, suggestionById, isMantra]);
+  }, [players, statoFiltro, ruoloFiltro, ricerca, soloConsigliati, soloPreferiti, suggestionById, isMantra, inAstaPlayer]);
+
+  const mostraPunteggio = statoFiltro === "disponibile" || !!inAstaPlayer;
 
   function apriAssegnazione(id: string, quotazione: number) {
     setAssignId(id);
@@ -89,6 +114,12 @@ export function PlayerTable() {
     assignToMe(id, prezzo);
     setAssignId(null);
     setPrezzoInput("1");
+    if (id === inAstaId) setInAstaId(null);
+  }
+
+  function handleAssignToOthers(id: string) {
+    assignToOthers(id);
+    if (id === inAstaId) setInAstaId(null);
   }
 
   function apriModifica(id: string, prezzoAttuale: number | undefined) {
@@ -138,51 +169,67 @@ export function PlayerTable() {
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <div className="flex flex-wrap gap-3 mb-4 items-center">
-        <input
-          value={ricerca}
-          onChange={(e) => setRicerca(e.target.value)}
-          placeholder="Cerca giocatore o squadra..."
-          className="border border-slate-200 rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]"
-        />
-        <select
-          value={ruoloFiltro}
-          onChange={(e) => setRuoloFiltro(e.target.value as RoleKey | "tutti")}
-          className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-        >
-          <option value="tutti">Tutti i ruoli</option>
-          {ruoliAttivi.map((r) => (
-            <option key={r} value={r}>
-              {isMantra ? `${r} - ${ruoloLabel(r)}` : ruoloLabel(r)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={statoFiltro}
-          onChange={(e) => setStatoFiltro(e.target.value as FiltroStato)}
-          className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-        >
-          <option value="disponibile">Disponibili</option>
-          <option value="mia">Mia squadra</option>
-          <option value="altrui">Prese da altri</option>
-          <option value="tutti">Tutti</option>
-        </select>
-        {statoFiltro === "disponibile" && (
+      {inAstaPlayer ? (
+        <div className="flex flex-wrap items-center gap-2 mb-4 bg-amber-50 border border-amber-200 rounded p-2.5 text-sm">
+          <Gavel size={16} className="text-amber-700 shrink-0" />
+          <span>
+            Giocatore in asta: <strong>{inAstaPlayer.nome}</strong> — sotto, i giocatori con ruoli compatibili
+            ancora disponibili.
+          </span>
+          <button
+            onClick={() => setInAstaId(null)}
+            className="ml-auto text-xs bg-slate-200 rounded px-2 py-1 hover:bg-slate-300"
+          >
+            Torna alla lista completa
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
+          <input
+            value={ricerca}
+            onChange={(e) => setRicerca(e.target.value)}
+            placeholder="Cerca giocatore o squadra..."
+            className="border border-slate-200 rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]"
+          />
+          <select
+            value={ruoloFiltro}
+            onChange={(e) => setRuoloFiltro(e.target.value as RoleKey | "tutti")}
+            className="border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option value="tutti">Tutti i ruoli</option>
+            {ruoliAttivi.map((r) => (
+              <option key={r} value={r}>
+                {isMantra ? `${r} - ${ruoloLabel(r)}` : ruoloLabel(r)}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statoFiltro}
+            onChange={(e) => setStatoFiltro(e.target.value as FiltroStato)}
+            className="border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option value="disponibile">Disponibili</option>
+            <option value="mia">Mia squadra</option>
+            <option value="altrui">Prese da altri</option>
+            <option value="tutti">Tutti</option>
+          </select>
+          {statoFiltro === "disponibile" && (
+            <label className="text-sm flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={soloConsigliati}
+                onChange={(e) => setSoloConsigliati(e.target.checked)}
+              />
+              Solo consigliati
+            </label>
+          )}
           <label className="text-sm flex items-center gap-1.5">
-            <input
-              type="checkbox"
-              checked={soloConsigliati}
-              onChange={(e) => setSoloConsigliati(e.target.checked)}
-            />
-            Solo consigliati
+            <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
+            Solo preferiti ★
           </label>
-        )}
-        <label className="text-sm flex items-center gap-1.5">
-          <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
-          Solo preferiti ★
-        </label>
-        <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
-      </div>
+          <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
+        </div>
+      )}
 
       {rosaPiena && (
         <p className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded p-2 mb-3">
@@ -200,7 +247,7 @@ export function PlayerTable() {
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
               <th className="pb-2 text-right">Quot.</th>
-              {statoFiltro === "disponibile" && <th className="pb-2 text-right">Punteggio</th>}
+              {mostraPunteggio && <th className="pb-2 text-right">Punteggio</th>}
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
@@ -221,7 +268,7 @@ export function PlayerTable() {
                   </td>
                   <td className="py-1.5 text-slate-500">{p.squadra}</td>
                   <td className="py-1.5 text-right">{p.quotazione}</td>
-                  {statoFiltro === "disponibile" && (
+                  {mostraPunteggio && (
                     <td className="py-1.5 text-right">
                       {suggestion?.consigliato ? (
                         <span
@@ -260,7 +307,7 @@ export function PlayerTable() {
                             X
                           </button>
                         </span>
-                      ) : (
+                      ) : inAstaPlayer && p.id === inAstaPlayer.id ? (
                         <span className="inline-flex gap-2">
                           <button
                             onClick={() => apriAssegnazione(p.id, p.quotazione)}
@@ -271,12 +318,20 @@ export function PlayerTable() {
                             Preso da me
                           </button>
                           <button
-                            onClick={() => assignToOthers(p.id)}
+                            onClick={() => handleAssignToOthers(p.id)}
                             className="text-xs bg-slate-200 rounded px-2 py-1"
                           >
                             Preso da altri
                           </button>
                         </span>
+                      ) : (
+                        <button
+                          onClick={() => setInAstaId(p.id)}
+                          title="Giocatore in asta: mostra i giocatori con ruoli compatibili ancora disponibili"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 text-slate-600"
+                        >
+                          <Gavel size={16} />
+                        </button>
                       )
                     ) : (
                       <span className="inline-flex items-center gap-1.5">
