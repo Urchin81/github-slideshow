@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { FpediaStagionePrecedente, FpediaStats, normalizeText } from "./types";
+import { FpediaStagionePrecedente, FpediaStats, normalizeText, scomponiNomeListino } from "./types";
 
 function numeroPulito(testo: string | undefined): number | undefined {
   if (!testo) return undefined;
@@ -138,25 +138,77 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
 // se il sito passa a un altro host/sottodominio o durante i test con un server locale.
 const URL_GIOCATORE_REGEX = /https?:\/\/[^\s"'<>]+\/lista-calciatori-serie-a\/[a-z]+\/\d+\/[a-z0-9-]+\.html/gi;
 
+function partiSlug(url: string): string[] {
+  const slug = url.split("/").pop()?.replace(/\.html$/i, "") ?? "";
+  return normalizeText(slug).split("-").filter(Boolean);
+}
+
+/** Il listino ha solo il cognome: e' incluso in una parte dello slug se coincide o ne e' una sottostringa. */
+function coincideConCognome(partiCandidato: string[], cognomeParti: string[]): boolean {
+  return cognomeParti.every((parte) => partiCandidato.some((p) => p === parte || p.includes(parte)));
+}
+
+export interface RisultatoRicercaFpedia {
+  url: string | null;
+  /** Quanti link a pagine giocatore sono stati trovati nella pagina di ricerca (0 = la ricerca stessa non ha funzionato). */
+  candidatiTotali: number;
+  /** Quanti di quei link contenevano per intero il cognome cercato (0 = nessuna corrispondenza esatta). */
+  candidatiConCognome: number;
+  usataIniziale: boolean;
+}
+
 /**
- * Cerca l'URL della pagina di un giocatore su FPEDIA usando il motore di
- * ricerca del sito. Non dipende dal markup esatto della pagina risultati:
- * estrae con una regex qualsiasi link che segua il formato delle pagine
- * giocatore, cosi' resta valido anche se il template dei risultati cambia.
+ * Risolve l'URL della pagina di un giocatore su FPEDIA a partire dall'HTML
+ * di una pagina di ricerca. Il listino Fantacalcio.it riporta solo il
+ * cognome (con l'iniziale del nome se serve a distinguere omonimi, es.
+ * "Adekunle A."), mentre FPEDIA usa slug "cognome-nome" (es.
+ * "scamacca-gianluca"): per una corrispondenza esatta si richiede che TUTTE
+ * le parole del cognome compaiano nello slug, e se ci sono più candidati con
+ * lo stesso cognome si usa l'iniziale del nome per scegliere quello giusto.
+ * Non dipende dal markup esatto della pagina risultati: estrae con una
+ * regex qualsiasi link che segua il formato delle pagine giocatore, cosi'
+ * resta valido anche se il template dei risultati cambia.
  */
-export function estraiUrlGiocatoreDaRicerca(html: string, nomeCercato: string): string | null {
-  const candidati = Array.from(new Set(html.match(URL_GIOCATORE_REGEX) ?? []));
-  if (candidati.length === 0) return null;
+export function risolviGiocatoreFpedia(html: string, nomeCercato: string): RisultatoRicercaFpedia {
+  const { cognome, iniziale } = scomponiNomeListino(nomeCercato);
+  const cognomeParti = normalizeText(cognome).split(/\s+/).filter(Boolean);
 
-  const parti = normalizeText(nomeCercato).split(/\s+/).filter(Boolean);
+  const urlCandidati = Array.from(new Set(html.match(URL_GIOCATORE_REGEX) ?? []));
+  const candidati = urlCandidati.map((url) => ({ url, parti: partiSlug(url) }));
+  const conCognome = candidati.filter(({ parti }) => coincideConCognome(parti, cognomeParti));
 
-  function punteggioMatch(url: string): number {
-    const slug = url.split("/").pop() ?? "";
-    const slugNormalizzato = normalizeText(slug.replace(/\.html$/, "").replace(/-/g, " "));
-    return parti.filter((parte) => slugNormalizzato.includes(parte)).length;
+  if (conCognome.length === 0) {
+    return { url: null, candidatiTotali: urlCandidati.length, candidatiConCognome: 0, usataIniziale: false };
   }
 
-  const migliore = candidati.map((url) => ({ url, punti: punteggioMatch(url) })).sort((a, b) => b.punti - a.punti)[0];
+  if (iniziale && conCognome.length > 1) {
+    const inizialeNorm = normalizeText(iniziale);
+    const conIniziale = conCognome.filter(({ parti }) => {
+      // Il nome proprio nello slug segue le parti del cognome (es. "scamacca-gianluca" -> "gianluca" dopo "scamacca").
+      const restanti = parti.filter((p) => !cognomeParti.some((c) => p === c || p.includes(c)));
+      return restanti.some((p) => p.startsWith(inizialeNorm));
+    });
+    if (conIniziale.length > 0) {
+      return {
+        url: conIniziale[0].url,
+        candidatiTotali: urlCandidati.length,
+        candidatiConCognome: conCognome.length,
+        usataIniziale: true,
+      };
+    }
+  }
 
-  return migliore.punti > 0 ? migliore.url : candidati[0];
+  return {
+    url: conCognome[0].url,
+    candidatiTotali: urlCandidati.length,
+    candidatiConCognome: conCognome.length,
+    usataIniziale: false,
+  };
+}
+
+/** Percorsi di ricerca da provare in ordine: il sito e' su WordPress (ricerca standard "?s="), con un vecchio percorso come riserva. */
+export function urlRicercaFpedia(baseUrl: string, nomeCercato: string): string[] {
+  const { cognome } = scomponiNomeListino(nomeCercato);
+  const q = encodeURIComponent(cognome);
+  return [`${baseUrl}/?s=${q}`, `${baseUrl}/ricerca.php?s=${q}`];
 }

@@ -49,15 +49,23 @@ export async function POST(request: NextRequest) {
     const indice = await otteniIndice();
     const url = trovaUrlGiocatore(indice, nome, FSTATS_BASE_URL);
     if (!url) {
-      return NextResponse.json({ stats: null, errore: "Nessuna pagina trovata su FSTATS." });
+      return NextResponse.json({
+        stats: null,
+        errore: "Nessuna corrispondenza esatta trovata su FSTATS.",
+        debug: { indiceDimensione: indice.length },
+      });
     }
 
     const html = await fetchTesto(url);
     const stats = parseFstatsHtml(html, url);
-    return NextResponse.json({ stats });
+    return NextResponse.json({ stats, debug: { indiceDimensione: indice.length, url } });
   } catch (err) {
     return NextResponse.json(
-      { stats: null, errore: err instanceof Error ? err.message : "Errore imprevisto." },
+      {
+        stats: null,
+        errore: err instanceof Error ? err.message : "Errore imprevisto.",
+        debug: { indiceDimensione: indiceCache?.voci.length ?? 0 },
+      },
       { status: 200 }
     );
   }

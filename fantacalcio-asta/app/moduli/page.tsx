@@ -7,7 +7,7 @@ function coloreSlot(slot: SlotModulo): string {
   if (slot.every((r) => RUOLI_DIFESA.includes(r))) {
     return slot.includes("Por") ? "bg-amber-500" : "bg-sky-500";
   }
-  if (slot.some((r) => RUOLI_ATTACCO.includes(r))) return "bg-pink-600";
+  if (slot.some((r) => RUOLI_ATTACCO.includes(r))) return "bg-red-600";
   return "bg-blue-600";
 }
 

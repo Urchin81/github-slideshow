@@ -5,8 +5,6 @@ import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
 import { PlayerTable } from "@/components/PlayerTable";
-import { NewsUpdatePanel } from "@/components/NewsUpdatePanel";
-import { StatsUpdatePanel } from "@/components/StatsUpdatePanel";
 import { ResetButton } from "@/components/ResetButton";
 
 export default function Home() {
@@ -19,8 +17,8 @@ export default function Home() {
         <p className="text-slate-500 mb-6">
           Importa il listino quotazioni per iniziare a usare l&apos;assistente durante l&apos;asta.
         </p>
-        <Link href="/setup" className="inline-block bg-slate-900 text-white rounded px-4 py-2">
-          Vai al Setup
+        <Link href="/settings" className="inline-block bg-slate-900 text-white rounded px-4 py-2">
+          Vai a Settings
         </Link>
       </div>
     );
@@ -29,12 +27,8 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap gap-4 items-start">
-        <div className="flex-1 min-w-[280px]">
-          <NewsUpdatePanel />
-        </div>
         <ResetButton />
       </div>
-      <StatsUpdatePanel />
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
         <BudgetPanel />
         <PlayerTable />

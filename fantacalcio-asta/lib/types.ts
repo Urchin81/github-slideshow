@@ -195,3 +195,22 @@ export function normalizeText(testo: string): string {
 export function playerKey(nome: string, ruolo: Ruolo): string {
   return `${normalizeText(nome)}::${ruolo}`;
 }
+
+export interface NomeScomposto {
+  cognome: string;
+  /** Iniziale del nome proprio, presente solo quando il listino la aggiunge per distinguere omonimi. */
+  iniziale?: string;
+}
+
+// Il listino ufficiale Fantacalcio.it riporta solo il cognome, e aggiunge
+// l'iniziale del nome (es. "Adekunle A.") solo quando serve a distinguere
+// due giocatori con lo stesso cognome. Serve a costruire ricerche/match
+// esatti contro siti terzi (FPEDIA, FSTATS) che invece usano nome+cognome.
+const INIZIALE_OMONIMIA_REGEX = /^(.*\S)\s+([A-Za-z])\.$/;
+
+/** Scompone un nome del listino in cognome (+ iniziale del nome, se presente per omonimia). */
+export function scomponiNomeListino(nome: string): NomeScomposto {
+  const m = nome.trim().match(INIZIALE_OMONIMIA_REGEX);
+  if (m) return { cognome: m[1], iniziale: m[2] };
+  return { cognome: nome.trim() };
+}

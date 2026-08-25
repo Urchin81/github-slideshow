@@ -7,7 +7,7 @@ ruoli ancora da coprire nella tua squadra.
 
 ## Funzionalità
 
-- **Classic e Mantra**: modalità selezionabile in Setup. In Mantra il listino puó
+- **Classic e Mantra**: modalità selezionabile in Settings. In Mantra il listino puó
   includere la colonna `RM` (ruoli multipli, es. `Dd;E`) e un giocatore resta
   idoneo per tutti i ruoli elencati (non si sceglie un solo slot all'acquisto).
 - **Import listino intelligente**: carica il file Excel/CSV delle quotazioni
@@ -52,34 +52,52 @@ ruoli ancora da coprire nella tua squadra.
   Centrocampisti e Attaccanti (un giocatore multi-ruolo va nella prima linea
   che uno dei suoi ruoli copre); in Classic segue già l'ordine
   Portiere/Difensore/Centrocampista/Attaccante.
-- **Aggiornamento notizie**: due pulsanti nella dashboard interrogano un set di
-  feed RSS di siti calcio (configurabili in `lib/newsSources.ts`) e per ogni
-  giocatore trovano le ultime 3 notizie con data e link. Dal testo delle
-  notizie vengono dedotti in modo euristico i flag rigorista/tiratore
-  punizioni/tiratore angoli e un trend qualitativo (es. "Infortunato",
-  "Titolare fisso"). "Aggiorna tutti" è pensato per il primo giro dopo un
-  import; "Top 200 per valore" per aggiornamenti rapidi successivi.
-- **Statistiche FPEDIA (stagione corrente)**: due pulsanti nella dashboard
-  cercano ogni giocatore su fantacalciopedia.com (una richiesta a giocatore,
-  con una pausa tra l'una e l'altra per non sovraccaricare il sito) e
-  importano ALG FCP, punteggio FCP, solidità investimento, resistenza
-  infortuni, presenze/gol/assist/media voto/ammonizioni/espulsioni,
-  presenze/gol/assist previsti, i tag (Panchinaro, Buona Media, Goleador,
-  Assistman, Giovane talento) e la nota di scouting. Mostrate nella scheda
-  giocatore insieme alla media fantavoto delle 2 stagioni precedenti.
-- **Statistiche FSTATS (stagione precedente)**: due pulsanti analoghi
-  recuperano da footystats.org presenze/gol/assist/ammonizioni/espulsioni/
-  minuti della stagione precedente, più posizione, nazionalità, piede
-  preferito ed età. Il motore di ricerca del sito è JS/AJAX (non
-  interrogabile lato server come quello di FPEDIA): l'app scarica invece
-  **una sola volta per giro** la pagina che elenca tutti i giocatori di
-  Serie A (`/italy/serie-a/players`) e ci costruisce sopra un indice
-  nome→pagina, che poi usa per risolvere ogni giocatore del tuo listino.
-  Per individuare la vera "stagione precedente" (la sezione storica del sito
-  può elencare le stagioni fuori ordine, con voci anomale relative a una
-  stagione futura ancora non conclusa), l'app legge quale stagione è
-  segnata come attiva nel selettore della pagina e scarta ogni voce storica
-  con anno pari o superiore a quello.
+- **Aggiornamento dati (in Settings)**: tutti i pulsanti che scaricano dati da
+  fonti esterne (notizie, FPEDIA, FSTATS) stanno nella pagina **⚙️ Settings**,
+  non in dashboard — sono operazioni di "manutenzione" separate dal seguire
+  l'asta dal vivo.
+  - **Notizie**: interrogano un set di feed RSS di siti calcio (configurabili
+    in `lib/newsSources.ts`) e per ogni giocatore trovano le ultime 3 notizie
+    con data e link. Dal testo delle notizie vengono dedotti in modo euristico
+    i flag rigorista/tiratore punizioni/tiratore angoli e un trend qualitativo
+    (es. "Infortunato", "Titolare fisso"). "Aggiorna tutti" è pensato per il
+    primo giro dopo un import; "Top 200 per valore" per aggiornamenti rapidi
+    successivi.
+  - **FPEDIA (stagione corrente)**: cerca ogni giocatore su
+    fantacalciopedia.com (una richiesta a giocatore, con una pausa tra l'una e
+    l'altra) e importa ALG FCP, punteggio FCP, solidità investimento,
+    resistenza infortuni, presenze/gol/assist/media voto/ammonizioni/
+    espulsioni, presenze/gol/assist previsti, i tag (Panchinaro, Buona Media,
+    Goleador, Assistman, Giovane talento) e la nota di scouting. Mostrate
+    nella scheda giocatore insieme alla media fantavoto delle 2 stagioni
+    precedenti.
+  - **FSTATS (stagione precedente)**: recupera da footystats.org presenze/
+    gol/assist/ammonizioni/espulsioni/minuti della stagione precedente, più
+    posizione, nazionalità, piede preferito ed età. Il motore di ricerca del
+    sito è JS/AJAX (non interrogabile lato server come quello di FPEDIA):
+    l'app scarica invece **una sola volta per giro** la pagina che elenca
+    tutti i giocatori di Serie A (`/italy/serie-a/players`) e ci costruisce
+    sopra un indice nome→pagina, che poi usa per risolvere ogni giocatore del
+    tuo listino. Per individuare la vera "stagione precedente" (la sezione
+    storica del sito può elencare le stagioni fuori ordine, con voci anomale
+    relative a una stagione futura ancora non conclusa), l'app legge quale
+    stagione è segnata come attiva nel selettore della pagina e scarta ogni
+    voce storica con anno pari o superiore a quello.
+  - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il
+    cognome (con l'iniziale del nome quando serve a distinguere omonimi, es.
+    "Adekunle A.") mentre FPEDIA/FSTATS usano nome+cognome (es. FPEDIA
+    conosce "Scamacca" come `scamacca-gianluca`): la ricerca richiede che
+    **tutte** le parole del cognome compaiano nel risultato candidato, e usa
+    l'iniziale per scegliere tra più omonimi; se non trova nessuna
+    corrispondenza esatta lascia il campo vuoto invece di rischiare un
+    abbinamento sbagliato (vedi `scomponiNomeListino` in `lib/types.ts`).
+  - **"Testa su un campione"**: prima di lanciare un aggiornamento su tutto il
+    listino, il pulsante ambra fa lo stesso giro solo su una manciata di
+    giocatori sparsi (per quotazione, non i primi N) e mostra riga per riga
+    se sono stati trovati e perché no — utile per verificare che la ricerca
+    funzioni davvero prima di un giro lungo su centinaia di giocatori. Anche
+    sui giri completi, i giocatori non trovati restano elencati (fino a 30)
+    con il motivo, invece di sparire in un conteggio aggregato.
 - **Scheda giocatore**: nome, ruolo (Classic e/o Mantra), quotazione, FVM,
   trend, flag rigorista/punizioni/angoli, statistiche FPEDIA, statistiche
   FSTATS e ultime notizie con data e fonte.
@@ -94,9 +112,10 @@ npm install
 npm run dev
 ```
 
-Poi apri `http://localhost:3000`, vai su **Setup** per scegliere la modalità
-(Classic/Mantra), importare il listino e configurare budget/rose, quindi torna
-alla pagina principale per seguire l'asta.
+Poi apri `http://localhost:3000`, vai su **⚙️ Settings** per scegliere la
+modalità (Classic/Mantra), importare il listino, configurare budget/rose e
+lanciare gli aggiornamenti dati (notizie/FPEDIA/FSTATS), quindi torna alla
+pagina principale per seguire l'asta.
 
 ## Note e limiti noti
 
@@ -127,8 +146,13 @@ alla pagina principale per seguire l'asta.
   browser su un file che carichi tu stesso, quindi il rischio pratico per un
   uso personale è limitato.
 - **FPEDIA è scraping, non un'API ufficiale**: `lib/fpedia.ts` interroga il
-  motore di ricerca del sito e analizza l'HTML della pagina giocatore. Il
-  parser è stato scritto e verificato contro un campione reale (in
+  motore di ricerca del sito e analizza l'HTML della pagina giocatore. Prova
+  in sequenza la ricerca standard di WordPress (`/?s=...`, il più probabile
+  per come è fatto il sito) e un vecchio percorso (`/ricerca.php?s=...`) come
+  riserva — se anche questi dovessero cambiare, usa il pulsante "Testa su un
+  campione" in Settings per vedere subito quanti giocatori vengono trovati
+  prima di lanciare l'aggiornamento su tutto il listino. Il parser è stato
+  scritto e verificato contro un campione reale (in
   `lib/__fixtures__/fpedia-sample.html`), ma se il sito cambia markup alcuni
   campi potrebbero smettere di essere trovati (in quel caso torneranno `—`,
   non un errore che blocca il resto). Uso personale, non massivo: c'è già una

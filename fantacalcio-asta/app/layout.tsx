@@ -22,8 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/moduli" className="hover:underline">
                 Moduli
               </a>
-              <a href="/setup" className="hover:underline">
-                Setup
+              <a href="/settings" className="hover:underline">
+                ⚙️ Settings
               </a>
             </nav>
           </header>
