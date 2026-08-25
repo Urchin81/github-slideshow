@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   RUOLI,
   RUOLI_MANTRA,
+  RUOLO_COLORE,
   RUOLO_LABEL,
   RUOLO_MANTRA_COLORE,
   RUOLO_MANTRA_LABEL,
@@ -92,7 +93,11 @@ export function PlayerTable() {
   }
 
   function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined) {
-    if (!isMantra) return playerRuolo;
+    if (!isMantra) {
+      return (
+        <span className={`text-white rounded px-1 text-xs ${RUOLO_COLORE[playerRuolo]}`}>{playerRuolo}</span>
+      );
+    }
     if (!ruoliMantra || ruoliMantra.length === 0) return <span className="text-slate-300">—</span>;
     return (
       <span className="flex gap-1 flex-wrap">

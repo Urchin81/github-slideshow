@@ -9,6 +9,14 @@ export const RUOLO_LABEL: Record<Ruolo, string> = {
   A: "Attaccante",
 };
 
+/** Stessi colori delle linee Mantra (Por/Difensori/Centrocampisti/Attaccanti), a cui i ruoli Classic corrispondono 1:1. */
+export const RUOLO_COLORE: Record<Ruolo, string> = {
+  P: "bg-amber-500",
+  D: "bg-emerald-600",
+  C: "bg-blue-600",
+  A: "bg-red-600",
+};
+
 /** Ruoli del modificatore Mantra. Un giocatore puo' essere idoneo per piu' ruoli. */
 export type RuoloMantra = "Por" | "Dc" | "Dd" | "Ds" | "B" | "E" | "M" | "C" | "W" | "T" | "A" | "Pc";
 
@@ -150,16 +158,16 @@ export function lineaMantraGiocatore(ruoliMantra: RuoloMantra[] | undefined): Li
 /**
  * Colore per ruolo Mantra, usato ovunque compaiano le etichette dei ruoli
  * (rosa, tabella, moduli) cosi' che lo stesso ruolo sia sempre riconoscibile
- * allo stesso colore: portiere ambra, resto della difesa azzurro,
+ * allo stesso colore: portiere ambra, resto della difesa verde,
  * centrocampo puro blu, trequartisti/ali viola (distinti dal rosso dei puri
  * attaccanti anche quando compaiono insieme in uno slot dei moduli).
  */
 export const RUOLO_MANTRA_COLORE: Record<RuoloMantra, string> = {
   Por: "bg-amber-500",
-  Dc: "bg-sky-500",
-  Dd: "bg-sky-500",
-  Ds: "bg-sky-500",
-  B: "bg-sky-500",
+  Dc: "bg-emerald-600",
+  Dd: "bg-emerald-600",
+  Ds: "bg-emerald-600",
+  B: "bg-emerald-600",
   E: "bg-blue-600",
   M: "bg-blue-600",
   C: "bg-blue-600",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
+import { RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
 import { getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
@@ -68,8 +68,11 @@ export default function GiocatorePage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div>
             <div className="text-xs text-slate-400">Ruolo Classic</div>
-            <div className="font-semibold">
-              {player.ruolo} · {RUOLO_LABEL[player.ruolo]}
+            <div className="font-semibold flex items-center gap-1.5">
+              <span className={`text-white text-xs rounded px-1.5 py-0.5 ${RUOLO_COLORE[player.ruolo]}`}>
+                {player.ruolo}
+              </span>
+              {RUOLO_LABEL[player.ruolo]}
             </div>
           </div>
           <div>
