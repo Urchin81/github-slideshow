@@ -280,9 +280,6 @@ export function PlayerTable() {
                       ) : (
                         <span className="text-slate-400">{Math.round(suggestion?.punteggio ?? 0)}</span>
                       )}
-                      {suggestion?.moduliUtili && suggestion.moduliUtili.length > 0 && (
-                        <div className="text-[10px] text-slate-400">utile: {suggestion.moduliUtili.join(", ")}</div>
-                      )}
                     </td>
                   )}
                   <td className="py-1.5 text-right">
@@ -387,9 +384,13 @@ export function PlayerTable() {
                   </td>
                 </tr>
                 <tr className="border-b border-slate-50">
-                  <td colSpan={mostraPunteggio ? 7 : 6} className="pb-1.5">
-                    <CaratteristicheGiocatore player={p} className="justify-between w-full px-1" />
+                  <td />
+                  <td />
+                  <td colSpan={3} className="pb-1.5">
+                    <CaratteristicheGiocatore player={p} className="justify-between w-full" />
                   </td>
+                  {mostraPunteggio && <td />}
+                  <td />
                 </tr>
                 </Fragment>
               );
