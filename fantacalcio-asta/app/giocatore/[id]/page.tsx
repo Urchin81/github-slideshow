@@ -99,67 +99,86 @@ export default function GiocatorePage() {
       </Link>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-baseline justify-between mb-1">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="text-xl">
-              <FavoriteStar id={player.id} preferito={player.preferito} />
-            </span>
-            {player.nome}
-          </h1>
-          <span className="text-sm text-slate-400">{player.squadra}</span>
-        </div>
-        <p className="text-slate-500 mb-4">
-          {statoLabel}
-          {player.stato === "mia" && player.prezzoPagato !== undefined && ` · pagato ${player.prezzoPagato}`}
-        </p>
+        <div className="flex gap-4">
+          <div className="shrink-0">
+            {player.fpedia?.immagineUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={player.fpedia.immagineUrl}
+                alt={`Disegno di ${player.nome}`}
+                className="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded bg-slate-50 border border-slate-100"
+              />
+            ) : (
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 text-[11px] text-center px-2">
+                Nessuna foto
+              </div>
+            )}
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          <div>
-            <div className="text-xs text-slate-400">Ruolo Classic</div>
-            <div className="font-semibold flex items-center gap-1.5">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold flex items-center gap-2 mb-1.5">
+              <span className="text-xl">
+                <FavoriteStar id={player.id} preferito={player.preferito} />
+              </span>
+              {player.nome}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
               <span
                 className="text-white text-xs rounded px-1.5 py-0.5"
                 style={{ backgroundColor: RUOLO_COLORE[player.ruolo] }}
               >
                 {player.ruolo}
               </span>
-              {RUOLO_LABEL[player.ruolo]}
+              <span className="text-sm text-slate-500">{RUOLO_LABEL[player.ruolo]}</span>
+              {settings.modalita === "mantra" &&
+                (player.ruoliMantra ?? []).map((r: RuoloMantra) => (
+                  <span
+                    key={r}
+                    className="text-xs text-white rounded px-2 py-1"
+                    style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
+                    title={RUOLO_MANTRA_LABEL[r]}
+                  >
+                    {r}
+                  </span>
+                ))}
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400">Quotazione</div>
-            <div className="font-semibold">{player.quotazione}</div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400">FVM</div>
-            <div className="font-semibold">{player.fvm ?? "—"}</div>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400">Trend</div>
-            <div className="font-semibold">{player.trendVoti ?? "Nessun dato"}</div>
+
+            <div className="grid grid-cols-3 gap-3 mb-3 max-w-xs">
+              <div>
+                <div className="text-xs text-slate-400">Quotazione</div>
+                <div className="font-semibold">{player.quotazione}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">FVM</div>
+                <div className="font-semibold">{player.fvm ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Trend</div>
+                <div className="font-semibold">{player.trendVoti ?? "Nessun dato"}</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {player.fpedia?.squadraLogoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={player.fpedia.squadraLogoUrl}
+                  alt={`Maglia ${player.fpedia.squadra ?? player.squadra}`}
+                  className="w-7 h-7 object-contain"
+                />
+              )}
+              <span className="font-medium text-slate-700">{player.squadra}</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {settings.modalita === "mantra" && (
-          <div>
-            <div className="text-xs text-slate-400 mb-1">Ruoli Mantra idonei</div>
-            <div className="flex flex-wrap gap-1">
-              {(player.ruoliMantra ?? []).length === 0 && (
-                <span className="text-slate-400 text-sm">Non specificato nel listino</span>
-              )}
-              {(player.ruoliMantra ?? []).map((r: RuoloMantra) => (
-                <span
-                  key={r}
-                  className="text-xs text-white rounded px-2 py-1"
-                  style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
-                  title={RUOLO_MANTRA_LABEL[r]}
-                >
-                  {r}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="bg-white rounded-lg shadow p-6">
+        <p className="text-slate-500">
+          {statoLabel}
+          {player.stato === "mia" && player.prezzoPagato !== undefined && ` · pagato ${player.prezzoPagato}`}
+        </p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -192,37 +211,19 @@ export default function GiocatorePage() {
           </p>
         ) : (
           <>
-            <div className="flex gap-4 mb-4">
-              <div className="flex flex-col items-center gap-2 shrink-0 w-20">
-                {player.fpedia.immagineUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={player.fpedia.immagineUrl}
-                    alt={`Disegno di ${player.nome}`}
-                    className="w-20 h-20 object-contain rounded bg-slate-50 border border-slate-100"
-                  />
-                )}
-                {player.fpedia.squadraLogoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={player.fpedia.squadraLogoUrl}
-                    alt={`Maglia ${player.fpedia.squadra ?? player.squadra}`}
-                    className="w-10 h-10 object-contain"
-                  />
-                )}
-                {player.fpedia.ruolo && (
-                  <span className="text-xs bg-slate-800 text-white rounded px-2 py-1">{player.fpedia.ruolo}</span>
-                )}
-              </div>
+            {player.fpedia.ruolo && (
+              <span className="inline-block text-xs bg-slate-800 text-white rounded px-2 py-1 mb-3">
+                {player.fpedia.ruolo}
+              </span>
+            )}
 
-              {(player.fpedia.pillole ?? []).length > 0 && (
-                <div className="grid grid-cols-3 gap-3 flex-1">
-                  {player.fpedia.pillole.map((p, i) => (
-                    <Pillola key={i} label={p.label} valore={p.valore} livello={livelloRelativo(p.label, p.valore)} />
-                  ))}
-                </div>
-              )}
-            </div>
+            {(player.fpedia.pillole ?? []).length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
+                {player.fpedia.pillole.map((p, i) => (
+                  <Pillola key={i} label={p.label} valore={p.valore} livello={livelloRelativo(p.label, p.valore)} />
+                ))}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4 text-sm">
               <div>

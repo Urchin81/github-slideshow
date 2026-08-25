@@ -67,7 +67,7 @@ export function CaratteristicheGiocatore({ player, className = "" }: { player: P
     <div className={`flex items-center gap-1 ${className}`}>
       {CARATTERISTICHE.map((c) => {
         const attiva = c.presente(player);
-        const colore = attiva ? (c.positiva ? "text-green-600" : "text-red-600") : "text-slate-300";
+        const colore = attiva ? (c.positiva ? "text-green-600" : "text-red-600") : "text-slate-400";
         return (
           <span key={c.chiave} title={c.label} className="inline-flex">
             <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />
