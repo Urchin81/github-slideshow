@@ -15,13 +15,18 @@ import {
   StatoGiocatore,
 } from "@/lib/types";
 import { computeMantraStato, getSuggestions, PlayerSuggestion, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
-import { classeLivello } from "@/lib/livelloColori";
+import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
+
+function formatRange(range: [number, number] | undefined): string {
+  if (!range) return "—";
+  return `${range[0]}-${range[1]}`;
+}
 
 // "Ordina per: Bilanciato" (solo Mantra): combina quanto e' buono il valore
 // atteso del giocatore (70%, in assenza di un percentile numerico si usa il
@@ -338,11 +343,14 @@ export function PlayerTable() {
             <tr className="text-left text-slate-400 border-b border-slate-100">
               <th className="pb-2">★</th>
               <th className="pb-2">Ruolo</th>
+              <th className="pb-2">Foto</th>
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
+              <th className="pb-2 text-right">Presenze previste</th>
+              <th className="pb-2 text-right">Gol previsti</th>
+              <th className="pb-2 text-right">Assist previsti</th>
               <th className="pb-2 text-right">Quot.</th>
               {mostraPunteggio && <th className="pb-2 text-right">Punteggio</th>}
-              {mostraPunteggio && <th className="pb-2 text-right">Valore atteso</th>}
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
@@ -356,12 +364,35 @@ export function PlayerTable() {
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>
                   <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra)}</td>
+                  <td className="py-1.5">
+                    {isSafeHttpUrl(p.fpedia?.immagineUrl) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.fpedia?.immagineUrl}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-contain bg-slate-50 border border-slate-100"
+                      />
+                    ) : (
+                      <span className="inline-block w-8 h-8 rounded-full bg-slate-50 border border-slate-100" />
+                    )}
+                  </td>
                   <td className="py-1.5 font-medium">
                     <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
                       {p.nome}
                     </Link>
                   </td>
-                  <td className="py-1.5 text-slate-500">{p.squadra}</td>
+                  <td className="py-1.5 text-slate-500">
+                    <span className="inline-flex items-center gap-1.5">
+                      {isSafeHttpUrl(p.fpedia?.squadraLogoUrl) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.fpedia?.squadraLogoUrl} alt="" className="w-4 h-4 object-contain" />
+                      )}
+                      {p.squadra}
+                    </span>
+                  </td>
+                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.presenzePreviste)}</td>
+                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.golPrevisti)}</td>
+                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.assistPrevisti)}</td>
                   <td className="py-1.5 text-right">{p.quotazione}</td>
                   {mostraPunteggio && (
                     <td className="py-1.5 text-right">
@@ -374,24 +405,6 @@ export function PlayerTable() {
                         </span>
                       ) : (
                         <span className="text-slate-400">{Math.round(suggestion?.punteggio ?? 0)}</span>
-                      )}
-                    </td>
-                  )}
-                  {mostraPunteggio && (
-                    <td className="py-1.5 text-right">
-                      {suggestion?.valoreAtteso ? (
-                        <span
-                          className={`inline-flex items-center justify-center min-w-[2.5rem] px-1.5 py-0.5 rounded-full text-xs font-semibold ${classeLivello(
-                            suggestion.livelloValoreAtteso ?? null
-                          )}`}
-                          title={`Stima punti stagione: ${Math.round(suggestion.valoreAtteso.puntiMediaVoto)} media voto + ${Math.round(suggestion.valoreAtteso.puntiGol)} gol + ${Math.round(suggestion.valoreAtteso.puntiAssist)} assist - ${Math.round(-suggestion.valoreAtteso.puntiMalus)} malus (confidenza ${suggestion.valoreAtteso.confidenza})`}
-                        >
-                          {Math.round(suggestion.valoreAtteso.totale)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 text-xs" title="Nessun dato FPEDIA per questo giocatore">
-                          —
-                        </span>
                       )}
                     </td>
                   )}
@@ -505,7 +518,7 @@ export function PlayerTable() {
                   <tr className="border-b border-slate-50">
                     <td />
                     <td />
-                    <td colSpan={mostraPunteggio ? 5 : 3} className="pb-1.5">
+                    <td colSpan={mostraPunteggio ? 8 : 7} className="pb-1.5">
                       {suggestion &&
                         (() => {
                           const rischio = valutaRischioSforamento(Number(prezzoInput) || 0, suggestion.prezzoMassimo);
@@ -573,7 +586,7 @@ export function PlayerTable() {
                   <tr className="border-b border-slate-50">
                     <td />
                     <td />
-                    <td colSpan={2} className="pb-1.5">
+                    <td colSpan={3} className="pb-1.5">
                       <CaratteristicheGiocatore
                         player={p}
                         className="justify-between w-full bg-slate-100 rounded px-2 py-1"
@@ -582,7 +595,9 @@ export function PlayerTable() {
                       />
                     </td>
                     <td />
-                    {mostraPunteggio && <td />}
+                    <td />
+                    <td />
+                    <td />
                     {mostraPunteggio && <td />}
                     <td />
                   </tr>

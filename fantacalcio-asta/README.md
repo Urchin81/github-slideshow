@@ -55,6 +55,23 @@ ruoli ancora da coprire nella tua squadra.
   potrebbero contenere qualche imprecisione di dettaglio — l'array `slot` in
   quel file è fatto apposta per essere facile da correggere se noti qualcosa
   che non corrisponde al tuo schema.
+- **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
+  disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
+  disponibile), Presenze/Gol/Assist previsti (da FPEDIA), Quotazione,
+  Punteggio (solo tra i disponibili) e Azioni — sempre in quest'ordine.
+- **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
+  disegno del campo, se è completabile con la rosa attuale — e in tal caso
+  quante formazioni titolari diverse puoi comporre (`lib/bipartiteMatching.ts`,
+  `contaCombinazioniComplete`, con un tetto di 999 oltre il quale il numero
+  esatto smette di contare) — oppure quali ruoli mancano ancora e quanti.
+  Cliccando su un modulo si apre una visualizzazione con i giocatori
+  posizionati in campo (foto, ruoli, nome, squadra) e la panchina con chi non
+  ha trovato posto; chi ha un sostituto compatibile in panchina mostra un
+  cerchietto "+" sopra la foto — cliccandolo si apre un elenco per scegliere
+  con chi far cambiare posto (o per toglierlo dal campo). È solo una
+  simulazione locale nella finestra: non tocca lo stato dell'asta, e
+  "Ripristina automatica" torna in qualsiasi momento alla formazione
+  calcolata dall'algoritmo di matching.
 - **Suggerimenti in tempo reale**: punteggio che premia una quotazione alta
   rispetto al budget medio ancora spendibile (Classic: per slot di ruolo;
   Mantra: per posto rimanente in rosa), penalizza chi supera quella media, e
@@ -194,12 +211,16 @@ ruoli ancora da coprire nella tua squadra.
     funzioni davvero prima di un giro lungo su centinaia di giocatori. Anche
     sui giri completi, i giocatori non trovati restano elencati (fino a 30)
     con il motivo, invece di sparire in un conteggio aggregato.
-- **Scheda giocatore**: nome, ruolo (Classic e/o Mantra), quotazione, FVM,
-  trend, statistiche FPEDIA (con foto del giocatore e stemma della squadra
-  quando disponibili) e ultime notizie con data e fonte. I flag rigorista/
-  tiratore punizioni/angoli dedotti dalle notizie non sono più mostrati qui
-  (restano visibili come icone nella tabella giocatori, vedi sopra) per
-  tenere la scheda più semplice da leggere.
+- **Scheda giocatore**: la card in alto raggruppa foto, nome, ruoli, quotazione/
+  FVM/trend/valore atteso, maglia+squadra e la fila di icone caratteristiche
+  (tutto in un unico riquadro). Sotto, le statistiche FPEDIA: "in prima linea"
+  (fuori da qualunque riquadro stagionale) restano solo i dati non legati a
+  un'annata specifica — Algoritmo Fantacalciopedia, presenze/gol/assist
+  previsti — mentre i dati della sola stagione più recente (Media Fanta Voto,
+  Presenze, Fanta Media, FM su tot gare) finiscono in un riquadro a parte
+  intitolato con quell'annata (es. "2025/2026"); le annate precedenti a
+  quella non vengono più mostrate, per non affollare la pagina. Chiude la
+  scheda l'elenco delle ultime notizie con data e fonte.
 - **Persistenza locale**: lo stato (listino, configurazione, assegnazioni,
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.

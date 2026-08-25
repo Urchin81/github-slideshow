@@ -1,7 +1,21 @@
-import { RuoloMantra } from "./types";
+import { RuoloMantra, RUOLO_MANTRA_COLORE } from "./types";
 
 /** Un singolo slot in campo: elenco di ruoli Mantra che possono occuparlo (es. Dc/B). */
 export type SlotModulo = RuoloMantra[];
+
+/**
+ * Colore di sfondo per l'etichetta di uno slot: quando i ruoli alternativi
+ * hanno colori diversi (es. "W/A" = ala viola o attaccante rosso) lo sfondo
+ * si divide a metà tra i due, cosi' l'etichetta mostra entrambe le categorie
+ * invece di far vincere una sola per priorita'. Condiviso da /moduli e dal
+ * visualizzatore di formazione, cosi' i colori restano coerenti ovunque.
+ */
+export function coloreSfondoSlot(slot: SlotModulo): { backgroundColor?: string; backgroundImage?: string } {
+  const colori = Array.from(new Set(slot.map((r) => RUOLO_MANTRA_COLORE[r])));
+  if (colori.length <= 1) return { backgroundColor: colori[0] ?? "#64748b" };
+  const [a, b] = colori;
+  return { backgroundImage: `linear-gradient(90deg, ${a} 50%, ${b} 50%)` };
+}
 
 export interface Modulo {
   nome: string;

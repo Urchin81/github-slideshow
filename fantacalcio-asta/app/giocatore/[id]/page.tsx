@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra, FpediaStats } from "@/lib/types";
+import { RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra, FpediaStats, FpediaPillola } from "@/lib/types";
 import { computeLivelliRelativiFpedia } from "@/lib/suggestions";
 import { computeContestoValoreAtteso, computeLivelloValoreAtteso, computeValoreAtteso } from "@/lib/valoreAtteso";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
@@ -12,6 +12,28 @@ import { FavoriteStar } from "@/components/FavoriteStar";
 import { CaratteristicheGiocatore } from "@/components/CaratteristicheGiocatore";
 import { Pillola } from "@/components/Pillola";
 import { isSafeHttpUrl } from "@/lib/url";
+
+// Le "pillole" FPEDIA con un'annata nell'etichetta (es. "Media Fanta Voto
+// 2025-2026") riguardano una stagione specifica: qui isoliamo la piu'
+// recente (la stagione appena conclusa, quella che l'utente chiama "stagione
+// precedente" rispetto alla prossima asta) per raccoglierla in un riquadro a
+// parte, e scartiamo le annate piu' vecchie invece di affollare la pagina.
+const STAGIONE_REGEX = /(\d{4})-(\d{4})/;
+
+function trovaStagionePiuRecente(pillole: FpediaPillola[]): string | null {
+  let migliore: string | null = null;
+  let annoMigliore = -1;
+  for (const p of pillole) {
+    const m = p.label.match(STAGIONE_REGEX);
+    if (!m) continue;
+    const anno = Number(m[1]);
+    if (anno > annoMigliore) {
+      annoMigliore = anno;
+      migliore = m[0];
+    }
+  }
+  return migliore;
+}
 
 export default function GiocatorePage() {
   const params = useParams<{ id: string }>();
@@ -67,6 +89,13 @@ export default function GiocatorePage() {
     stagionePrecedente: "media voto stagione precedente",
     medianaRuolo: "mediana di ruolo (dato individuale non disponibile)",
   };
+
+  const pillole = player.fpedia?.pillole ?? [];
+  const stagionePrecedente = trovaStagionePiuRecente(pillole);
+  const pilloleGenerali = pillole.filter((p) => !STAGIONE_REGEX.test(p.label));
+  const pilloleStagionePrecedente = stagionePrecedente
+    ? pillole.filter((p) => p.label.includes(stagionePrecedente))
+    : [];
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -160,10 +189,11 @@ export default function GiocatorePage() {
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <CaratteristicheGiocatore player={player} className="justify-between w-full bg-slate-100 rounded px-2 py-1" />
+        <CaratteristicheGiocatore
+          player={player}
+          className="justify-between w-full bg-slate-100 rounded px-2 py-1 mt-4"
+        />
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -202,11 +232,29 @@ export default function GiocatorePage() {
               </span>
             )}
 
-            {(player.fpedia.pillole ?? []).length > 0 && (
+            {pilloleGenerali.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
-                {player.fpedia.pillole.map((p, i) => (
+                {pilloleGenerali.map((p, i) => (
                   <Pillola key={i} label={p.label} valore={p.valore} livello={livelloRelativo(p.label, p.valore)} />
                 ))}
+              </div>
+            )}
+
+            {pilloleStagionePrecedente.length > 0 && (
+              <div className="border border-slate-100 rounded p-3 mb-4">
+                <h3 className="text-xs uppercase text-slate-400 mb-2">
+                  {stagionePrecedente?.replace("-", "/")}
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {pilloleStagionePrecedente.map((p, i) => (
+                    <Pillola
+                      key={i}
+                      label={p.label.replace(STAGIONE_REGEX, "").trim()}
+                      valore={p.valore}
+                      livello={livelloRelativo(p.label, p.valore)}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -265,20 +313,6 @@ export default function GiocatorePage() {
                 (calcolato confrontando ogni giocatore con gli altri nel tuo listino)
               </span>
             </div>
-
-            {player.fpedia.stagioniPrecedenti.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs text-slate-400 mb-1">Media fantavoto stagioni precedenti</div>
-                <div className="flex gap-4 text-sm">
-                  {player.fpedia.stagioniPrecedenti.map((s) => (
-                    <span key={s.stagione}>
-                      {s.stagione}: <span className="font-semibold">{s.mediaVoto ?? "nd"}</span>
-                      {s.presenze !== undefined && <span className="text-slate-400"> ({s.presenze} pres.)</span>}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {player.fpedia.descrizione && <p className="text-sm text-slate-600">{player.fpedia.descrizione}</p>}
           </>

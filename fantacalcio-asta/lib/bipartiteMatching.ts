@@ -69,6 +69,11 @@ export class MatchmakerModulo {
   slotScoperti(): SlotModulo[] {
     return this.slots.filter((_, i) => this.assegnazioni[i] === undefined);
   }
+
+  /** Copia dell'assegnazione slot -> id giocatore (undefined se lo slot non è coperto), nello stesso ordine di `slots`. */
+  assegnazioniComplete(): (string | undefined)[] {
+    return [...this.assegnazioni];
+  }
 }
 
 export function costruisciMatchmaker(
@@ -78,4 +83,47 @@ export function costruisciMatchmaker(
   const matchmaker = new MatchmakerModulo(slots);
   for (const g of giocatori) matchmaker.aggiungi(g.id, g.ruoli);
   return matchmaker;
+}
+
+/**
+ * Conta quante formazioni titolari complete e distinte (un giocatore diverso
+ * per ogni slot) si possono comporre con la rosa data, fino a un tetto
+ * massimo (per non esplodere quando ci sono molti giocatori interscambiabili
+ * sugli stessi ruoli): oltre il tetto il numero esatto smette di interessare,
+ * conta solo che ce ne sono "tante". Ha senso chiamarla solo quando il modulo
+ * è completamente coprbile (vedi coperti === totale nel matcher), altrimenti
+ * ritorna 0.
+ */
+export function contaCombinazioniComplete(
+  slots: SlotModulo[],
+  giocatori: { id: string; ruoli: RuoloMantra[] }[],
+  cap = 999
+): number {
+  const eligibili = giocatori.filter((g) => slots.some((slot) => slotAccetta(slot, g.ruoli)));
+  const slotConCandidati = slots
+    .map((slot) => ({ slot, candidati: eligibili.filter((g) => slotAccetta(slot, g.ruoli)) }))
+    .sort((a, b) => a.candidati.length - b.candidati.length);
+
+  if (slotConCandidati.some((s) => s.candidati.length === 0)) return 0;
+
+  const usati = new Set<string>();
+  let conteggio = 0;
+
+  function backtrack(idx: number): void {
+    if (conteggio >= cap) return;
+    if (idx === slotConCandidati.length) {
+      conteggio++;
+      return;
+    }
+    for (const g of slotConCandidati[idx].candidati) {
+      if (usati.has(g.id)) continue;
+      usati.add(g.id);
+      backtrack(idx + 1);
+      usati.delete(g.id);
+      if (conteggio >= cap) return;
+    }
+  }
+
+  backtrack(0);
+  return conteggio;
 }
