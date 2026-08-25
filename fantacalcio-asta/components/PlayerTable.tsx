@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Gavel } from "lucide-react";
 import {
   RUOLI,
@@ -255,7 +255,8 @@ export function PlayerTable() {
             {righe.map((p) => {
               const suggestion = suggestionById.get(p.id);
               return (
-                <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                <Fragment key={p.id}>
+                <tr className="hover:bg-slate-50">
                   <td className="py-1.5">
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>
@@ -264,7 +265,6 @@ export function PlayerTable() {
                     <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
                       {p.nome}
                     </Link>
-                    <CaratteristicheGiocatore player={p} className="mt-0.5" />
                   </td>
                   <td className="py-1.5 text-slate-500">{p.squadra}</td>
                   <td className="py-1.5 text-right">{p.quotazione}</td>
@@ -386,6 +386,12 @@ export function PlayerTable() {
                     )}
                   </td>
                 </tr>
+                <tr className="border-b border-slate-50">
+                  <td colSpan={mostraPunteggio ? 7 : 6} className="pb-1.5">
+                    <CaratteristicheGiocatore player={p} className="justify-between w-full px-1" />
+                  </td>
+                </tr>
+                </Fragment>
               );
             })}
           </tbody>
