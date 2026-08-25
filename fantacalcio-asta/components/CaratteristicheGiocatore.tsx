@@ -8,8 +8,18 @@ interface Caratteristica {
   presente: (p: Player) => boolean;
 }
 
+// I tag possono ancora arrivare nel vecchio formato (string[]) da dati salvati
+// nel browser prima che diventassero {label, livello}: gestiamo entrambi.
+function etichettaTag(t: unknown): string | undefined {
+  if (typeof t === "string") return t;
+  if (t && typeof t === "object" && typeof (t as { label?: unknown }).label === "string") {
+    return (t as { label: string }).label;
+  }
+  return undefined;
+}
+
 function haTag(p: Player, label: string): boolean {
-  return (p.fpedia?.tags ?? []).some((t) => t.label.toLowerCase() === label.toLowerCase());
+  return (p.fpedia?.tags ?? []).some((t) => etichettaTag(t)?.toLowerCase() === label.toLowerCase());
 }
 
 // Icone rapide per riconoscere a colpo d'occhio le caratteristiche di un giocatore:

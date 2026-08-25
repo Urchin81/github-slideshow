@@ -212,7 +212,7 @@ export default function GiocatorePage() {
               )}
             </div>
 
-            {player.fpedia.pillole.length > 0 && (
+            {(player.fpedia.pillole ?? []).length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-4">
                 {player.fpedia.pillole.map((p, i) => (
                   <Pillola key={i} p={p} />
@@ -243,18 +243,24 @@ export default function GiocatorePage() {
               </div>
             </div>
 
-            {player.fpedia.tags.length > 0 && (
+            {(player.fpedia.tags ?? []).length > 0 && (
               <div className="flex flex-wrap gap-1 mb-4">
-                {player.fpedia.tags.map((t) => (
-                  <span
-                    key={t.label}
-                    className={`text-xs rounded px-2 py-1 ${
-                      t.livello ? classeLivello(t.livello) : "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                    }`}
-                  >
-                    {t.label}
-                  </span>
-                ))}
+                {player.fpedia.tags.map((t, i) => {
+                  // Dati salvati prima che i tag diventassero {label, livello} possono ancora essere semplici stringhe.
+                  const label = typeof t === "string" ? t : t?.label;
+                  const livello = typeof t === "string" ? null : t?.livello ?? null;
+                  if (!label) return null;
+                  return (
+                    <span
+                      key={`${label}-${i}`}
+                      className={`text-xs rounded px-2 py-1 ${
+                        livello ? classeLivello(livello) : "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      }`}
+                    >
+                      {label}
+                    </span>
+                  );
+                })}
               </div>
             )}
 
