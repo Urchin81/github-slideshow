@@ -59,19 +59,32 @@ ruoli ancora da coprire nella tua squadra.
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
   disponibile), Presenze/Gol/Assist previsti (da FPEDIA), Quotazione,
   Punteggio (solo tra i disponibili) e Azioni — sempre in quest'ordine.
+  L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
+  basso, cosí si vede sempre a quale colonna corrisponde ogni valore.
 - **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
   disegno del campo, se è completabile con la rosa attuale — e in tal caso
-  quante formazioni titolari diverse puoi comporre (`lib/bipartiteMatching.ts`,
-  `contaCombinazioniComplete`, con un tetto di 999 oltre il quale il numero
-  esatto smette di contare) — oppure quali ruoli mancano ancora e quanti.
-  Cliccando su un modulo si apre una visualizzazione con i giocatori
-  posizionati in campo (foto, ruoli, nome, squadra) e la panchina con chi non
-  ha trovato posto; chi ha un sostituto compatibile in panchina mostra un
-  cerchietto "+" sopra la foto — cliccandolo si apre un elenco per scegliere
-  con chi far cambiare posto (o per toglierlo dal campo). È solo una
-  simulazione locale nella finestra: non tocca lo stato dell'asta, e
-  "Ripristina automatica" torna in qualsiasi momento alla formazione
-  calcolata dall'algoritmo di matching.
+  quanti **insiemi distinti di 11 giocatori schierabili** puoi comporre
+  (`lib/bipartiteMatching.ts`, `contaCombinazioniComplete`, con un tetto di
+  999 insiemi distinti oltre il quale il numero esatto smette di contare, e
+  un secondo tetto sui tentativi di backtracking grezzi per restare veloce
+  anche con rose molto simmetriche) — oppure quali ruoli mancano ancora e
+  quanti. Il conteggio deduplica sull'insieme di giocatori in campo: se due
+  giocatori intercambiabili si scambiano solo lo slot restando entrambi
+  schierati, non conta come una combinazione diversa. Lo stesso pop-up si
+  apre sia dalla pagina **Moduli Mantra** sia cliccando su una qualsiasi voce
+  dell'elenco "Moduli (dal più vicino al completamento)" nel pannello
+  Budget della dashboard (ora mostra tutti gli 11 moduli, non solo i primi
+  5). Nel pop-up il campo ha il portiere in basso e l'attacco in alto
+  (direzione di gioco verso l'alto) con i giocatori posizionati (foto, ruoli,
+  nome, squadra) e la panchina a destra con chi non ha trovato posto; chi ha
+  un sostituto compatibile in panchina mostra un cerchietto "+" sopra la
+  foto — cliccandolo si apre un elenco per scegliere con chi far cambiare
+  posto (o per toglierlo dal campo) — oppure si può trascinare (drag & drop)
+  un giocatore dal campo alla panchina e viceversa: si entra in campo solo
+  se il ruolo del giocatore corrisponde a quello richiesto dallo slot, altri
+  tentativi vengono ignorati. È solo una simulazione locale nella finestra:
+  non tocca lo stato dell'asta, e "Ripristina automatica" torna in qualsiasi
+  momento alla formazione calcolata dall'algoritmo di matching.
 - **Suggerimenti in tempo reale**: punteggio che premia una quotazione alta
   rispetto al budget medio ancora spendibile (Classic: per slot di ruolo;
   Mantra: per posto rimanente in rosa), penalizza chi supera quella media, e
@@ -114,26 +127,25 @@ ruoli ancora da coprire nella tua squadra.
   prenotazione rigida.
 - **Valore atteso fantacalcistico**: quando un giocatore ha statistiche
   FPEDIA, la tabella mostra (colonna "Valore atteso", accanto al Punteggio) e
-  la scheda giocatore mostrano una stima dei punti fantacalcio attesi in
-  stagione — media voto attesa × presenze attese, + bonus gol/assist previsti
-  (6 punti a gol per i portieri, 3 per gli altri ruoli, 1 per assist), −
-  malus ammonizioni/espulsioni (proiettate sul rateo presenze attese/già
-  giocate) — colorata con lo stesso semaforo a 5 fasce (relativo, per
-  ruolo/linea) usato per le statistiche FPEDIA. È **una dimensione separata
-  dal Punteggio/consigliato**, che restano basati solo su quotazione/FVM/
-  budget: funzionano sempre, mentre il valore atteso esiste solo per chi è
-  già stato aggiornato da FPEDIA (mostra "—" per gli altri). Il menu "Ordina
-  per" in tabella permette di ordinare per Convenienza (default, invariato),
-  Valore atteso, o — solo in Mantra — Bilanciato (70% valore atteso relativo
-  + 30% se aiuta a completare un modulo vicino, sempre spiegato nel
-  tooltip). Nella colonna destra, il pannello "Valore atteso rosa" somma i
-  punti attesi dei giocatori già presi (con indicazione di quanti hanno dati
-  FPEDIA) e aggiunge una stima approssimativa per gli slot ancora vuoti,
-  basata sulla mediana del valore atteso tra i disponibili dello stesso
-  ruolo/linea — una proiezione, non un vincolo di budget. Nota: per i
-  portieri il valore atteso pesa solo la media voto (FPEDIA non espone gol
-  subiti/rigori parati), quindi tende a essere sottostimato rispetto al
-  punteggio reale del gioco.
+  la scheda giocatore mostrano la **previsione di fantacalciopedia.com**
+  stessa — la media tra Algoritmo FCP e Punteggio FCP (0-100 entrambi;
+  se manca uno dei due si usa solo l'altro) — segnalata con un'icona a
+  bacchetta magica 🪄 per ricordare che è una previsione esterna, non un
+  calcolo di questa app, colorata con lo stesso semaforo a 5 fasce (relativo,
+  per ruolo/linea) usato per le altre statistiche FPEDIA. È **una dimensione
+  separata dal Punteggio/consigliato**, che restano basati solo su
+  quotazione/FVM/budget: funzionano sempre, mentre il valore atteso esiste
+  solo per chi è già stato aggiornato da FPEDIA (mostra "—" per gli altri).
+  Il menu "Ordina per" in tabella permette di ordinare per Convenienza
+  (default, invariato), Valore atteso, o — solo in Mantra — Bilanciato (70%
+  valore atteso relativo + 30% se aiuta a completare un modulo vicino,
+  sempre spiegato nel tooltip). Nella colonna destra, il pannello "Valore
+  atteso rosa" mostra il punteggio medio (0-100) dei giocatori già presi (con
+  indicazione di quanti hanno dati FPEDIA) e una proiezione a rosa completa
+  che pesa questa media con una stima per gli slot ancora vuoti, basata sulla
+  mediana del valore atteso tra i disponibili dello stesso ruolo/linea — una
+  media, non una somma di punti, perché il valore atteso è ora un punteggio
+  0-100 e non punti fantacalcio cumulabili.
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
@@ -289,8 +301,8 @@ principale per seguire l'asta.
   ogni volta.
 - I moduli Mantra in `lib/moduliMantra.ts` sono una trascrizione a mano
   dell'immagine fornita: verifica i tuoi moduli preferiti nel pannello
-  "Moduli più vicini al completamento" e correggi quell'array se qualche slot
-  non corrisponde al tuo schema.
+  "Moduli (dal più vicino al completamento)" e correggi quell'array se
+  qualche slot non corrisponde al tuo schema.
 - **Feed notizie non verificati**: l'elenco di default in `lib/newsSources.ts`
   è stato scelto in buona fede tra fonti italiane di calcio note per
   pubblicare RSS pubblici, ma non è stato possibile verificarne la

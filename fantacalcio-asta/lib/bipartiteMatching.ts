@@ -86,18 +86,29 @@ export function costruisciMatchmaker(
 }
 
 /**
- * Conta quante formazioni titolari complete e distinte (un giocatore diverso
- * per ogni slot) si possono comporre con la rosa data, fino a un tetto
- * massimo (per non esplodere quando ci sono molti giocatori interscambiabili
- * sugli stessi ruoli): oltre il tetto il numero esatto smette di interessare,
- * conta solo che ce ne sono "tante". Ha senso chiamarla solo quando il modulo
- * è completamente coprbile (vedi coperti === totale nel matcher), altrimenti
- * ritorna 0.
+ * Conta quanti insiemi distinti di 11 giocatori schierabili (non
+ * assegnazioni slot->giocatore) si possono comporre con la rosa data, fino a
+ * un tetto massimo (per non esplodere quando ci sono molti giocatori
+ * interscambiabili sugli stessi ruoli): oltre il tetto il numero esatto
+ * smette di interessare, conta solo che ce ne sono "tanti". Due assegnazioni
+ * che mettono in campo esattamente gli stessi 11 giocatori, differendo solo
+ * per quale slot equivalente occupa ciascuno (es. due Dc intercambiabili che
+ * si scambiano lo slot), contano come lo stesso insieme: la ricerca
+ * backtracking esplora comunque ogni permutazione slot->giocatore (necessaria
+ * per non perdere insiemi raggiungibili solo con un certo ordine di
+ * assegnazione), ma il risultato riportato è la cardinalità dell'insieme di
+ * chiavi canoniche (id giocatori ordinati), non il numero di assegnazioni
+ * visitate. `capTentativi` limita i tentativi di backtracking grezzi (che
+ * restano combinatori anche quando molti collassano sullo stesso insieme),
+ * `capInsiemi` limita gli insiemi distinti riportati. Ha senso chiamarla solo
+ * quando il modulo è completamente coprbile (vedi coperti === totale nel
+ * matcher), altrimenti ritorna 0.
  */
 export function contaCombinazioniComplete(
   slots: SlotModulo[],
   giocatori: { id: string; ruoli: RuoloMantra[] }[],
-  cap = 999
+  capInsiemi = 999,
+  capTentativi = 200000
 ): number {
   const eligibili = giocatori.filter((g) => slots.some((slot) => slotAccetta(slot, g.ruoli)));
   const slotConCandidati = slots
@@ -107,12 +118,14 @@ export function contaCombinazioniComplete(
   if (slotConCandidati.some((s) => s.candidati.length === 0)) return 0;
 
   const usati = new Set<string>();
-  let conteggio = 0;
+  const insiemi = new Set<string>();
+  let tentativi = 0;
 
   function backtrack(idx: number): void {
-    if (conteggio >= cap) return;
+    if (insiemi.size >= capInsiemi || tentativi >= capTentativi) return;
     if (idx === slotConCandidati.length) {
-      conteggio++;
+      tentativi++;
+      insiemi.add(Array.from(usati).sort().join(","));
       return;
     }
     for (const g of slotConCandidati[idx].candidati) {
@@ -120,10 +133,10 @@ export function contaCombinazioniComplete(
       usati.add(g.id);
       backtrack(idx + 1);
       usati.delete(g.id);
-      if (conteggio >= cap) return;
+      if (insiemi.size >= capInsiemi || tentativi >= capTentativi) return;
     }
   }
 
   backtrack(0);
-  return conteggio;
+  return insiemi.size;
 }

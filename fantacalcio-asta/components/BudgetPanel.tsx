@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
@@ -12,6 +13,8 @@ import {
   ScarsitaRuolo,
   SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
+import { MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
+import { ModuloVisualizzazione } from "@/components/ModuloVisualizzazione";
 import { useAuctionStore } from "@/lib/store";
 
 function AllertaScarsita({ scarsita, numeroPartecipanti }: { scarsita: ScarsitaRuolo[]; numeroPartecipanti: number }) {
@@ -96,6 +99,9 @@ function PannelloMantra() {
   const coperture = computeCoperturaModuli(players);
   const scarsita = computeScarsitaMantra(players, settings);
   const pianoSpesa = computePianoSpesaMantra(players, settings);
+  const mieiMantra = players.filter((p) => p.stato === "mia");
+  const moduliByNome = new Map(MODULI_MANTRA.map((m) => [m.nome, m]));
+  const [moduloAperto, setModuloAperto] = useState<Modulo | null>(null);
 
   return (
     <>
@@ -149,25 +155,35 @@ function PannelloMantra() {
         </>
       )}
 
-      <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli più vicini al completamento</h3>
+      <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>
       <ul className="text-sm space-y-1">
-        {coperture.slice(0, 5).map((m) => (
-          <li key={m.nome} className="flex items-center justify-between">
-            <span>{m.nome}</span>
-            <span className="flex items-center gap-2">
-              <span className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                <span
-                  className="block h-full bg-green-500"
-                  style={{ width: `${(m.coperti / m.totale) * 100}%` }}
-                />
+        {coperture.map((m) => (
+          <li key={m.nome}>
+            <button
+              onClick={() => setModuloAperto(moduliByNome.get(m.nome) ?? null)}
+              className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-1 -mx-1 py-0.5"
+              title={`Vedi ${m.nome} in campo`}
+            >
+              <span>{m.nome}</span>
+              <span className="flex items-center gap-2">
+                <span className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <span
+                    className="block h-full bg-green-500"
+                    style={{ width: `${(m.coperti / m.totale) * 100}%` }}
+                  />
+                </span>
+                <span className="text-slate-400 text-xs">
+                  {m.coperti}/{m.totale}
+                </span>
               </span>
-              <span className="text-slate-400 text-xs">
-                {m.coperti}/{m.totale}
-              </span>
-            </span>
+            </button>
           </li>
         ))}
       </ul>
+
+      {moduloAperto && (
+        <ModuloVisualizzazione modulo={moduloAperto} mieiMantra={mieiMantra} onClose={() => setModuloAperto(null)} />
+      )}
     </>
   );
 }

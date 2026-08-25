@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { Wand2 } from "lucide-react";
 import { RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra, FpediaStats, FpediaPillola } from "@/lib/types";
 import { computeLivelliRelativiFpedia } from "@/lib/suggestions";
-import { computeContestoValoreAtteso, computeLivelloValoreAtteso, computeValoreAtteso } from "@/lib/valoreAtteso";
+import { computeLivelloValoreAtteso, computeValoreAtteso } from "@/lib/valoreAtteso";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
@@ -43,7 +44,6 @@ export default function GiocatorePage() {
   const settings = useAuctionStore((s) => s.settings);
   const applyNewsResults = useAuctionStore((s) => s.applyNewsResults);
   const livelloRelativo = useMemo(() => computeLivelliRelativiFpedia(players), [players]);
-  const contestoValoreAtteso = useMemo(() => computeContestoValoreAtteso(players), [players]);
   const livelloValoreAttesoDi = useMemo(() => computeLivelloValoreAtteso(players, settings), [players, settings]);
 
   const [aggiornando, setAggiornando] = useState(false);
@@ -83,12 +83,7 @@ export default function GiocatorePage() {
     );
   }
 
-  const valoreAtteso = computeValoreAtteso(player, contestoValoreAtteso);
-  const FONTE_MEDIA_VOTO_LABEL: Record<string, string> = {
-    stagioneCorrente: "media voto stagione corrente",
-    stagionePrecedente: "media voto stagione precedente",
-    medianaRuolo: "mediana di ruolo (dato individuale non disponibile)",
-  };
+  const valoreAtteso = computeValoreAtteso(player);
 
   const pillole = player.fpedia?.pillole ?? [];
   const stagionePrecedente = trovaStagionePiuRecente(pillole);
@@ -166,12 +161,16 @@ export default function GiocatorePage() {
                 label="Valore atteso"
                 valore={valoreAtteso ? String(Math.round(valoreAtteso.totale)) : "—"}
                 livello={valoreAtteso ? livelloValoreAttesoDi(player) : null}
+                icona={
+                  <span title="Previsione di fantacalciopedia.com (Algoritmo + Punteggio FCP), non calcolata da questa app">
+                    <Wand2 size={11} />
+                  </span>
+                }
               />
             </div>
             {valoreAtteso && (
-              <p className="text-[10px] text-slate-400 mb-3" title="Punti fantacalcio attesi in stagione: media voto attesa × presenze attese + bonus gol/assist attesi − malus ammonizioni/espulsioni attese, dai dati FPEDIA.">
-                Stima punti stagione, da {FONTE_MEDIA_VOTO_LABEL[valoreAtteso.fonteMediaVoto]}
-                {player.ruolo === "P" && " · nota: per i portieri non conta gol subiti/rigori parati (dati non disponibili)"}
+              <p className="text-[10px] text-slate-400 mb-3" title="Media di Algoritmo FCP e Punteggio FCP, i punteggi previsionali proprietari di fantacalciopedia.com (0-100).">
+                Previsione FPEDIA (Punteggio FCP + Algoritmo)
               </p>
             )}
             {!valoreAtteso && <div className="mb-3" />}

@@ -2,7 +2,7 @@ import { LivelloFpedia, Player, RUOLI, RUOLI_MANTRA, Ruolo, RuoloMantra, Setting
 import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
 import { livelloRelativoInCampione } from "./percentile";
-import { computeContestoValoreAtteso, computeLivelloValoreAtteso, computeValoreAtteso, ValoreAtteso } from "./valoreAtteso";
+import { computeLivelloValoreAtteso, computeValoreAtteso, ValoreAtteso } from "./valoreAtteso";
 
 export { livelloRelativoInCampione } from "./percentile";
 
@@ -104,11 +104,10 @@ export function getSuggestions(players: Player[], settings: Settings): PlayerSug
   const base =
     settings.modalita === "classic" ? getSuggestionsClassic(players, settings) : getSuggestionsMantra(players, settings);
 
-  const contestoValoreAtteso = computeContestoValoreAtteso(players);
   const livelloValoreAttesoDi = computeLivelloValoreAtteso(players, settings);
   return base.map((s) => ({
     ...s,
-    valoreAtteso: computeValoreAtteso(s.player, contestoValoreAtteso),
+    valoreAtteso: computeValoreAtteso(s.player),
     livelloValoreAtteso: livelloValoreAttesoDi(s.player),
   }));
 }

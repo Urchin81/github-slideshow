@@ -337,10 +337,10 @@ export function PlayerTable() {
         </p>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[75vh]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-400 border-b border-slate-100">
+            <tr className="text-left text-slate-400 [&>th]:sticky [&>th]:top-0 [&>th]:bg-white [&>th]:z-10 [&>th]:border-b [&>th]:border-slate-100">
               <th className="pb-2">★</th>
               <th className="pb-2">Ruolo</th>
               <th className="pb-2">Foto</th>
