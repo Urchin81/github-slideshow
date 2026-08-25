@@ -238,6 +238,73 @@ export default function GiocatorePage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-lg">Statistiche stagione precedente (FSTATS)</h2>
+          {player.fstats && (
+            <a href={player.fstats.url} target="_blank" rel="noreferrer" className="text-xs text-slate-400 hover:underline">
+              Aggiornate il {new Date(player.fstats.aggiornatoIl).toLocaleString("it-IT")} · fonte
+            </a>
+          )}
+        </div>
+        {!player.fstats ? (
+          <p className="text-slate-400 text-sm">
+            Nessun dato. Usa il pulsante &quot;Aggiorna statistiche FSTATS&quot; nella dashboard.
+          </p>
+        ) : (
+          <>
+            {player.fstats.stagione && (
+              <p className="text-xs text-slate-400 mb-2">Stagione: {player.fstats.stagione}</p>
+            )}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
+              <div>
+                <div className="text-xs text-slate-400">Presenze</div>
+                <div className="font-semibold">{player.fstats.presenze ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Gol</div>
+                <div className="font-semibold">{player.fstats.gol ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Assist</div>
+                <div className="font-semibold">{player.fstats.assist ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Ammonizioni</div>
+                <div className="font-semibold">{player.fstats.ammonizioni ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Espulsioni</div>
+                <div className="font-semibold">{player.fstats.espulsioni ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Minuti</div>
+                <div className="font-semibold">{player.fstats.minuti ?? "—"}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <div className="text-xs text-slate-400">Posizione</div>
+                <div className="font-semibold">{player.fstats.posizione ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Nazionalità</div>
+                <div className="font-semibold">{player.fstats.nazionalita ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Piede</div>
+                <div className="font-semibold">{player.fstats.piede ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Età</div>
+                <div className="font-semibold">{player.fstats.eta ?? "—"}</div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-lg">Ultime notizie</h2>
           {player.notizieAggiornateIl && (
             <span className="text-xs text-slate-400">

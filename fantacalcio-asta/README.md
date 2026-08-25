@@ -57,9 +57,22 @@ ruoli ancora da coprire nella tua squadra.
   presenze/gol/assist previsti, i tag (Panchinaro, Buona Media, Goleador,
   Assistman, Giovane talento) e la nota di scouting. Mostrate nella scheda
   giocatore insieme alla media fantavoto delle 2 stagioni precedenti.
+- **Statistiche FSTATS (stagione precedente)**: due pulsanti analoghi
+  recuperano da footystats.org presenze/gol/assist/ammonizioni/espulsioni/
+  minuti della stagione precedente, più posizione, nazionalità, piede
+  preferito ed età. Il motore di ricerca del sito è JS/AJAX (non
+  interrogabile lato server come quello di FPEDIA): l'app scarica invece
+  **una sola volta per giro** la pagina che elenca tutti i giocatori di
+  Serie A (`/italy/serie-a/players`) e ci costruisce sopra un indice
+  nome→pagina, che poi usa per risolvere ogni giocatore del tuo listino.
+  Per individuare la vera "stagione precedente" (la sezione storica del sito
+  può elencare le stagioni fuori ordine, con voci anomale relative a una
+  stagione futura ancora non conclusa), l'app legge quale stagione è
+  segnata come attiva nel selettore della pagina e scarta ogni voce storica
+  con anno pari o superiore a quello.
 - **Scheda giocatore**: nome, ruolo (Classic e/o Mantra), quotazione, FVM,
-  trend, flag rigorista/punizioni/angoli, statistiche FPEDIA e ultime notizie
-  con data e fonte.
+  trend, flag rigorista/punizioni/angoli, statistiche FPEDIA, statistiche
+  FSTATS e ultime notizie con data e fonte.
 - **Persistenza locale**: lo stato (listino, configurazione, assegnazioni,
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.
@@ -111,6 +124,14 @@ alla pagina principale per seguire l'asta.
   non un errore che blocca il resto). Uso personale, non massivo: c'è già una
   pausa tra le richieste, ma resta scraping di un sito di terzi — verifica i
   loro termini d'uso se ne fai un uso intensivo o ripetuto.
-- **FSTATS (statistiche stagione precedente) non è ancora implementato**: in
-  attesa di un campione HTML di una pagina giocatore footystats.org per
-  scrivere il parser allo stesso modo di FPEDIA.
+- **FSTATS è scraping, non un'API ufficiale**: `lib/fstats.ts` scarica una
+  volta per giro la pagina elenco giocatori di footystats.org, ci costruisce
+  un indice nome→pagina e richiede un match completo di tutte le parole del
+  nome per evitare falsi positivi tra centinaia di giocatori — se un
+  giocatore non viene trovato, il campo resta vuoto invece di rischiare un
+  match sbagliato. Il parser è stato scritto e verificato contro un campione
+  reale (in `lib/__fixtures__/fstats-sample.html`), incluso il caso in cui la
+  sezione storica del sito elenca le stagioni fuori ordine. Come per FPEDIA,
+  se il sito cambia markup alcuni campi potrebbero smettere di essere trovati
+  senza bloccare il resto, e vale lo stesso discorso di uso personale non
+  massivo.

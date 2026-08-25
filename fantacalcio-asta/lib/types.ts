@@ -74,6 +74,29 @@ export interface FpediaStats {
   aggiornatoIl: string;
 }
 
+/** Statistiche stagione precedente recuperate da footystats.org. */
+export interface FstatsStats {
+  url: string;
+  posizione?: string;
+  squadra?: string;
+  nazionaleSquadra?: string;
+  nazionalita?: string;
+  piede?: string;
+  eta?: number;
+  dataNascita?: string;
+  altezzaCm?: number;
+  pesoKg?: number;
+  /** Stagione a cui si riferiscono le statistiche sotto (es. "2024/2025"). */
+  stagione?: string;
+  presenze?: number;
+  gol?: number;
+  assist?: number;
+  ammonizioni?: number;
+  espulsioni?: number;
+  minuti?: number;
+  aggiornatoIl: string;
+}
+
 export interface Player {
   id: string;
   ruolo: Ruolo;
@@ -93,6 +116,7 @@ export interface Player {
   notizie?: NewsItem[];
   notizieAggiornateIl?: string;
   fpedia?: FpediaStats;
+  fstats?: FstatsStats;
 }
 
 export interface RoleConfig {
