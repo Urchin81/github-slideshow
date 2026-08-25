@@ -197,6 +197,8 @@ export interface MantraConfig {
 export interface Settings {
   modalita: Modalita;
   budgetTotale: number;
+  /** Quante squadre (te incluso) si spartiscono i giocatori: serve a stimare quando un ruolo sta scarseggiando. */
+  numeroPartecipanti: number;
   ruoli: Record<Ruolo, RoleConfig>;
   mantra: MantraConfig;
 }
@@ -204,6 +206,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   modalita: "classic",
   budgetTotale: 500,
+  numeroPartecipanti: 8,
   ruoli: {
     P: { slot: 3, percentualeBudget: 5 },
     D: { slot: 8, percentualeBudget: 15 },

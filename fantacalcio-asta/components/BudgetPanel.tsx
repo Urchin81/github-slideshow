@@ -1,20 +1,44 @@
 "use client";
 
-import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_LABEL } from "@/lib/types";
+import { RUOLI, RUOLO_LABEL } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
   computeCoperturaModuli,
   computeMantraStato,
   computeRoleStats,
-  computeRuoliNecessari,
+  computeScarsitaClassic,
+  computeScarsitaMantra,
+  ScarsitaRuolo,
 } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
+
+function AllertaScarsita({ scarsita, numeroPartecipanti }: { scarsita: ScarsitaRuolo[]; numeroPartecipanti: number }) {
+  const scarsi = scarsita.filter((s) => s.allerta);
+  if (scarsi.length === 0) return null;
+  return (
+    <div className="mb-4">
+      <h3 className="text-xs uppercase text-amber-600 mb-1">⚠️ Ruoli in esaurimento</h3>
+      <div className="flex flex-wrap gap-1">
+        {scarsi.map((s) => (
+          <span
+            key={s.chiave}
+            className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-2 py-1"
+            title={`Restano ${s.titolariDisponibili} titolari su ${s.titolariTotali} stimati per ${numeroPartecipanti} partecipanti`}
+          >
+            {s.label} · {s.titolariDisponibili} rimasti
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function PannelloClassic() {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const budgetResiduo = computeBudgetResiduoTotale(players, settings);
   const roleStats = computeRoleStats(players, settings);
+  const scarsita = computeScarsitaClassic(players, settings);
 
   return (
     <>
@@ -24,7 +48,7 @@ function PannelloClassic() {
           {budgetResiduo} <span className="text-sm font-normal text-slate-400">/ {settings.budgetTotale}</span>
         </span>
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full text-sm mb-4">
         <thead>
           <tr className="text-left text-slate-400">
             <th className="pb-1">Ruolo</th>
@@ -53,6 +77,7 @@ function PannelloClassic() {
           })}
         </tbody>
       </table>
+      <AllertaScarsita scarsita={scarsita} numeroPartecipanti={settings.numeroPartecipanti} />
     </>
   );
 }
@@ -62,7 +87,7 @@ function PannelloMantra() {
   const settings = useAuctionStore((s) => s.settings);
   const stato = computeMantraStato(players, settings);
   const coperture = computeCoperturaModuli(players);
-  const ruoliNecessari = computeRuoliNecessari(coperture).slice(0, 6);
+  const scarsita = computeScarsitaMantra(players, settings);
 
   return (
     <>
@@ -84,22 +109,7 @@ function PannelloMantra() {
         </p>
       )}
 
-      <h3 className="text-xs uppercase text-slate-400 mb-1">Ruoli più richiesti</h3>
-      {ruoliNecessari.length === 0 ? (
-        <p className="text-slate-400 text-sm mb-4">Nessuna necessità particolare al momento.</p>
-      ) : (
-        <div className="flex flex-wrap gap-1 mb-4">
-          {ruoliNecessari.map(({ ruolo, punteggio }) => (
-            <span
-              key={ruolo}
-              className="text-xs bg-red-50 text-red-700 border border-red-100 rounded px-2 py-1"
-              title={RUOLO_MANTRA_LABEL[ruolo]}
-            >
-              {ruolo} <span className="text-red-400">×{punteggio}</span>
-            </span>
-          ))}
-        </div>
-      )}
+      <AllertaScarsita scarsita={scarsita} numeroPartecipanti={settings.numeroPartecipanti} />
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli più vicini al completamento</h3>
       <ul className="text-sm space-y-1">

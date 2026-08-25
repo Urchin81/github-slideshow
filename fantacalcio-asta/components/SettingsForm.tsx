@@ -52,6 +52,21 @@ export function SettingsForm() {
         />
       </label>
 
+      <label className="block text-sm mb-4">
+        Numero di partecipanti all&apos;asta
+        <input
+          type="number"
+          min={2}
+          value={local.numeroPartecipanti}
+          onChange={(e) => setLocal({ ...local, numeroPartecipanti: Number(e.target.value) || 0 })}
+          className="block mt-1 border border-slate-200 rounded px-3 py-1.5 w-40"
+        />
+        <span className="block text-xs text-slate-400 mt-1">
+          Quante squadre (te incluso) si spartiscono i giocatori: serve per avvisarti quando i titolari
+          di un ruolo cominciano a scarseggiare sul mercato.
+        </span>
+      </label>
+
       {local.modalita === "classic" ? (
         <>
           <table className="w-full text-sm mb-2">

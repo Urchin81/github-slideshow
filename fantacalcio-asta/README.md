@@ -29,17 +29,28 @@ ruoli ancora da coprire nella tua squadra.
   ruolo (Portiere/Difensore/Centrocampista/Attaccante). In **Mantra non ci
   sono slot fissi per ruolo** (sempre acquistabile qualsiasi ruolo): si imposta
   solo un numero minimo e massimo di giocatori totali da acquistare — oltre il
-  massimo, "Preso da me" si disabilita.
-- **Moduli tattici e ruoli più richiesti (Mantra)**: la dashboard calcola, con
-  un algoritmo di matching (non un modello AI/LLM: deterministico e istantaneo,
-  vedi sotto), quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa
-  attuale riesce a coprire, mostra i moduli più vicini al completamento e
-  aggrega gli slot ancora scoperti in una classifica dei ruoli più necessari.
-  I moduli sono stati trascritti a mano dallo schema "Mantra Experience"
-  fornito: i più densi (3-5-2, 3-5-1-1, 4-1-4-1, 4-4-1-1, 4-2-3-1) potrebbero
-  contenere qualche imprecisione di dettaglio — l'array `slot` in quel file è
-  fatto apposta per essere facile da correggere se noti qualcosa che non
-  corrisponde al tuo schema.
+  massimo, "Preso da me" si disabilita. Si imposta anche il **numero di
+  partecipanti all'asta** (default 8): serve solo per l'allerta scarsità
+  titolari qui sotto.
+- **Allerta scarsità titolari**: nel pannello Budget, un avviso "⚠️ Ruoli in
+  esaurimento" elenca i ruoli (Classic) o le linee Portieri/Difensori/
+  Centrocampisti/Attaccanti (Mantra) i cui migliori giocatori per quotazione
+  stanno per finire sul mercato. La stima di "quanti titolari servono in
+  totale" si basa su slot-per-ruolo × numero di partecipanti in Classic, e
+  sulla media di quanti slot di quella linea occupa un modulo Mantra × numero
+  di partecipanti in Mantra; scatta quando ne restano disponibili non più di
+  uno a partecipante.
+- **Moduli tattici (Mantra)**: la dashboard calcola, con un algoritmo di
+  matching (non un modello AI/LLM: deterministico e istantaneo, vedi sotto),
+  quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa attuale riesce
+  a coprire e mostra i moduli più vicini al completamento; gli slot ancora
+  scoperti dei moduli più vicini alimentano anche un bonus nel punteggio
+  suggerito (vedi sotto), anche se non c'è più un pannello dedicato ai "ruoli
+  più richiesti". I moduli sono stati trascritti a mano dallo schema "Mantra
+  Experience" fornito: i più densi (3-5-2, 3-5-1-1, 4-1-4-1, 4-4-1-1, 4-2-3-1)
+  potrebbero contenere qualche imprecisione di dettaglio — l'array `slot` in
+  quel file è fatto apposta per essere facile da correggere se noti qualcosa
+  che non corrisponde al tuo schema.
 - **Suggerimenti in tempo reale**: punteggio che premia una quotazione alta
   rispetto al budget medio ancora spendibile (Classic: per slot di ruolo;
   Mantra: per posto rimanente in rosa), penalizza chi supera quella media, e

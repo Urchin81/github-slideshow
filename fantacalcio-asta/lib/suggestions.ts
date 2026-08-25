@@ -1,4 +1,14 @@
-import { Player, RUOLI, Ruolo, RuoloMantra, Settings } from "./types";
+import {
+  LINEE_MANTRA,
+  LineaMantra,
+  Player,
+  RUOLI,
+  RUOLO_MANTRA_LINEA,
+  Ruolo,
+  RuoloMantra,
+  Settings,
+  lineaMantraGiocatore,
+} from "./types";
 import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
 
@@ -241,4 +251,91 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
       };
     })
     .sort((a, b) => b.punteggio - a.punteggio);
+}
+
+// ---------------------------------------------------------------------------
+// Scarsita' dei titolari per ruolo: con N partecipanti all'asta, quanti
+// giocatori "da titolare" restano ancora disponibili in un ruolo prima che
+// diventi un problema trovarne uno decente.
+// ---------------------------------------------------------------------------
+
+export interface ScarsitaRuolo {
+  /** Ruolo Classic o linea Mantra (Portieri/Difensori/Centrocampisti/Attaccanti). */
+  chiave: string;
+  label: string;
+  /** Quanti giocatori "da titolare" in questo ruolo ci si aspetta servano in tutta la lega. */
+  titolariTotali: number;
+  /** Quanti di quei titolari sono ancora disponibili sul mercato. */
+  titolariDisponibili: number;
+  /** True quando i titolari rimasti non bastano piu' per un partecipante a testa. */
+  allerta: boolean;
+}
+
+/**
+ * Classic: i "titolari" di un ruolo sono i migliori per quotazione fino a
+ * quanti slot quel ruolo occupa moltiplicati per il numero di partecipanti
+ * (ogni squadra della lega usa lo stesso numero di slot per ruolo). Se quelli
+ * ancora disponibili scendono a non piu' di un partecipante a testa, e' il
+ * segnale che il ruolo sta per esaurirsi.
+ */
+export function computeScarsitaClassic(players: Player[], settings: Settings): ScarsitaRuolo[] {
+  const partecipanti = Math.max(1, settings.numeroPartecipanti);
+  return RUOLI.map((ruolo) => {
+    const delRuolo = [...players.filter((p) => p.ruolo === ruolo)].sort((a, b) => b.quotazione - a.quotazione);
+    const titolariTotali = settings.ruoli[ruolo].slot * partecipanti;
+    const titolari = delRuolo.slice(0, titolariTotali);
+    const titolariDisponibili = titolari.filter((p) => p.stato === "disponibile").length;
+    return {
+      chiave: ruolo,
+      label: ruolo,
+      titolariTotali,
+      titolariDisponibili,
+      allerta: titolariTotali > 0 && titolariDisponibili > 0 && titolariDisponibili <= partecipanti,
+    };
+  });
+}
+
+/** Quanti slot occupa in media, per ognuna delle 4 linee, uno degli 11 moduli Mantra. */
+function bisognoMedioPerLineaMantra(): Record<LineaMantra, number> {
+  const somme: Record<LineaMantra, number> = { Portieri: 0, Difensori: 0, Centrocampisti: 0, Attaccanti: 0 };
+  for (const modulo of MODULI_MANTRA) {
+    for (const slot of modulo.slot) {
+      const linea = LINEE_MANTRA.find((l) => slot.some((r) => RUOLO_MANTRA_LINEA[r] === l));
+      if (linea) somme[linea]++;
+    }
+  }
+  const media = {} as Record<LineaMantra, number>;
+  for (const linea of LINEE_MANTRA) media[linea] = somme[linea] / MODULI_MANTRA.length;
+  return media;
+}
+
+/**
+ * Mantra: niente slot fissi per ruolo, quindi la scarsita' si calcola per
+ * linea (Portieri/Difensori/Centrocampisti/Attaccanti) invece che per i 12
+ * ruoli singoli, usando quanti slot di quella linea occupa in media un
+ * modulo come stima di "titolari serviti per squadra".
+ */
+export function computeScarsitaMantra(players: Player[], settings: Settings): ScarsitaRuolo[] {
+  const partecipanti = Math.max(1, settings.numeroPartecipanti);
+  const bisognoMedio = bisognoMedioPerLineaMantra();
+
+  return LINEE_MANTRA.map((linea) => {
+    const dellaLinea = [...players.filter((p) => lineaMantraGiocatore(p.ruoliMantra) === linea)].sort(
+      (a, b) => b.quotazione - a.quotazione
+    );
+    const titolariTotali = Math.round(bisognoMedio[linea] * partecipanti);
+    const titolari = dellaLinea.slice(0, titolariTotali);
+    const titolariDisponibili = titolari.filter((p) => p.stato === "disponibile").length;
+    return {
+      chiave: linea,
+      label: linea,
+      titolariTotali,
+      titolariDisponibili,
+      allerta: titolariTotali > 0 && titolariDisponibili > 0 && titolariDisponibili <= partecipanti,
+    };
+  });
+}
+
+export function computeScarsitaRuoli(players: Player[], settings: Settings): ScarsitaRuolo[] {
+  return settings.modalita === "classic" ? computeScarsitaClassic(players, settings) : computeScarsitaMantra(players, settings);
 }

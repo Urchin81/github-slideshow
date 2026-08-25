@@ -56,6 +56,28 @@ export const useAuctionStore = create<AuctionState>()(
           players: state.players.map((p) => (p.id === id ? { ...p, preferito: !p.preferito } : p)),
         })),
     }),
-    { name: "fantacalcio-asta-store" }
+    {
+      name: "fantacalcio-asta-store",
+      // Fusione profonda di "settings" coi default: un campo aggiunto in un
+      // aggiornamento (es. numeroPartecipanti) altrimenti resterebbe
+      // "undefined" per chi ha gia' delle impostazioni salvate nel browser,
+      // invece di prendere il valore di default.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AuctionState> | undefined;
+        if (!persisted) return currentState;
+        return {
+          ...currentState,
+          ...persisted,
+          settings: persisted.settings
+            ? {
+                ...currentState.settings,
+                ...persisted.settings,
+                ruoli: { ...currentState.settings.ruoli, ...persisted.settings.ruoli },
+                mantra: { ...currentState.settings.mantra, ...persisted.settings.mantra },
+              }
+            : currentState.settings,
+        };
+      },
+    }
   )
 );
