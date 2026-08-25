@@ -13,10 +13,18 @@ ruoli ancora da coprire nella tua squadra.
 - **Import listino intelligente**: carica il file Excel/CSV delle quotazioni
   ufficiali (colonne Ruolo/R, RM, Nome, Squadra, Qt.A, opzionalmente FVM). Se
   importi un file dopo il primo, l'app confronta il listino gia' caricato con
-  quello nuovo: aggiorna i valori cambiati (quotazione, squadra, ruoli Mantra),
-  non tocca nulla se un giocatore è invariato, aggiunge i nuovi e ti mostra
-  un'anteprima da confermare prima di rimuovere i giocatori assenti nel nuovo
-  file (con avviso esplicito se qualcuno di questi era già nella tua rosa).
+  quello nuovo e mostra un'anteprima (nuovi/aggiornati/invariati/rimossi, con
+  avviso se qualcuno dei rimossi era già nella tua rosa) **prima di toccare
+  qualsiasi cosa**, chiedendo come procedere:
+  - **Mantieni e aggiorna solo i cambiamenti** (opzione consigliata): aggiunge
+    i nuovi, rimuove quelli assenti nel nuovo file, aggiorna i valori cambiati
+    (quotazione, squadra, ruoli Mantra) — tutto il resto di ogni giocatore già
+    tracciato (stato, prezzo pagato, preferito, notizie, statistiche FPEDIA)
+    resta intatto.
+  - **Aggiorna tutto**: cancella l'intero listino attuale e lo sostituisce da
+    zero col nuovo file — chiede un'ulteriore conferma esplicita perché perde
+    tutte le assegnazioni, i preferiti e i dati raccolti.
+  - **Annulla**: non fa nulla, il listino resta quello di prima.
 - **Setup asta**: in Classic, budget totale e slot/percentuale di budget per
   ruolo (Portiere/Difensore/Centrocampista/Attaccante). In **Mantra non ci
   sono slot fissi per ruolo** (sempre acquistabile qualsiasi ruolo): si imposta
