@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { RUOLI, RUOLI_MANTRA, RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra, Ruolo, StatoGiocatore } from "@/lib/types";
 import { computeMantraStato, getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
+import { FavoriteStar } from "./FavoriteStar";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
@@ -28,6 +29,7 @@ export function PlayerTable() {
   const [statoFiltro, setStatoFiltro] = useState<FiltroStato>("disponibile");
   const [ricerca, setRicerca] = useState("");
   const [soloConsigliati, setSoloConsigliati] = useState(false);
+  const [soloPreferiti, setSoloPreferiti] = useState(false);
   const [assignId, setAssignId] = useState<string | null>(null);
   const [prezzoInput, setPrezzoInput] = useState("1");
 
@@ -52,6 +54,9 @@ export function PlayerTable() {
     if (soloConsigliati && statoFiltro === "disponibile") {
       base = base.filter((p) => suggestionById.get(p.id)?.consigliato);
     }
+    if (soloPreferiti) {
+      base = base.filter((p) => p.preferito);
+    }
 
     return [...base].sort((a, b) => {
       if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
@@ -59,7 +64,7 @@ export function PlayerTable() {
       const sb = suggestionById.get(b.id)?.punteggio ?? 0;
       return sb - sa;
     });
-  }, [players, statoFiltro, ruoloFiltro, ricerca, soloConsigliati, suggestionById, isMantra]);
+  }, [players, statoFiltro, ruoloFiltro, ricerca, soloConsigliati, soloPreferiti, suggestionById, isMantra]);
 
   function apriAssegnazione(id: string, quotazione: number) {
     setAssignId(id);
@@ -132,6 +137,10 @@ export function PlayerTable() {
             Solo consigliati
           </label>
         )}
+        <label className="text-sm flex items-center gap-1.5">
+          <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
+          Solo preferiti ★
+        </label>
         <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
       </div>
 
@@ -146,6 +155,7 @@ export function PlayerTable() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-400 border-b border-slate-100">
+              <th className="pb-2">★</th>
               <th className="pb-2">Ruolo</th>
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
@@ -159,6 +169,9 @@ export function PlayerTable() {
               const suggestion = suggestionById.get(p.id);
               return (
                 <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                  <td className="py-1.5">
+                    <FavoriteStar id={p.id} preferito={p.preferito} />
+                  </td>
                   <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra)}</td>
                   <td className="py-1.5 font-medium">
                     <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">

@@ -41,7 +41,17 @@ ruoli ancora da coprire nella tua squadra.
 - **Tracciamento asta**: segna un giocatore come "Preso da me" (con prezzo
   pagato, aggiorna budget e rosa) o "Preso da altri" (rimosso dal mercato). Il
   pulsante "Azzera chiamate" in dashboard rimette tutti i giocatori disponibili
-  senza toccare il listino importato.
+  senza toccare il listino importato **né i preferiti** (vedi sotto).
+- **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
+  nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
+  personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
+  cosí i giocatori su cui vuoi puntare restano segnati anche dopo un reset.
+  Nella tabella si può filtrare con "Solo preferiti ★".
+- **La mia rosa ordinata per linea (Mantra)**: in Mantra i giocatori presi
+  sono raggruppati dall'alto verso il basso in Portieri, Difensori,
+  Centrocampisti e Attaccanti (un giocatore multi-ruolo va nella prima linea
+  che uno dei suoi ruoli copre); in Classic segue già l'ordine
+  Portiere/Difensore/Centrocampista/Attaccante.
 - **Aggiornamento notizie**: due pulsanti nella dashboard interrogano un set di
   feed RSS di siti calcio (configurabili in `lib/newsSources.ts`) e per ogni
   giocatore trovano le ultime 3 notizie con data e link. Dal testo delle

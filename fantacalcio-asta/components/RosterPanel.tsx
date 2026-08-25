@@ -1,14 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { RUOLI, RUOLO_LABEL } from "@/lib/types";
+import { LINEE_MANTRA, lineaMantraGiocatore, RUOLI, RUOLO_LABEL } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
+import { FavoriteStar } from "./FavoriteStar";
 
-function RigaGiocatore({ id, nome, squadra, prezzoPagato, extra }: { id: string; nome: string; squadra: string; prezzoPagato?: number; extra?: React.ReactNode }) {
+function RigaGiocatore({
+  id,
+  nome,
+  squadra,
+  prezzoPagato,
+  preferito,
+  extra,
+}: {
+  id: string;
+  nome: string;
+  squadra: string;
+  prezzoPagato?: number;
+  preferito?: boolean;
+  extra?: React.ReactNode;
+}) {
   const resetPlayer = useAuctionStore((s) => s.resetPlayer);
   return (
     <li className="flex justify-between items-center">
-      <span>
+      <span className="flex items-center gap-1.5">
+        <FavoriteStar id={id} preferito={preferito} />
         <Link href={`/giocatore/${encodeURIComponent(id)}`} className="hover:underline">
           {nome}
         </Link>{" "}
@@ -39,7 +55,14 @@ function RosterClassic() {
             <h3 className="text-xs uppercase text-slate-400 mb-1">{RUOLO_LABEL[ruolo]}</h3>
             <ul className="text-sm space-y-1">
               {list.map((p) => (
-                <RigaGiocatore key={p.id} id={p.id} nome={p.nome} squadra={p.squadra} prezzoPagato={p.prezzoPagato} />
+                <RigaGiocatore
+                  key={p.id}
+                  id={p.id}
+                  nome={p.nome}
+                  squadra={p.squadra}
+                  prezzoPagato={p.prezzoPagato}
+                  preferito={p.preferito}
+                />
               ))}
             </ul>
           </div>
@@ -51,29 +74,60 @@ function RosterClassic() {
 
 function RosterMantra() {
   const players = useAuctionStore((s) => s.players);
-  const mine = [...players.filter((p) => p.stato === "mia")].sort((a, b) => b.quotazione - a.quotazione);
+  const mine = players.filter((p) => p.stato === "mia");
+
+  // Portieri in alto, poi linea difensiva, centrale e offensiva: un giocatore
+  // multi-ruolo va nella prima linea che uno dei suoi ruoli copre.
+  const gruppi = LINEE_MANTRA.map((linea) => ({
+    linea,
+    list: [...mine.filter((p) => lineaMantraGiocatore(p.ruoliMantra) === linea)].sort(
+      (a, b) => b.quotazione - a.quotazione
+    ),
+  }));
+  const senzaRuolo = [...mine.filter((p) => !lineaMantraGiocatore(p.ruoliMantra))].sort(
+    (a, b) => b.quotazione - a.quotazione
+  );
+
+  function riga(p: (typeof mine)[number]) {
+    return (
+      <RigaGiocatore
+        key={p.id}
+        id={p.id}
+        nome={p.nome}
+        squadra={p.squadra}
+        prezzoPagato={p.prezzoPagato}
+        preferito={p.preferito}
+        extra={
+          <span className="ml-1">
+            {(p.ruoliMantra ?? []).map((r) => (
+              <span key={r} className="text-[10px] bg-slate-100 rounded px-1 mr-0.5">
+                {r}
+              </span>
+            ))}
+          </span>
+        }
+      />
+    );
+  }
 
   return (
-    <ul className="text-sm space-y-1">
-      {mine.map((p) => (
-        <RigaGiocatore
-          key={p.id}
-          id={p.id}
-          nome={p.nome}
-          squadra={p.squadra}
-          prezzoPagato={p.prezzoPagato}
-          extra={
-            <span className="ml-1">
-              {(p.ruoliMantra ?? []).map((r) => (
-                <span key={r} className="text-[10px] bg-slate-100 rounded px-1 mr-0.5">
-                  {r}
-                </span>
-              ))}
-            </span>
-          }
-        />
-      ))}
-    </ul>
+    <div className="space-y-3">
+      {gruppi.map(({ linea, list }) => {
+        if (list.length === 0) return null;
+        return (
+          <div key={linea}>
+            <h3 className="text-xs uppercase text-slate-400 mb-1">{linea}</h3>
+            <ul className="text-sm space-y-1">{list.map(riga)}</ul>
+          </div>
+        );
+      })}
+      {senzaRuolo.length > 0 && (
+        <div>
+          <h3 className="text-xs uppercase text-slate-400 mb-1">Senza ruolo Mantra indicato</h3>
+          <ul className="text-sm space-y-1">{senzaRuolo.map(riga)}</ul>
+        </div>
+      )}
+    </div>
   );
 }
 

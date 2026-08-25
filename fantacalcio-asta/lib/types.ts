@@ -117,6 +117,34 @@ export interface Player {
   notizieAggiornateIl?: string;
   fpedia?: FpediaStats;
   fstats?: FstatsStats;
+  /** Preferito personale: sopravvive al reset dell'asta (non è uno stato d'asta). */
+  preferito?: boolean;
+}
+
+export type LineaMantra = "Portieri" | "Difensori" | "Centrocampisti" | "Attaccanti";
+
+export const LINEE_MANTRA: LineaMantra[] = ["Portieri", "Difensori", "Centrocampisti", "Attaccanti"];
+
+/** Stessa suddivisione in linee usata per colorare i moduli in lib/moduliMantra.ts / app/moduli. */
+export const RUOLO_MANTRA_LINEA: Record<RuoloMantra, LineaMantra> = {
+  Por: "Portieri",
+  Dc: "Difensori",
+  Dd: "Difensori",
+  Ds: "Difensori",
+  B: "Difensori",
+  E: "Centrocampisti",
+  M: "Centrocampisti",
+  C: "Centrocampisti",
+  W: "Centrocampisti",
+  T: "Centrocampisti",
+  A: "Attaccanti",
+  Pc: "Attaccanti",
+};
+
+/** Linea (Portieri/Difensori/Centrocampisti/Attaccanti) di un giocatore Mantra multi-ruolo: la prima che copre. */
+export function lineaMantraGiocatore(ruoliMantra: RuoloMantra[] | undefined): LineaMantra | undefined {
+  if (!ruoliMantra || ruoliMantra.length === 0) return undefined;
+  return LINEE_MANTRA.find((linea) => ruoliMantra.some((r) => RUOLO_MANTRA_LINEA[r] === linea));
 }
 
 export interface RoleConfig {

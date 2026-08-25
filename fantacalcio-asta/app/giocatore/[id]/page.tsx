@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { RUOLO_LABEL, RUOLO_MANTRA_LABEL, RuoloMantra } from "@/lib/types";
 import { getSuggestions } from "@/lib/suggestions";
 import { useAuctionStore } from "@/lib/store";
+import { FavoriteStar } from "@/components/FavoriteStar";
 
 function Flag({ attivo, label }: { attivo?: boolean; label: string }) {
   return (
@@ -51,7 +52,12 @@ export default function GiocatorePage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-baseline justify-between mb-1">
-          <h1 className="text-2xl font-bold">{player.nome}</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <span className="text-xl">
+              <FavoriteStar id={player.id} preferito={player.preferito} />
+            </span>
+            {player.nome}
+          </h1>
           <span className="text-sm text-slate-400">{player.squadra}</span>
         </div>
         <p className="text-slate-500 mb-4">

@@ -12,6 +12,7 @@ interface AuctionState {
   resetPlayer: (id: string) => void;
   resetAll: () => void;
   applyNewsResults: (updates: Record<string, Partial<Player>>) => void;
+  toggleFavorite: (id: string) => void;
 }
 
 export const useAuctionStore = create<AuctionState>()(
@@ -37,6 +38,7 @@ export const useAuctionStore = create<AuctionState>()(
             p.id === id ? { ...p, stato: "disponibile", prezzoPagato: undefined } : p
           ),
         })),
+      // Azzera solo lo stato d'asta (chi ha preso chi): i preferiti, marcati a parte, restano intatti.
       resetAll: () =>
         set((state) => ({
           players: state.players.map((p) => ({
@@ -48,6 +50,10 @@ export const useAuctionStore = create<AuctionState>()(
       applyNewsResults: (updates) =>
         set((state) => ({
           players: state.players.map((p) => (updates[p.id] ? { ...p, ...updates[p.id] } : p)),
+        })),
+      toggleFavorite: (id) =>
+        set((state) => ({
+          players: state.players.map((p) => (p.id === id ? { ...p, preferito: !p.preferito } : p)),
         })),
     }),
     { name: "fantacalcio-asta-store" }
