@@ -42,6 +42,8 @@ export function PlayerTable() {
   const [soloPreferiti, setSoloPreferiti] = useState(false);
   const [assignId, setAssignId] = useState<string | null>(null);
   const [prezzoInput, setPrezzoInput] = useState("1");
+  const [modificaId, setModificaId] = useState<string | null>(null);
+  const [modificaInput, setModificaInput] = useState("1");
 
   const suggestions = useMemo(() => getSuggestions(players, settings), [players, settings]);
   const suggestionById = useMemo(() => {
@@ -86,6 +88,24 @@ export function PlayerTable() {
     assignToMe(id, prezzo);
     setAssignId(null);
     setPrezzoInput("1");
+  }
+
+  function apriModifica(id: string, prezzoAttuale: number | undefined) {
+    setModificaId(id);
+    setModificaInput(String(prezzoAttuale ?? 1));
+  }
+
+  function salvaModifica(id: string) {
+    assignToMe(id, Math.max(1, Number(modificaInput) || 1));
+    setModificaId(null);
+  }
+
+  function confermaRimozione(nome: string, prezzoPagato: number | undefined, id: string) {
+    const messaggio =
+      prezzoPagato !== undefined
+        ? `Rimuovere ${nome} dalla tua rosa? Il prezzo pagato (${prezzoPagato}) andrà perso.`
+        : `Rimettere ${nome} tra i disponibili?`;
+    if (confirm(messaggio)) resetPlayer(id);
   }
 
   function ruoloLabel(r: RoleKey) {
@@ -257,11 +277,54 @@ export function PlayerTable() {
                         </span>
                       )
                     ) : (
-                      <span className="inline-flex items-center gap-2">
-                        {p.stato === "mia" && <span className="text-xs text-slate-500">{p.prezzoPagato}</span>}
-                        <button onClick={() => resetPlayer(p.id)} className="text-xs text-red-500 hover:underline">
-                          annulla
-                        </button>
+                      <span className="inline-flex items-center gap-1.5">
+                        {p.stato === "mia" &&
+                          (modificaId === p.id ? (
+                            <>
+                              <input
+                                type="number"
+                                min={1}
+                                value={modificaInput}
+                                onChange={(e) => setModificaInput(e.target.value)}
+                                className="w-14 border border-slate-200 rounded px-1 py-0.5"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => salvaModifica(p.id)}
+                                className="text-xs bg-green-600 text-white rounded px-1.5 py-0.5 hover:bg-green-700"
+                                title="Salva prezzo"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={() => setModificaId(null)}
+                                className="text-xs text-slate-400 hover:text-slate-600 px-1"
+                                title="Annulla modifica"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-xs text-slate-500">{p.prezzoPagato}</span>
+                              <button
+                                onClick={() => apriModifica(p.id, p.prezzoPagato)}
+                                className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 hover:bg-amber-600"
+                                title="Modifica prezzo"
+                              >
+                                ✏️
+                              </button>
+                            </>
+                          ))}
+                        {modificaId !== p.id && (
+                          <button
+                            onClick={() => confermaRimozione(p.nome, p.prezzoPagato, p.id)}
+                            className="text-xs bg-red-600 text-white rounded px-1.5 py-0.5 hover:bg-red-700"
+                            title="Rimuovi dalla rosa"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </span>
                     )}
                   </td>

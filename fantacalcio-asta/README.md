@@ -39,9 +39,13 @@ ruoli ancora da coprire nella tua squadra.
   un bonus per ogni modulo (tra i più vicini al completamento) che il
   giocatore aiuterebbe effettivamente a completare.
 - **Tracciamento asta**: segna un giocatore come "Preso da me" (con prezzo
-  pagato, aggiorna budget e rosa) o "Preso da altri" (rimosso dal mercato). Il
-  pulsante "Azzera chiamate" in dashboard rimette tutti i giocatori disponibili
-  senza toccare il listino importato **né i preferiti** (vedi sotto).
+  pagato, aggiorna budget e rosa) o "Preso da altri" (rimosso dal mercato). Su
+  un giocatore già preso, il bottone giallo con la matita ✏️ modifica il
+  prezzo pagato senza toccare lo stato, il bottone rosso con la ✕ lo rimette
+  disponibile (chiede conferma, perché il prezzo registrato va perso). Il
+  pulsante "Azzera chiamate" in dashboard (o "Azzera asta" in Settings)
+  rimette tutti i giocatori disponibili senza toccare il listino importato
+  **né i preferiti** (vedi sotto) — entrambi chiedono conferma prima di agire.
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,

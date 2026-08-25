@@ -178,7 +178,7 @@ export function SettingsForm() {
             resetAll();
           }
         }}
-        className="text-sm text-red-500 hover:underline"
+        className="text-sm bg-red-50 text-red-700 border border-red-200 rounded px-3 py-1.5 hover:bg-red-100"
       >
         Azzera asta (mantiene il listino importato)
       </button>

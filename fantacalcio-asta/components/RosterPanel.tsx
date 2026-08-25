@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { LINEE_MANTRA, lineaMantraGiocatore, RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
@@ -21,6 +22,21 @@ function RigaGiocatore({
   extra?: React.ReactNode;
 }) {
   const resetPlayer = useAuctionStore((s) => s.resetPlayer);
+  const assignToMe = useAuctionStore((s) => s.assignToMe);
+  const [modifica, setModifica] = useState(false);
+  const [prezzoInput, setPrezzoInput] = useState(String(prezzoPagato ?? 1));
+
+  function confermaRimozione() {
+    if (confirm(`Rimuovere ${nome} dalla tua rosa? Il prezzo pagato (${prezzoPagato}) andrà perso.`)) {
+      resetPlayer(id);
+    }
+  }
+
+  function salvaPrezzo() {
+    assignToMe(id, Math.max(1, Number(prezzoInput) || 1));
+    setModifica(false);
+  }
+
   return (
     <li className="flex justify-between items-center">
       <span className="flex items-center gap-1.5">
@@ -31,11 +47,54 @@ function RigaGiocatore({
         <span className="text-slate-400">({squadra})</span>
         {extra}
       </span>
-      <span className="flex items-center gap-2">
-        <span className="font-medium">{prezzoPagato}</span>
-        <button onClick={() => resetPlayer(id)} className="text-xs text-red-500 hover:underline" title="Annulla acquisto">
-          annulla
-        </button>
+      <span className="flex items-center gap-1.5">
+        {modifica ? (
+          <>
+            <input
+              type="number"
+              min={1}
+              value={prezzoInput}
+              onChange={(e) => setPrezzoInput(e.target.value)}
+              className="w-14 border border-slate-200 rounded px-1 py-0.5 text-xs"
+              autoFocus
+            />
+            <button
+              onClick={salvaPrezzo}
+              className="text-xs bg-green-600 text-white rounded px-1.5 py-0.5 hover:bg-green-700"
+              title="Salva prezzo"
+            >
+              ✓
+            </button>
+            <button
+              onClick={() => {
+                setModifica(false);
+                setPrezzoInput(String(prezzoPagato ?? 1));
+              }}
+              className="text-xs text-slate-400 hover:text-slate-600 px-1"
+              title="Annulla modifica"
+            >
+              ✕
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="font-medium">{prezzoPagato}</span>
+            <button
+              onClick={() => setModifica(true)}
+              className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 hover:bg-amber-600"
+              title="Modifica prezzo"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={confermaRimozione}
+              className="text-xs bg-red-600 text-white rounded px-1.5 py-0.5 hover:bg-red-700"
+              title="Rimuovi dalla rosa"
+            >
+              ✕
+            </button>
+          </>
+        )}
       </span>
     </li>
   );
