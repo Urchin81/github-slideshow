@@ -102,7 +102,8 @@ function RosterMantra() {
             {(p.ruoliMantra ?? []).map((r) => (
               <span
                 key={r}
-                className={`text-[10px] text-white rounded px-1 mr-0.5 ${RUOLO_MANTRA_COLORE[r]}`}
+                className="text-[10px] text-white rounded px-1 mr-0.5"
+                style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
               >
                 {r}
               </span>

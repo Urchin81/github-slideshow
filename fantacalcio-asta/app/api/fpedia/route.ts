@@ -10,7 +10,17 @@ const USER_AGENT =
 const FPEDIA_BASE_URL = process.env.FPEDIA_BASE_URL ?? "https://www.fantacalciopedia.com";
 
 async function fetchTesto(url: string): Promise<string> {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  } catch (err) {
+    // "fetch failed" da solo non dice nulla: Node incapsula il motivo reale
+    // (DNS, connessione rifiutata, TLS...) nella proprieta' "cause".
+    const causa = err instanceof Error ? (err.cause as unknown) : undefined;
+    const dettaglioCausa = causa instanceof Error ? causa.message : causa ? String(causa) : undefined;
+    const messaggioBase = err instanceof Error ? err.message : "Richiesta di rete fallita.";
+    throw new Error(`${messaggioBase}${dettaglioCausa ? ` — ${dettaglioCausa}` : ""} (${url})`);
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status} su ${url}`);
   return res.text();
 }

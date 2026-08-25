@@ -1,27 +1,22 @@
 import { MODULI_MANTRA, SlotModulo } from "@/lib/moduliMantra";
 import { RUOLO_MANTRA_COLORE } from "@/lib/types";
 
-const RUOLI_DIFESA = ["Por", "Dc", "Dd", "Ds", "B"];
-const RUOLI_TREQUARTISTI_ALI = ["T", "W"];
-const RUOLI_ATTACCO = ["A", "Pc"];
-
-// Uno slot elenca ruoli alternativi per lo stesso posto in campo: il colore
-// dell'etichetta segue la stessa mappa usata per i singoli ruoli altrove
-// nell'app (rosa, tabella, scheda giocatore), con questa priorita' quando lo
-// slot mescola ruoli di categorie diverse (es. "W/A" resta viola, non rosso).
-function coloreSlot(slot: SlotModulo): string {
-  if (slot.every((r) => RUOLI_DIFESA.includes(r))) {
-    return slot.includes("Por") ? RUOLO_MANTRA_COLORE.Por : RUOLO_MANTRA_COLORE.Dc;
-  }
-  if (slot.some((r) => RUOLI_TREQUARTISTI_ALI.includes(r))) return RUOLO_MANTRA_COLORE.T;
-  if (slot.some((r) => RUOLI_ATTACCO.includes(r))) return RUOLO_MANTRA_COLORE.A;
-  return RUOLO_MANTRA_COLORE.E;
+// Uno slot elenca ruoli alternativi per lo stesso posto in campo: quando quei
+// ruoli hanno colori diversi (es. "W/A" = ala viola o attaccante rosso) lo
+// sfondo si divide a metà tra i due colori, cosi' l'etichetta mostra entrambe
+// le categorie invece di far vincere una sola per priorita'.
+function sfondoSlot(slot: SlotModulo): React.CSSProperties {
+  const colori = Array.from(new Set(slot.map((r) => RUOLO_MANTRA_COLORE[r])));
+  if (colori.length <= 1) return { backgroundColor: colori[0] ?? "#64748b" };
+  const [a, b] = colori;
+  return { backgroundImage: `linear-gradient(90deg, ${a} 50%, ${b} 50%)` };
 }
 
 function Badge({ slot }: { slot: SlotModulo }) {
   return (
     <span
-      className={`${coloreSlot(slot)} text-white text-xs font-bold rounded px-2 py-1 shadow`}
+      className="text-white text-xs font-bold rounded px-2 py-1 shadow"
+      style={sfondoSlot(slot)}
       title={slot.join(" o ")}
     >
       {slot.join("/")}

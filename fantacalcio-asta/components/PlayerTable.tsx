@@ -95,14 +95,19 @@ export function PlayerTable() {
   function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined) {
     if (!isMantra) {
       return (
-        <span className={`text-white rounded px-1 text-xs ${RUOLO_COLORE[playerRuolo]}`}>{playerRuolo}</span>
+        <span
+          className="text-white rounded px-1 text-xs"
+          style={{ backgroundColor: RUOLO_COLORE[playerRuolo] }}
+        >
+          {playerRuolo}
+        </span>
       );
     }
     if (!ruoliMantra || ruoliMantra.length === 0) return <span className="text-slate-300">—</span>;
     return (
       <span className="flex gap-1 flex-wrap">
         {ruoliMantra.map((r) => (
-          <span key={r} className={`text-white rounded px-1 text-xs ${RUOLO_MANTRA_COLORE[r]}`}>
+          <span key={r} className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
             {r}
           </span>
         ))}
@@ -197,7 +202,10 @@ export function PlayerTable() {
                   {statoFiltro === "disponibile" && (
                     <td className="py-1.5 text-right">
                       {suggestion?.consigliato ? (
-                        <span className="text-green-600 font-semibold">
+                        <span
+                          className="text-green-600 font-semibold"
+                          title="Consigliato: quotazione/FVM conveniente rispetto al budget medio ancora disponibile per questo ruolo (non più del +30%) e c'è ancora posto libero da riempire in rosa."
+                        >
                           {Math.round(suggestion.punteggio)} ✓
                         </span>
                       ) : (

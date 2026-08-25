@@ -12,8 +12,7 @@ export interface VoceIndiceGiocatore {
  * parole del cognome compaiano nel nome candidato (l'indice contiene tutti
  * i giocatori del campionato, quindi niente match parziali per evitare falsi
  * positivi), e se più giocatori condividono lo stesso cognome usa l'iniziale
- * per scegliere quello giusto. Usata sia per FPEDIA che per FSTATS: stesso
- * listino, stessa convenzione di nomi da riconciliare con siti terzi.
+ * per scegliere quello giusto.
  */
 export function trovaUrlGiocatoreInIndice(
   indice: VoceIndiceGiocatore[],

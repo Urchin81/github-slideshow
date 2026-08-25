@@ -10,11 +10,13 @@ export const RUOLO_LABEL: Record<Ruolo, string> = {
 };
 
 /** Stessi colori delle linee Mantra (Por/Difensori/Centrocampisti/Attaccanti), a cui i ruoli Classic corrispondono 1:1. */
+// Colore esadecimale (non classe Tailwind: usato anche per gli sfondi a due
+// colori dei moduli, che richiedono un gradiente CSS con valori concreti).
 export const RUOLO_COLORE: Record<Ruolo, string> = {
-  P: "bg-amber-500",
-  D: "bg-emerald-600",
-  C: "bg-blue-600",
-  A: "bg-red-600",
+  P: "#f59e0b",
+  D: "#059669",
+  C: "#2563eb",
+  A: "#dc2626",
 };
 
 /** Ruoli del modificatore Mantra. Un giocatore puo' essere idoneo per piu' ruoli. */
@@ -82,29 +84,6 @@ export interface FpediaStats {
   aggiornatoIl: string;
 }
 
-/** Statistiche stagione precedente recuperate da footystats.org. */
-export interface FstatsStats {
-  url: string;
-  posizione?: string;
-  squadra?: string;
-  nazionaleSquadra?: string;
-  nazionalita?: string;
-  piede?: string;
-  eta?: number;
-  dataNascita?: string;
-  altezzaCm?: number;
-  pesoKg?: number;
-  /** Stagione a cui si riferiscono le statistiche sotto (es. "2024/2025"). */
-  stagione?: string;
-  presenze?: number;
-  gol?: number;
-  assist?: number;
-  ammonizioni?: number;
-  espulsioni?: number;
-  minuti?: number;
-  aggiornatoIl: string;
-}
-
 export interface Player {
   id: string;
   ruolo: Ruolo;
@@ -124,7 +103,6 @@ export interface Player {
   notizie?: NewsItem[];
   notizieAggiornateIl?: string;
   fpedia?: FpediaStats;
-  fstats?: FstatsStats;
   /** Preferito personale: sopravvive al reset dell'asta (non è uno stato d'asta). */
   preferito?: boolean;
 }
@@ -162,19 +140,21 @@ export function lineaMantraGiocatore(ruoliMantra: RuoloMantra[] | undefined): Li
  * centrocampo puro blu, trequartisti/ali viola (distinti dal rosso dei puri
  * attaccanti anche quando compaiono insieme in uno slot dei moduli).
  */
+// Colore esadecimale (non classe Tailwind: usato anche per gli sfondi a due
+// colori dei moduli, che richiedono un gradiente CSS con valori concreti).
 export const RUOLO_MANTRA_COLORE: Record<RuoloMantra, string> = {
-  Por: "bg-amber-500",
-  Dc: "bg-emerald-600",
-  Dd: "bg-emerald-600",
-  Ds: "bg-emerald-600",
-  B: "bg-emerald-600",
-  E: "bg-blue-600",
-  M: "bg-blue-600",
-  C: "bg-blue-600",
-  W: "bg-purple-600",
-  T: "bg-purple-600",
-  A: "bg-red-600",
-  Pc: "bg-red-600",
+  Por: "#f59e0b",
+  Dc: "#059669",
+  Dd: "#059669",
+  Ds: "#059669",
+  B: "#059669",
+  E: "#2563eb",
+  M: "#2563eb",
+  C: "#2563eb",
+  W: "#9333ea",
+  T: "#9333ea",
+  A: "#dc2626",
+  Pc: "#dc2626",
 };
 
 export interface RoleConfig {
@@ -235,7 +215,7 @@ export interface NomeScomposto {
 // Il listino ufficiale Fantacalcio.it riporta solo il cognome, e aggiunge
 // l'iniziale del nome (es. "Adekunle A.") solo quando serve a distinguere
 // due giocatori con lo stesso cognome. Serve a costruire ricerche/match
-// esatti contro siti terzi (FPEDIA, FSTATS) che invece usano nome+cognome.
+// esatti contro siti terzi (es. FPEDIA) che invece usano nome+cognome.
 const INIZIALE_OMONIMIA_REGEX = /^(.*\S)\s+([A-Za-z])\.$/;
 
 /** Scompone un nome del listino in cognome (+ iniziale del nome, se presente per omonimia). */

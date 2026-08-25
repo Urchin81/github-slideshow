@@ -53,9 +53,9 @@ ruoli ancora da coprire nella tua squadra.
   che uno dei suoi ruoli copre); in Classic segue già l'ordine
   Portiere/Difensore/Centrocampista/Attaccante.
 - **Aggiornamento dati (in Settings)**: tutti i pulsanti che scaricano dati da
-  fonti esterne (notizie, FPEDIA, FSTATS) stanno nella pagina **⚙️ Settings**,
-  non in dashboard — sono operazioni di "manutenzione" separate dal seguire
-  l'asta dal vivo.
+  fonti esterne (notizie, FPEDIA) stanno nella pagina **⚙️ Settings**, non in
+  dashboard — sono operazioni di "manutenzione" separate dal seguire l'asta
+  dal vivo.
   - **Notizie**: interrogano un set di feed RSS di siti calcio (configurabili
     in `lib/newsSources.ts`) e per ogni giocatore trovano le ultime 3 notizie
     con data e link. Dal testo delle notizie vengono dedotti in modo euristico
@@ -73,26 +73,14 @@ ruoli ancora da coprire nella tua squadra.
     previsti, i tag (Panchinaro, Buona Media, Goleador, Assistman, Giovane
     talento) e la nota di scouting. Mostrate nella scheda giocatore insieme
     alla media fantavoto delle 2 stagioni precedenti.
-  - **FSTATS (stagione precedente)**: recupera da footystats.org presenze/
-    gol/assist/ammonizioni/espulsioni/minuti della stagione precedente, più
-    posizione, nazionalità, piede preferito ed età. Il motore di ricerca del
-    sito è JS/AJAX (non interrogabile lato server come quello di FPEDIA):
-    l'app scarica invece **una sola volta per giro** la pagina che elenca
-    tutti i giocatori di Serie A (`/italy/serie-a/players`) e ci costruisce
-    sopra un indice nome→pagina, che poi usa per risolvere ogni giocatore del
-    tuo listino. Per individuare la vera "stagione precedente" (la sezione
-    storica del sito può elencare le stagioni fuori ordine, con voci anomale
-    relative a una stagione futura ancora non conclusa), l'app legge quale
-    stagione è segnata come attiva nel selettore della pagina e scarta ogni
-    voce storica con anno pari o superiore a quello.
   - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il
     cognome (con l'iniziale del nome quando serve a distinguere omonimi, es.
-    "Adekunle A.") mentre FPEDIA/FSTATS usano nome+cognome (es. FPEDIA
-    conosce "Scamacca" come `scamacca-gianluca`): la ricerca richiede che
-    **tutte** le parole del cognome compaiano nel risultato candidato, e usa
-    l'iniziale per scegliere tra più omonimi; se non trova nessuna
-    corrispondenza esatta lascia il campo vuoto invece di rischiare un
-    abbinamento sbagliato (vedi `scomponiNomeListino` in `lib/types.ts`).
+    "Adekunle A.") mentre FPEDIA usa nome+cognome (es. conosce "Scamacca" come
+    `scamacca-gianluca`): la ricerca richiede che **tutte** le parole del
+    cognome compaiano nel risultato candidato, e usa l'iniziale per scegliere
+    tra più omonimi; se non trova nessuna corrispondenza esatta lascia il
+    campo vuoto invece di rischiare un abbinamento sbagliato (vedi
+    `scomponiNomeListino` in `lib/types.ts`).
   - **"Testa su un campione"**: prima di lanciare un aggiornamento su tutto il
     listino, il pulsante ambra fa lo stesso giro solo su una manciata di
     giocatori sparsi (per quotazione, non i primi N) e mostra riga per riga
@@ -101,8 +89,8 @@ ruoli ancora da coprire nella tua squadra.
     sui giri completi, i giocatori non trovati restano elencati (fino a 30)
     con il motivo, invece di sparire in un conteggio aggregato.
 - **Scheda giocatore**: nome, ruolo (Classic e/o Mantra), quotazione, FVM,
-  trend, flag rigorista/punizioni/angoli, statistiche FPEDIA, statistiche
-  FSTATS e ultime notizie con data e fonte.
+  trend, flag rigorista/punizioni/angoli, statistiche FPEDIA e ultime notizie
+  con data e fonte.
 - **Persistenza locale**: lo stato (listino, configurazione, assegnazioni,
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.
@@ -116,8 +104,8 @@ npm run dev
 
 Poi apri `http://localhost:3000`, vai su **⚙️ Settings** per scegliere la
 modalità (Classic/Mantra), importare il listino, configurare budget/rose e
-lanciare gli aggiornamenti dati (notizie/FPEDIA/FSTATS), quindi torna alla
-pagina principale per seguire l'asta.
+lanciare gli aggiornamenti dati (notizie/FPEDIA), quindi torna alla pagina
+principale per seguire l'asta.
 
 ## Note e limiti noti
 
@@ -152,24 +140,17 @@ pagina principale per seguire l'asta.
   ricerca indovinato non trovava nulla sul sito reale) ma le pagine elenco
   per ruolo, la cui struttura è confermata da due scraper indipendenti dello
   stesso sito (github.com/protti/ScraperFantacalcio e
-  github.com/DrElegantia/fanta-app). Se il sito cambia quella struttura, usa
-  il pulsante "Testa su un campione" in Settings per vedere subito quanti
-  giocatori vengono trovati prima di lanciare l'aggiornamento su tutto il
-  listino. Il parser della pagina giocatore è stato scritto e verificato
-  contro un campione reale (in `lib/__fixtures__/fpedia-sample.html`), ma se
-  il sito cambia markup alcuni campi potrebbero smettere di essere trovati
-  (in quel caso torneranno `—`, non un errore che blocca il resto). Uso
-  personale, non massivo: c'è già una pausa tra le richieste, ma resta
-  scraping di un sito di terzi — verifica i loro termini d'uso se ne fai un
-  uso intensivo o ripetuto.
-- **FSTATS è scraping, non un'API ufficiale**: `lib/fstats.ts` scarica una
-  volta per giro la pagina elenco giocatori di footystats.org, ci costruisce
-  un indice nome→pagina e richiede un match completo di tutte le parole del
-  nome per evitare falsi positivi tra centinaia di giocatori — se un
-  giocatore non viene trovato, il campo resta vuoto invece di rischiare un
-  match sbagliato. Il parser è stato scritto e verificato contro un campione
-  reale (in `lib/__fixtures__/fstats-sample.html`), incluso il caso in cui la
-  sezione storica del sito elenca le stagioni fuori ordine. Come per FPEDIA,
-  se il sito cambia markup alcuni campi potrebbero smettere di essere trovati
-  senza bloccare il resto, e vale lo stesso discorso di uso personale non
-  massivo.
+  github.com/DrElegantia/fanta-app) e da un campione HTML reale. Se il sito
+  cambia quella struttura, usa il pulsante "Testa su un campione" in Settings
+  per vedere subito quanti giocatori vengono trovati prima di lanciare
+  l'aggiornamento su tutto il listino. Il parser della pagina giocatore è
+  stato scritto e verificato contro un campione reale (in
+  `lib/__fixtures__/fpedia-sample.html`), ma se il sito cambia markup alcuni
+  campi potrebbero smettere di essere trovati (in quel caso torneranno `—`,
+  non un errore che blocca il resto). Se invece la richiesta stessa fallisce
+  (es. "fetch failed"), il messaggio d'errore include il motivo di rete
+  sottostante (DNS, connessione rifiutata, ecc.), utile per capire se il
+  problema è la tua rete/proxy locale piuttosto che il sito. Uso personale,
+  non massivo: c'è già una pausa tra le richieste, ma resta scraping di un
+  sito di terzi — verifica i loro termini d'uso se ne fai un uso intensivo o
+  ripetuto.
