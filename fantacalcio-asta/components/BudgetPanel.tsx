@@ -12,7 +12,7 @@ import {
   computeValoreMedioAcquisto,
   SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
-import { MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
+import { coloreSfondoSlot, MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
 import { ModuloVisualizzazione } from "@/components/ModuloVisualizzazione";
 import { useAuctionStore } from "@/lib/store";
 
@@ -175,12 +175,12 @@ function PannelloMantra() {
               {(dettagliByNome.get(m.nome) ?? []).map((r) => (
                 <div
                   key={r.slot.join("/")}
-                  className={`flex justify-between ${
-                    r.coperti < r.totale ? "text-red-600 font-semibold" : "text-slate-600"
-                  }`}
+                  className="flex justify-between items-center"
                 >
-                  <span>{r.slot.join("/")}</span>
-                  <span>
+                  <span className="text-white rounded px-1.5 text-[10px]" style={coloreSfondoSlot(r.slot)}>
+                    {r.slot.join("/")}
+                  </span>
+                  <span className={r.coperti < r.totale ? "text-red-600 font-semibold" : "text-slate-600"}>
                     {r.coperti}/{r.totale}
                   </span>
                 </div>

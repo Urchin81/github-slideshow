@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { Gavel } from "lucide-react";
+import { Euro, Gavel } from "lucide-react";
 import {
   RUOLI,
   RUOLI_MANTRA,
@@ -14,32 +14,44 @@ import {
   Ruolo,
   StatoGiocatore,
 } from "@/lib/types";
-import { computeMantraStato, getSuggestions, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
+import { computeMantraStato, getSuggerimentiAsta, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import {
   classeBordoTitolarita,
-  computeLivelloPriorita,
-  computePriorita,
-  DETTAGLIO_PRIORITA_LABEL,
-  DettaglioPriorita,
-} from "@/lib/priorita";
+  computeLivelloScore,
+  computeScore,
+  DETTAGLIO_SCORE_LABEL,
+  DettaglioScore,
+} from "@/lib/score";
+import { computeLivelloUrgenza, computeUrgenza, DETTAGLIO_URGENZA_LABEL, DettaglioUrgenza } from "@/lib/urgenza";
 import { classeLivello } from "@/lib/livelloColori";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
-import { BarraFantasolidita } from "./BarraFantasolidita";
+import { Pillola } from "./Pillola";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
-type Ordinamento = "convenienza" | "priorita";
+type Ordinamento = "score" | "urgenza";
 
-/** Scomposizione di Priorità come tooltip leggibile: solo le componenti che pesano davvero, con segno esplicito. */
-function tooltipPriorita(d: DettaglioPriorita): string {
-  const voci = (Object.keys(DETTAGLIO_PRIORITA_LABEL) as (keyof typeof DETTAGLIO_PRIORITA_LABEL)[])
-    .map((chiave) => ({ label: DETTAGLIO_PRIORITA_LABEL[chiave], valore: d[chiave] }))
+/** Scomposizione dello Score come tooltip leggibile: solo le componenti che pesano davvero, con segno esplicito. */
+function tooltipScore(d: DettaglioScore): string {
+  const voci = (Object.keys(DETTAGLIO_SCORE_LABEL) as (keyof typeof DETTAGLIO_SCORE_LABEL)[])
+    .map((chiave) => ({ label: DETTAGLIO_SCORE_LABEL[chiave], valore: d[chiave] }))
     .filter((v) => Math.abs(v.valore) >= 0.05)
     .map((v) => `${v.label}: ${v.valore > 0 ? "+" : ""}${v.valore.toFixed(1)}`);
-  return voci.length > 0 ? `Priorità ${Math.round(d.totale)}\n${voci.join("\n")}` : "Nessun dato sufficiente per calcolare la Priorità";
+  return voci.length > 0 ? `Score ${Math.round(d.totale)}\n${voci.join("\n")}` : "Nessun dato sufficiente per calcolare lo Score";
+}
+
+/** Scomposizione dell'Urgenza come tooltip leggibile, con il ruolo su cui è calcolata (rilevante nei multi-ruolo Mantra). */
+function tooltipUrgenza(d: DettaglioUrgenza): string {
+  const voci = (Object.keys(DETTAGLIO_URGENZA_LABEL) as (keyof typeof DETTAGLIO_URGENZA_LABEL)[])
+    .map((chiave) => ({ label: DETTAGLIO_URGENZA_LABEL[chiave], valore: d[chiave] }))
+    .filter((v) => Math.abs(v.valore) >= 0.05)
+    .map((v) => `${v.label}: ${v.valore > 0 ? "+" : ""}${v.valore.toFixed(1)}`);
+  return voci.length > 0
+    ? `Urgenza ${Math.round(d.totale)} (${d.ruoloUsato})\n${voci.join("\n")}`
+    : "Nessun dato sufficiente per calcolare l'Urgenza";
 }
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
@@ -71,27 +83,28 @@ export function PlayerTable() {
   const [ruoloFiltro, setRuoloFiltro] = useState<RoleKey | "tutti">("tutti");
   const [statoFiltro, setStatoFiltro] = useState<FiltroStato>("disponibile");
   const [ricerca, setRicerca] = useState("");
-  const [soloConsigliati, setSoloConsigliati] = useState(false);
   const [soloPreferiti, setSoloPreferiti] = useState(false);
   const [modificaId, setModificaId] = useState<string | null>(null);
   const [modificaInput, setModificaInput] = useState("1");
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
-  const [ordinamento, setOrdinamento] = useState<Ordinamento>("convenienza");
+  const [ordinamento, setOrdinamento] = useState<Ordinamento>("score");
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
   }
 
-  const suggestions = useMemo(() => getSuggestions(players, settings), [players, settings]);
-  const suggestionById = useMemo(() => {
-    const map = new Map(suggestions.map((s) => [s.player.id, s]));
+  const suggerimenti = useMemo(() => getSuggerimentiAsta(players, settings), [players, settings]);
+  const suggerimentoById = useMemo(() => {
+    const map = new Map(suggerimenti.map((s) => [s.player.id, s]));
     return map;
-  }, [suggestions]);
+  }, [suggerimenti]);
   const livelloFantasolidita = useMemo(() => computeLivelliFantasolidita(players), [players]);
-  const priorita = useMemo(() => computePriorita(players, settings), [players, settings]);
-  const livelloPriorita = useMemo(() => computeLivelloPriorita(players, priorita), [players, priorita]);
+  const score = useMemo(() => computeScore(players, settings), [players, settings]);
+  const livelloScore = useMemo(() => computeLivelloScore(players, score), [players, score]);
+  const urgenza = useMemo(() => computeUrgenza(players, settings), [players, settings]);
+  const livelloUrgenza = useMemo(() => computeLivelloUrgenza(players, urgenza), [players, urgenza]);
 
   // Giocatore attualmente "sotto il martello": resta valido solo finché è ancora
   // disponibile (appena viene assegnato o rimosso si torna automaticamente alla lista intera).
@@ -100,7 +113,7 @@ export function PlayerTable() {
     const p = players.find((pl) => pl.id === inAstaId);
     return p && p.stato === "disponibile" ? p : null;
   }, [inAstaId, players]);
-  const astaSuggestion = inAstaPlayer ? suggestionById.get(inAstaPlayer.id) : undefined;
+  const astaSuggerimento = inAstaPlayer ? suggerimentoById.get(inAstaPlayer.id) : undefined;
 
   function ruoliCompatibili(a: typeof players[number], b: typeof players[number]) {
     return isMantra
@@ -112,7 +125,7 @@ export function PlayerTable() {
     if (inAstaPlayer) {
       const compatibili = players
         .filter((p) => p.id !== inAstaPlayer.id && p.stato === "disponibile" && ruoliCompatibili(p, inAstaPlayer))
-        .sort((a, b) => (suggestionById.get(b.id)?.punteggio ?? 0) - (suggestionById.get(a.id)?.punteggio ?? 0));
+        .sort((a, b) => (score(b)?.totale ?? -Infinity) - (score(a)?.totale ?? -Infinity));
       return [inAstaPlayer, ...compatibili];
     }
 
@@ -127,9 +140,6 @@ export function PlayerTable() {
       const q = ricerca.trim().toLowerCase();
       base = base.filter((p) => p.nome.toLowerCase().includes(q) || p.squadra.toLowerCase().includes(q));
     }
-    if (soloConsigliati && statoFiltro === "disponibile") {
-      base = base.filter((p) => suggestionById.get(p.id)?.consigliato);
-    }
     if (soloPreferiti) {
       base = base.filter((p) => p.preferito);
     }
@@ -140,13 +150,13 @@ export function PlayerTable() {
 
     return [...base].sort((a, b) => {
       if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
-      if (ordinamento === "priorita") {
-        const pa = priorita(a)?.totale ?? -Infinity;
-        const pb = priorita(b)?.totale ?? -Infinity;
-        return pb - pa;
+      if (ordinamento === "urgenza") {
+        const ua = urgenza(a)?.totale ?? -Infinity;
+        const ub = urgenza(b)?.totale ?? -Infinity;
+        return ub - ua;
       }
-      const sa = suggestionById.get(a.id)?.punteggio ?? 0;
-      const sb = suggestionById.get(b.id)?.punteggio ?? 0;
+      const sa = score(a)?.totale ?? -Infinity;
+      const sb = score(b)?.totale ?? -Infinity;
       return sb - sa;
     });
   }, [
@@ -154,17 +164,16 @@ export function PlayerTable() {
     statoFiltro,
     ruoloFiltro,
     ricerca,
-    soloConsigliati,
     soloPreferiti,
     caratteristicaFiltro,
-    suggestionById,
     isMantra,
     inAstaPlayer,
     ordinamento,
-    priorita,
+    score,
+    urgenza,
   ]);
 
-  const mostraPunteggio = statoFiltro === "disponibile" || !!inAstaPlayer;
+  const mostraValutazioni = statoFiltro === "disponibile" || !!inAstaPlayer;
 
   // Simulazione live del prezzo mentre si tiene aperto il box "in asta": nessun
   // effetto sullo stato reale, solo una proiezione budget/slot prima-dopo.
@@ -247,18 +256,17 @@ export function PlayerTable() {
     );
   }
 
-  function celleFantasolidita(p: (typeof players)[number]) {
+  function celleFCPedia(p: (typeof players)[number]) {
     const voci = vociFantasolditaLista(p);
     if (voci.length === 0) return <span className="text-slate-300">—</span>;
     return (
-      <div className="w-36 space-y-0.5">
+      <div className="flex gap-2">
         {voci.map((v) => (
-          <BarraFantasolidita
+          <Pillola
             key={v.campo}
             label={v.label}
-            valore={v.valore}
+            valore={String(Math.round(v.valore))}
             livello={livelloFantasolidita(p, v.campo)}
-            compatta
           />
         ))}
       </div>
@@ -266,7 +274,9 @@ export function PlayerTable() {
   }
 
   const prezzoAstaNum = Number(prezzoAstaInput) || 0;
-  const rischioAsta = astaSuggestion ? valutaRischioSforamento(prezzoAstaNum, astaSuggestion.prezzoMassimo) : null;
+  const rischioAsta = astaSuggerimento
+    ? valutaRischioSforamento(prezzoAstaNum, astaSuggerimento.prezzoMassimo)
+    : null;
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -323,54 +333,50 @@ export function PlayerTable() {
               </div>
             </div>
 
-            {astaSuggestion && (
-              <>
-                <div className="text-center">
-                  <div className="text-[10px] uppercase text-slate-400 tracking-wide">Punteggio</div>
-                  {astaSuggestion.consigliato ? (
-                    <div
-                      className="text-green-600 font-bold"
-                      title="Consigliato: quotazione/FVM conveniente rispetto al budget medio ancora disponibile per questo ruolo (non più del +30%) e c'è ancora posto libero da riempire in rosa."
-                    >
-                      {Math.round(astaSuggestion.punteggio)} ✓
-                    </div>
-                  ) : (
-                    <div className="text-slate-500 font-bold">{Math.round(astaSuggestion.punteggio)}</div>
-                  )}
-                </div>
-                <span
-                  className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
-                  title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
-                >
-                  Max consigliato <strong>{Math.round(astaSuggestion.prezzoMassimo.massimoConsigliato)}</strong>
-                  <span className="text-slate-400"> · tetto {Math.round(astaSuggestion.prezzoMassimo.tettoSicurezza)}</span>
-                </span>
-              </>
+            {astaSuggerimento && (
+              <span
+                className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
+              >
+                Max consigliato <strong>{Math.round(astaSuggerimento.prezzoMassimo.massimoConsigliato)}</strong>
+                <span className="text-slate-400"> · tetto {Math.round(astaSuggerimento.prezzoMassimo.tettoSicurezza)}</span>
+              </span>
             )}
 
-            {priorita(inAstaPlayer) && (
+            {vociFantasolditaLista(inAstaPlayer).length > 0 && (
+              <div className="flex gap-3">
+                {vociFantasolditaLista(inAstaPlayer).map((v) => (
+                  <Pillola
+                    key={v.campo}
+                    label={v.label}
+                    valore={String(Math.round(v.valore))}
+                    livello={livelloFantasolidita(inAstaPlayer, v.campo)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {score(inAstaPlayer) && (
               <div className="text-center">
-                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Priorità</div>
+                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Score</div>
                 <div
-                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloPriorita(inAstaPlayer))}`}
-                  title={tooltipPriorita(priorita(inAstaPlayer)!)}
+                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloScore(inAstaPlayer))}`}
+                  title={tooltipScore(score(inAstaPlayer)!)}
                 >
-                  {Math.round(priorita(inAstaPlayer)!.totale)}
+                  {Math.round(score(inAstaPlayer)!.totale)}
                 </div>
               </div>
             )}
 
-            {vociFantasolditaLista(inAstaPlayer).length > 0 && (
-              <div className="w-40 space-y-0.5">
-                {vociFantasolditaLista(inAstaPlayer).map((v) => (
-                  <BarraFantasolidita
-                    key={v.campo}
-                    label={v.label}
-                    valore={v.valore}
-                    livello={livelloFantasolidita(inAstaPlayer, v.campo)}
-                    compatta
-                  />
-                ))}
+            {urgenza(inAstaPlayer) && (
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Urgenza</div>
+                <div
+                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloUrgenza(inAstaPlayer))}`}
+                  title={tooltipUrgenza(urgenza(inAstaPlayer)!)}
+                >
+                  {Math.round(urgenza(inAstaPlayer)!.totale)}
+                </div>
               </div>
             )}
           </div>
@@ -476,8 +482,8 @@ export function PlayerTable() {
                     <span>Media/posto dopo</span>
                     <span>{Math.round(simulazione.mantraStatoSimulato.prezzoMedioDisponibile)}</span>
                   </div>
-                  {astaSuggestion?.moduliUtili && astaSuggestion.moduliUtili.length > 0 && (
-                    <p className="text-slate-500">Aiuta a completare: {astaSuggestion.moduliUtili.join(", ")}</p>
+                  {astaSuggerimento?.moduliUtili && astaSuggerimento.moduliUtili.length > 0 && (
+                    <p className="text-slate-500">Aiuta a completare: {astaSuggerimento.moduliUtili.join(", ")}</p>
                   )}
                 </>
               )}
@@ -519,21 +525,11 @@ export function PlayerTable() {
               value={ordinamento}
               onChange={(e) => setOrdinamento(e.target.value as Ordinamento)}
               className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-              title="Convenienza: rapporto quotazione/budget residuo. Priorità: potenziale di rendimento reale (gol, assist, voti, titolarità)."
+              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta."
             >
-              <option value="convenienza">Ordina per: Convenienza</option>
-              <option value="priorita">Ordina per: Priorità</option>
+              <option value="score">Ordina per: Score</option>
+              <option value="urgenza">Ordina per: Urgenza</option>
             </select>
-          )}
-          {statoFiltro === "disponibile" && (
-            <label className="text-sm flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={soloConsigliati}
-                onChange={(e) => setSoloConsigliati(e.target.checked)}
-              />
-              Solo consigliati
-            </label>
           )}
           <label className="text-sm flex items-center gap-1.5">
             <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
@@ -571,16 +567,20 @@ export function PlayerTable() {
               <th className="pb-2">Foto</th>
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
-              <th className="pb-2">Fantasolidità/rischi</th>
-              {mostraPunteggio && <th className="pb-2 text-right">Priorità</th>}
-              <th className="pb-2 text-right">Quot.</th>
-              {mostraPunteggio && <th className="pb-2 text-right">Punteggio</th>}
+              <th className="pb-2 text-right">
+                <span className="inline-flex items-center justify-end gap-1">
+                  <Euro size={12} />
+                  Quot.
+                </span>
+              </th>
+              <th className="pb-2">FCPedia</th>
+              {mostraValutazioni && <th className="pb-2 text-right">Score</th>}
+              {mostraValutazioni && <th className="pb-2 text-right">Urgenza</th>}
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
           <tbody>
             {righe.map((p) => {
-              const suggestion = suggestionById.get(p.id);
               const inAsta = inAstaPlayer?.id === p.id;
               return (
                 <Fragment key={p.id}>
@@ -618,35 +618,37 @@ export function PlayerTable() {
                       {p.squadra}
                     </span>
                   </td>
-                  <td className="py-1.5">{celleFantasolidita(p)}</td>
-                  {mostraPunteggio && (
+                  <td className="py-1.5 text-right">{p.quotazione}</td>
+                  <td className="py-1.5">{celleFCPedia(p)}</td>
+                  {mostraValutazioni && (
                     <td className="py-1.5 text-right">
-                      {priorita(p) ? (
+                      {score(p) ? (
                         <span
                           className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
-                            livelloPriorita(p)
+                            livelloScore(p)
                           )}`}
-                          title={tooltipPriorita(priorita(p)!)}
+                          title={tooltipScore(score(p)!)}
                         >
-                          {Math.round(priorita(p)!.totale)}
+                          {Math.round(score(p)!.totale)}
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
                   )}
-                  <td className="py-1.5 text-right">{p.quotazione}</td>
-                  {mostraPunteggio && (
+                  {mostraValutazioni && (
                     <td className="py-1.5 text-right">
-                      {suggestion?.consigliato ? (
+                      {urgenza(p) ? (
                         <span
-                          className="text-green-600 font-semibold"
-                          title="Consigliato: quotazione/FVM conveniente rispetto al budget medio ancora disponibile per questo ruolo (non più del +30%) e c'è ancora posto libero da riempire in rosa."
+                          className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
+                            livelloUrgenza(p)
+                          )}`}
+                          title={tooltipUrgenza(urgenza(p)!)}
                         >
-                          {Math.round(suggestion.punteggio)} ✓
+                          {Math.round(urgenza(p)!.totale)}
                         </span>
                       ) : (
-                        <span className="text-slate-400">{Math.round(suggestion?.punteggio ?? 0)}</span>
+                        <span className="text-slate-300">—</span>
                       )}
                     </td>
                   )}
@@ -731,9 +733,9 @@ export function PlayerTable() {
                     />
                   </td>
                   <td />
-                  {mostraPunteggio && <td />}
                   <td />
-                  {mostraPunteggio && <td />}
+                  {mostraValutazioni && <td />}
+                  {mostraValutazioni && <td />}
                   <td />
                 </tr>
                 </Fragment>

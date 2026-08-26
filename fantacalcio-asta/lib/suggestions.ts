@@ -28,10 +28,12 @@ export interface PrezzoMassimo {
 
 /**
  * Calcola il prezzo massimo per un giocatore dato quanto budget/slot restano
- * ancora nel suo ruolo (Classic) o nel pool (Mantra). Riusa lo stesso bonus
- * FVM di scoreValoreForBudget cosi' il "massimo consigliato" e' coerente con
- * la soglia che gia' determina "consigliato" in tabella, non un numero
- * inventato a parte.
+ * ancora nel suo ruolo (Classic) o nel pool (Mantra): "massimo consigliato"
+ * (soglia prudente, SOGLIA_RAPPORTO_CONSIGLIATO * prezzo medio disponibile,
+ * con un bonus se l'FVM supera la quotazione) e "tetto di sicurezza"
+ * (aritmetico, oltre il quale non basterebbe almeno 1 credito a testa per gli
+ * altri slot/posti rimanenti) — un allarme sul prezzo, indipendente da quanto
+ * il giocatore sia forte (vedi invece Score in lib/score.ts).
  */
 export function computePrezzoMassimo(
   quotazione: number,
@@ -76,21 +78,17 @@ export function valutaRischioSforamento(prezzo: number, massimo: PrezzoMassimo):
   return { livello: "ok", messaggio: "Nel budget consigliato." };
 }
 
-export interface PlayerSuggestion {
+export interface SuggerimentoAsta {
   player: Player;
-  prezzoMedioDisponibile: number;
-  rapporto: number;
-  punteggio: number;
-  consigliato: boolean;
   prezzoMassimo: PrezzoMassimo;
-  /** Solo Classic: il ruolo su cui e' stato calcolato il punteggio. */
-  ruoloUsato?: Ruolo;
   /** Solo Mantra: nomi dei moduli (tra i piu' vicini al completamento) che questo giocatore aiuterebbe a completare. */
   moduliUtili?: string[];
 }
 
-export function getSuggestions(players: Player[], settings: Settings): PlayerSuggestion[] {
-  return settings.modalita === "classic" ? getSuggestionsClassic(players, settings) : getSuggestionsMantra(players, settings);
+export function getSuggerimentiAsta(players: Player[], settings: Settings): SuggerimentoAsta[] {
+  return settings.modalita === "classic"
+    ? getSuggerimentiAstaClassic(players, settings)
+    : getSuggerimentiAstaMantra(players, settings);
 }
 
 // ---------------------------------------------------------------------------
@@ -136,34 +134,13 @@ export function computeRoleStats(players: Player[], settings: Settings): Record<
   return stats;
 }
 
-/**
- * Punteggio di convenienza: premia una quotazione alta rispetto al budget
- * medio ancora spendibile per uno slot di quel ruolo (rapporto
- * qualita'/prezzo), penalizza chi sfora quel budget medio, e valorizza un FVM
- * superiore alla quotazione se disponibile.
- */
-function scoreValoreForBudget(quotazione: number, fvm: number | undefined, prezzoMedioDisponibile: number) {
-  const rapporto =
-    prezzoMedioDisponibile > 0 ? quotazione / prezzoMedioDisponibile : quotazione > 0 ? Infinity : 0;
-  const eccedenza = Math.max(0, quotazione - prezzoMedioDisponibile);
-  const bonusFvm = fvm ? (fvm - quotazione) * 0.5 : 0;
-  const punteggio = quotazione - eccedenza * 2 + bonusFvm;
-  return { rapporto, punteggio };
-}
-
-function getSuggestionsClassic(players: Player[], settings: Settings): PlayerSuggestion[] {
+function getSuggerimentiAstaClassic(players: Player[], settings: Settings): SuggerimentoAsta[] {
   const roleStats = computeRoleStats(players, settings);
 
   return players
     .filter((p) => p.stato === "disponibile")
     .map((player) => {
       const stats = roleStats[player.ruolo];
-      const { rapporto, punteggio } = scoreValoreForBudget(
-        player.quotazione,
-        player.fvm,
-        stats.prezzoMedioDisponibile
-      );
-      const consigliato = stats.slotRimanenti > 0 && rapporto <= SOGLIA_RAPPORTO_CONSIGLIATO;
       const prezzoMassimo = computePrezzoMassimo(
         player.quotazione,
         player.fvm,
@@ -171,17 +148,8 @@ function getSuggestionsClassic(players: Player[], settings: Settings): PlayerSug
         stats.slotRimanenti,
         stats.prezzoMedioDisponibile
       );
-      return {
-        player,
-        prezzoMedioDisponibile: stats.prezzoMedioDisponibile,
-        rapporto,
-        punteggio,
-        consigliato,
-        prezzoMassimo,
-        ruoloUsato: player.ruolo,
-      };
-    })
-    .sort((a, b) => b.punteggio - a.punteggio);
+      return { player, prezzoMassimo };
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -336,9 +304,7 @@ export function computePianoSpesaMantra(players: Player[], settings: Settings, t
   }));
 }
 
-const PESO_NECESSITA = 10;
-
-function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSuggestion[] {
+function getSuggerimentiAstaMantra(players: Player[], settings: Settings): SuggerimentoAsta[] {
   const stato = computeMantraStato(players, settings);
   const { coperture, matchers } = calcolaCoperturaModuli(players);
   const promettenti = coperture.slice(0, MODULI_CONSIDERATI);
@@ -347,30 +313,6 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
     .filter((p) => p.stato === "disponibile")
     .map((player) => {
       const ruoli = player.ruoliMantra ?? [];
-      if (ruoli.length === 0) {
-        return {
-          player,
-          prezzoMedioDisponibile: 0,
-          rapporto: 0,
-          punteggio: 0,
-          consigliato: false,
-          prezzoMassimo: { tettoSicurezza: 0, massimoConsigliato: 0 },
-        };
-      }
-
-      const { rapporto, punteggio: scoreValore } = scoreValoreForBudget(
-        player.quotazione,
-        player.fvm,
-        stato.prezzoMedioDisponibile
-      );
-
-      const moduliUtili = promettenti
-        .filter((modulo) => matchers.get(modulo.nome)!.proveresti(player.id, ruoli))
-        .map((modulo) => modulo.nome);
-
-      const punteggio = scoreValore + moduliUtili.length * PESO_NECESSITA;
-      const consigliato =
-        stato.postiRimanenti > 0 && (rapporto <= SOGLIA_RAPPORTO_CONSIGLIATO || moduliUtili.length > 0);
       const prezzoMassimo = computePrezzoMassimo(
         player.quotazione,
         player.fvm,
@@ -378,18 +320,16 @@ function getSuggestionsMantra(players: Player[], settings: Settings): PlayerSugg
         stato.postiRimanenti,
         stato.prezzoMedioDisponibile
       );
+      if (ruoli.length === 0) {
+        return { player, prezzoMassimo };
+      }
 
-      return {
-        player,
-        prezzoMedioDisponibile: stato.prezzoMedioDisponibile,
-        rapporto,
-        punteggio,
-        consigliato,
-        prezzoMassimo,
-        moduliUtili,
-      };
-    })
-    .sort((a, b) => b.punteggio - a.punteggio);
+      const moduliUtili = promettenti
+        .filter((modulo) => matchers.get(modulo.nome)!.proveresti(player.id, ruoli))
+        .map((modulo) => modulo.nome);
+
+      return { player, prezzoMassimo, moduliUtili };
+    });
 }
 
 // ---------------------------------------------------------------------------

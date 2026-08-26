@@ -12,11 +12,11 @@ import {
 import { livelloRelativoInCampione } from "./percentile";
 
 // ---------------------------------------------------------------------------
-// Punteggio "Priorita'": quanto e' forte/affidabile un giocatore (gol, assist,
-// voti costanti, pochi cartellini, titolarita'), a differenza del "Punteggio"
-// esistente in lib/suggestions.ts che misura solo la convenienza economica
-// (quotazione/FVM vs budget). Ogni componente e' una costante nominata qui
-// sotto, cosi' da poter essere ritoccata senza spulciare le formule.
+// "Score": quanto e' forte/affidabile un giocatore (gol, assist, voti
+// costanti, pochi cartellini, titolarita') — l'unico punteggio-qualita'
+// dell'app (il vecchio "Punteggio" di convenienza economica e' stato
+// rimosso). Ogni componente e' una costante nominata qui sotto, cosi' da
+// poter essere ritoccata senza spulciare le formule.
 // ---------------------------------------------------------------------------
 
 /** Un gol pesa di piu' per chi normalmente ne fa meno (difensori/centrocampisti) che per un attaccante puro. */
@@ -75,7 +75,7 @@ const PESO_VERSATILITA = 2;
 /** Bonus per un giocatore disponibile che fa da "assicurazione" (stessa squadra reale, ruolo compatibile) a un titolare gia' posseduto. */
 const BONUS_BACKUP_TITOLARE = 5;
 
-export interface DettaglioPriorita {
+export interface DettaglioScore {
   golAttesi: number;
   assistAttesi: number;
   votoMedio: number;
@@ -134,12 +134,12 @@ function spreadVersatilita(ruoliMantra: RuoloMantra[] | undefined): number {
 }
 
 /**
- * Costruisce, dalla rosa attuale, una funzione che calcola il dettaglio del
- * punteggio Priorita' per un singolo giocatore. Restituisce null se il
- * giocatore non ha alcun dato FPEDIA (nessuna base per stimare nulla, stesso
- * criterio di lib/fantasolidita.ts).
+ * Costruisce, dalla rosa attuale, una funzione che calcola il dettaglio dello
+ * Score per un singolo giocatore. Restituisce null se il giocatore non ha
+ * alcun dato FPEDIA (nessuna base per stimare nulla, stesso criterio di
+ * lib/fantasolidita.ts).
  */
-export function computePriorita(players: Player[], settings: Settings): (player: Player) => DettaglioPriorita | null {
+export function computeScore(players: Player[], settings: Settings): (player: Player) => DettaglioScore | null {
   const isMantra = settings.modalita === "mantra";
   const titolariPosseduti = players.filter((p) => p.stato === "mia" && isTitolarePositivo(p));
 
@@ -227,21 +227,21 @@ export function computePriorita(players: Player[], settings: Settings): (player:
 }
 
 /**
- * Livello relativo (5 fasce) del totale di Priorita' rispetto a tutti gli
- * altri giocatori con dati sufficienti per calcolarlo — stesso semaforo di
+ * Livello relativo (5 fasce) del totale di Score rispetto a tutti gli altri
+ * giocatori con dati sufficienti per calcolarlo — stesso semaforo di
  * lib/fantasolidita.ts, cosi' il colore del badge in tabella e' coerente col
  * resto dell'app.
  */
-export function computeLivelloPriorita(
+export function computeLivelloScore(
   players: Player[],
-  priorita: (player: Player) => DettaglioPriorita | null
+  score: (player: Player) => DettaglioScore | null
 ): (player: Player) => LivelloFpedia {
   const campione = players
-    .map((p) => priorita(p)?.totale)
+    .map((p) => score(p)?.totale)
     .filter((v): v is number => v !== undefined);
 
   return (player) => {
-    const dettaglio = priorita(player);
+    const dettaglio = score(player);
     if (!dettaglio) return null;
     return livelloRelativoInCampione(dettaglio.totale, campione);
   };
@@ -249,10 +249,10 @@ export function computeLivelloPriorita(
 
 /**
  * Classificazione a 4 fasce della titolarita' (a differenza del punteggio
- * continuo "titolarita" di DettaglioPriorita, qui serve una categoria
- * discreta da mostrare come bordo colorato nella lista giocatori): riusa gli
- * stessi segnali (trend notizie, tag FPEDIA, flag infortunato) piu' le
- * presenze previste, non ancora usate per una classificazione a soglie.
+ * continuo "titolarita" di DettaglioScore, qui serve una categoria discreta
+ * da mostrare come bordo colorato nella lista giocatori): riusa gli stessi
+ * segnali (trend notizie, tag FPEDIA, flag infortunato) piu' le presenze
+ * previste, non ancora usate per una classificazione a soglie.
  */
 export type LivelloTitolarita = "alta" | "media" | "bassa" | "sconosciuta";
 
@@ -285,7 +285,7 @@ export function classeBordoTitolarita(player: Player): string {
   return BORDO_TITOLARITA[classificaTitolarita(player)];
 }
 
-export const DETTAGLIO_PRIORITA_LABEL: Record<Exclude<keyof DettaglioPriorita, "totale">, string> = {
+export const DETTAGLIO_SCORE_LABEL: Record<Exclude<keyof DettaglioScore, "totale">, string> = {
   golAttesi: "Gol attesi",
   assistAttesi: "Assist attesi",
   votoMedio: "Media voto",
