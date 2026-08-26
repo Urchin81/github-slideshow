@@ -189,6 +189,30 @@ export const RUOLO_MANTRA_COLORE: Record<RuoloMantra, string> = {
   Pc: "#dc2626",
 };
 
+/**
+ * Quanto e' "offensivo" ogni ruolo Mantra, da 0 (portiere) a 5.5 (punta
+ * pura): usato solo per il bonus di versatilita' del punteggio Priorita'
+ * (lib/priorita.ts), per premiare i giocatori multi-ruolo il cui ruolo
+ * secondario e' piu' avanzato del primario (es. Dc/E, C/T). I valori
+ * intermedi riflettono difensori centrali < laterali < braccetto <
+ * centrocampo puro < ala/trequartista < attacco, coerenti con RUOLO_MANTRA_COLORE
+ * (che gia' distingue E/M/C da W/T) e con gli 11 moduli di lib/moduliMantra.ts.
+ */
+export const RUOLO_MANTRA_AVANZAMENTO: Record<RuoloMantra, number> = {
+  Por: 0,
+  Dc: 1,
+  Dd: 1.5,
+  Ds: 1.5,
+  B: 2,
+  E: 3,
+  M: 3,
+  C: 3.5,
+  W: 4.5,
+  T: 4.5,
+  Pc: 5.5,
+  A: 5,
+};
+
 export interface RoleConfig {
   slot: number;
   percentualeBudget: number;

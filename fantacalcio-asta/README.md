@@ -44,10 +44,14 @@ ruoli ancora da coprire nella tua squadra.
   che non corrisponde al tuo schema.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
-  disponibile), Fantasolidità/rischi (da FPEDIA, vedi sotto), Quotazione,
-  Punteggio (solo tra i disponibili) e Azioni — sempre in quest'ordine.
-  L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
-  basso, cosí si vede sempre a quale colonna corrisponde ogni valore.
+  disponibile), Fantasolidità/rischi (da FPEDIA, vedi sotto), Priorità (solo
+  tra i disponibili, vedi sotto), Quotazione, Punteggio (solo tra i
+  disponibili) e Azioni — sempre in quest'ordine. L'intestazione resta
+  visibile ("sticky") mentre si scorre l'elenco verso il basso, cosí si vede
+  sempre a quale colonna corrisponde ogni valore. Sopra la tabella, tra i
+  disponibili, il menu **"Ordina per"** sceglie se ordinare per
+  **Convenienza** (il Punteggio: rapporto qualità/prezzo, default) o per
+  **Priorità** (vedi sotto).
 - **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
   disegno del campo, se è completabile con la rosa attuale — e in tal caso
   quanti **insiemi distinti di 11 giocatori schierabili** puoi comporre
@@ -79,6 +83,54 @@ ruoli ancora da coprire nella tua squadra.
   valorizza un FVM superiore alla quotazione. In Mantra il punteggio aggiunge
   un bonus per ogni modulo (tra i più vicini al completamento) che il
   giocatore aiuterebbe effettivamente a completare.
+- **Priorità**: un secondo punteggio, indipendente dal Punteggio/Convenienza
+  sopra (quello resta un indicatore di costo, non di rendimento), pensato per
+  aiutare a scegliere — a parità di budget — i giocatori più forti in campo:
+  quelli con più potenziale di gol e assist, voti costanti e pochi cartellini.
+  Combina (`lib/priorita.ts`, pesi tutti nominati in cima al file e
+  facilmente ritoccabili) solo dati già raccolti dall'app, mai un punteggio
+  esterno opaco:
+  - **Gol e assist attesi** (da FPEDIA): un gol vale di più per un difensore
+    o un centrocampista che per un attaccante puro (per cui è "normale"); un
+    assist vale uguale per tutti i ruoli.
+  - **Media voto e costanza**: bonus se la media voto è sopra la sufficienza
+    (e malus se sotto), più un piccolo bonus se è vicina a quella dell'ultima
+    stagione precedente disponibile (affidabilità, non solo media assoluta).
+  - **Cartellini**: malus proporzionale al tasso ammonizioni/espulsioni sulle
+    presenze già giocate (non un conteggio assoluto, per non penalizzare chi
+    ha giocato meno partite finora), rinforzato dal tag FPEDIA "Falloso".
+  - **Presenze attese** e **calci piazzati** (rigorista/punizioni/angoli, più
+    i tag FPEDIA "Piazzati"/"Outsider"/"Buona Media" già scaricati e prima
+    inutilizzati): bonus, gol/assist extra spesso non catturati nel solo
+    range previsionale.
+  - **Titolarità**: combina il trend dedotto dalle notizie (es. "Titolare
+    fisso" vs "In panchina") e i tag FPEDIA "Titolare"/"Panchinaro" (due
+    segnali indipendenti ma da soli poco affidabili, sommati con un tetto per
+    non doppiare lo stesso segnale), più un malus forte a parte per il flag
+    "infortunato" strutturato (le liste infortunati di FPEDIA, più affidabile
+    del solo trend testuale) — fondamentale per non restare scoperti in una
+    posizione durante l'asta.
+  - **Versatilità offensiva (solo Mantra)**: bonus per i giocatori con doppio
+    ruolo il cui ruolo secondario è più avanzato/offensivo del primario (es.
+    un Dc/E vale di più di un Dc puro; un C/T di più di un C puro), in base a
+    un nuovo ranking di "avanzamento offensivo" dei 12 ruoli Mantra
+    (`RUOLO_MANTRA_AVANZAMENTO` in `lib/types.ts`, da 0 il portiere a 5.5 la
+    punta pura) — generalizza il criterio a qualunque coppia di ruoli, senza
+    hard-codare casi specifici.
+  - **Assicurazione titolare**: bonus automatico (nessun interruttore da
+    attivare) per un giocatore disponibile che gioca nella stessa squadra
+    reale di un titolare già nella tua rosa, con ruolo compatibile — utile
+    soprattutto per gli ultimi slot di rosa, come "panchinaro" di un
+    titolare che già possiedi in caso di rotazioni o infortuni; si attiva da
+    solo sempre più spesso man mano che possiedi titolari, senza bisogno di
+    sapere esplicitamente di essere agli ultimi slot.
+
+  Il numero mostrato (in tabella e nel riquadro "in asta", accanto a
+  Punteggio/Max consigliato) è colorato con lo stesso semaforo relativo a 5
+  fasce delle altre statistiche FPEDIA, e passandoci sopra il mouse compare
+  la scomposizione completa punto per punto — mai un numero "magico" senza
+  spiegazione. Un giocatore senza alcun dato FPEDIA mostra "—" (nessuna base
+  per stimare nulla), come già avviene per Fantasolidità/rischi.
 - **Tracciamento asta**: segna un giocatore come "Preso da me" (con prezzo
   pagato, aggiorna budget e rosa) o "Preso da altri" (rimosso dal mercato). Su
   un giocatore già preso, il bottone giallo con la matita ✏️ modifica il
@@ -92,8 +144,9 @@ ruoli ancora da coprire nella tua squadra.
   entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
   la riga: foto (con il cerotto 🩹 se infortunato), ruolo/i, squadra,
-  quotazione, FVM, titolarità (dedotta dalle notizie), Punteggio, Max
-  consigliato/tetto, le barre Fantasolidità/rischi (vedi sotto), e — a
+  quotazione, FVM, titolarità (dedotta dalle notizie), Punteggio, Priorità
+  (vedi sotto), Max consigliato/tetto, le barre Fantasolidità/rischi (vedi
+  sotto), e — a
   differenza della fila di icone sempre-tutte-visibili altrove nell'app —
   **solo le caratteristiche effettivamente presenti**, ognuna con
   l'etichetta testuale accanto all'icona invece del solo tooltip (qui c'è

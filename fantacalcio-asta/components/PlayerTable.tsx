@@ -16,12 +16,25 @@ import {
 } from "@/lib/types";
 import { computeMantraStato, getSuggestions, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
+import { computeLivelloPriorita, computePriorita, DETTAGLIO_PRIORITA_LABEL, DettaglioPriorita } from "@/lib/priorita";
+import { classeLivello } from "@/lib/livelloColori";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 import { BarraFantasolidita } from "./BarraFantasolidita";
 import { BadgeInfortunio } from "./BadgeInfortunio";
+
+type Ordinamento = "convenienza" | "priorita";
+
+/** Scomposizione di Priorità come tooltip leggibile: solo le componenti che pesano davvero, con segno esplicito. */
+function tooltipPriorita(d: DettaglioPriorita): string {
+  const voci = (Object.keys(DETTAGLIO_PRIORITA_LABEL) as (keyof typeof DETTAGLIO_PRIORITA_LABEL)[])
+    .map((chiave) => ({ label: DETTAGLIO_PRIORITA_LABEL[chiave], valore: d[chiave] }))
+    .filter((v) => Math.abs(v.valore) >= 0.05)
+    .map((v) => `${v.label}: ${v.valore > 0 ? "+" : ""}${v.valore.toFixed(1)}`);
+  return voci.length > 0 ? `Priorità ${Math.round(d.totale)}\n${voci.join("\n")}` : "Nessun dato sufficiente per calcolare la Priorità";
+}
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
@@ -59,6 +72,7 @@ export function PlayerTable() {
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
+  const [ordinamento, setOrdinamento] = useState<Ordinamento>("convenienza");
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
@@ -70,6 +84,8 @@ export function PlayerTable() {
     return map;
   }, [suggestions]);
   const livelloFantasolidita = useMemo(() => computeLivelliFantasolidita(players), [players]);
+  const priorita = useMemo(() => computePriorita(players, settings), [players, settings]);
+  const livelloPriorita = useMemo(() => computeLivelloPriorita(players, priorita), [players, priorita]);
 
   // Giocatore attualmente "sotto il martello": resta valido solo finché è ancora
   // disponibile (appena viene assegnato o rimosso si torna automaticamente alla lista intera).
@@ -118,6 +134,11 @@ export function PlayerTable() {
 
     return [...base].sort((a, b) => {
       if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
+      if (ordinamento === "priorita") {
+        const pa = priorita(a)?.totale ?? -Infinity;
+        const pb = priorita(b)?.totale ?? -Infinity;
+        return pb - pa;
+      }
       const sa = suggestionById.get(a.id)?.punteggio ?? 0;
       const sb = suggestionById.get(b.id)?.punteggio ?? 0;
       return sb - sa;
@@ -133,6 +154,8 @@ export function PlayerTable() {
     suggestionById,
     isMantra,
     inAstaPlayer,
+    ordinamento,
+    priorita,
   ]);
 
   const mostraPunteggio = statoFiltro === "disponibile" || !!inAstaPlayer;
@@ -319,6 +342,18 @@ export function PlayerTable() {
               </>
             )}
 
+            {priorita(inAstaPlayer) && (
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Priorità</div>
+                <div
+                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloPriorita(inAstaPlayer))}`}
+                  title={tooltipPriorita(priorita(inAstaPlayer)!)}
+                >
+                  {Math.round(priorita(inAstaPlayer)!.totale)}
+                </div>
+              </div>
+            )}
+
             {vociFantasolditaLista(inAstaPlayer).length > 0 && (
               <div className="w-40 space-y-0.5">
                 {vociFantasolditaLista(inAstaPlayer).map((v) => (
@@ -474,6 +509,17 @@ export function PlayerTable() {
             <option value="tutti">Tutti</option>
           </select>
           {statoFiltro === "disponibile" && (
+            <select
+              value={ordinamento}
+              onChange={(e) => setOrdinamento(e.target.value as Ordinamento)}
+              className="border border-slate-200 rounded px-2 py-1.5 text-sm"
+              title="Convenienza: rapporto quotazione/budget residuo. Priorità: potenziale di rendimento reale (gol, assist, voti, titolarità)."
+            >
+              <option value="convenienza">Ordina per: Convenienza</option>
+              <option value="priorita">Ordina per: Priorità</option>
+            </select>
+          )}
+          {statoFiltro === "disponibile" && (
             <label className="text-sm flex items-center gap-1.5">
               <input
                 type="checkbox"
@@ -520,6 +566,7 @@ export function PlayerTable() {
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
               <th className="pb-2">Fantasolidità/rischi</th>
+              {mostraPunteggio && <th className="pb-2 text-right">Priorità</th>}
               <th className="pb-2 text-right">Quot.</th>
               {mostraPunteggio && <th className="pb-2 text-right">Punteggio</th>}
               <th className="pb-2 text-right">Azioni</th>
@@ -566,6 +613,22 @@ export function PlayerTable() {
                     </span>
                   </td>
                   <td className="py-1.5">{celleFantasolidita(p)}</td>
+                  {mostraPunteggio && (
+                    <td className="py-1.5 text-right">
+                      {priorita(p) ? (
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
+                            livelloPriorita(p)
+                          )}`}
+                          title={tooltipPriorita(priorita(p)!)}
+                        >
+                          {Math.round(priorita(p)!.totale)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="py-1.5 text-right">{p.quotazione}</td>
                   {mostraPunteggio && (
                     <td className="py-1.5 text-right">
@@ -662,6 +725,7 @@ export function PlayerTable() {
                     />
                   </td>
                   <td />
+                  {mostraPunteggio && <td />}
                   <td />
                   {mostraPunteggio && <td />}
                   <td />
