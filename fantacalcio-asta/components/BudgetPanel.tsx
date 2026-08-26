@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Calculator, ShieldAlert, Users, Wallet } from "lucide-react";
 import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
@@ -43,10 +44,18 @@ function PannelloClassic() {
         <thead>
           <tr className="text-left text-slate-400">
             <th className="pb-1">Ruolo</th>
-            <th className="pb-1 text-right">Slot</th>
-            <th className="pb-1 text-right">Budget res.</th>
-            <th className="pb-1 text-right">Media/slot</th>
-            <th className="pb-1 text-right">Tetto prudente</th>
+            <th className="pb-1 text-right" title="Slot occupati / slot totali per questo ruolo">
+              <Users size={14} className="inline-block" />
+            </th>
+            <th className="pb-1 text-right" title="Budget residuo assegnato a questo ruolo">
+              <Wallet size={14} className="inline-block" />
+            </th>
+            <th className="pb-1 text-right" title="Media disponibile per ogni slot ancora da riempire in questo ruolo">
+              <Calculator size={14} className="inline-block" />
+            </th>
+            <th className="pb-1 text-right" title="Tetto prudente: soglia (+30% della media) oltre la quale conviene evitare di sforare per questo ruolo">
+              <ShieldAlert size={14} className="inline-block" />
+            </th>
           </tr>
         </thead>
         <tbody>
