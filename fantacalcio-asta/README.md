@@ -51,9 +51,15 @@ ruoli ancora da coprire nella tua squadra.
   Azioni — sempre in quest'ordine. I valori di Quotazione, FCP×2 e
   Urgenza sono centrati nella loro colonna; Quotazione è mostrata in un
   riquadrino grigio chiaro con bordo grigio scuro, mentre FCP/Urgenza
-  restano nei rettangolini colorati in base al livello. L'intestazione resta
-  visibile ("sticky") mentre si scorre l'elenco verso il basso, cosí si vede
-  sempre a quale colonna corrisponde ogni valore.
+  restano nei rettangolini colorati in base al livello. Urgenza e Azioni sono
+  rappresentate nell'header solo da un'icona (sveglia per Urgenza, martelletto
+  d'asta per Azioni), con tooltip per il nome esteso — stesso stile compatto
+  già usato per FCP/€. Le righe alternano uno sfondo bianco e uno grigio
+  chiarissimo per distinguerle più facilmente a colpo d'occhio (il giocatore
+  "in asta" resta evidenziato in ambra, ha sempre la priorità sullo sfondo a
+  righe alterne). L'intestazione resta visibile ("sticky") mentre si scorre
+  l'elenco verso il basso, cosí si vede sempre a quale colonna corrisponde
+  ogni valore.
 - **Ordinamento cliccando sugli header**: ogni header ordinabile (★, Ruolo,
   Nome, Squadra, €, bacchetta FCP, blocco note FCP, Urgenza) ordina
   l'elenco al click, con una freccetta che indica quale colonna è attiva e in
@@ -73,7 +79,9 @@ ruoli ancora da coprire nella tua squadra.
   comunque discrete), **rosso** (titolarità bassa: infortunato, squalificato,
   o poche presenze previste), **grigio** (nessuna informazione disponibile).
   Calcolata da `classificaTitolarita` in `lib/titolarita.ts`, a partire dal
-  trend delle notizie, dai tag FPEDIA e dalle presenze previste.
+  trend delle notizie, dai tag FPEDIA e dalle presenze previste. Lo stesso
+  bordo colorato compare anche sui cerchietti del pop-up formazione (in campo
+  e in panchina), così la titolarità si legge allo stesso modo ovunque nell'app.
 - **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
   disegno del campo, se è completabile con la rosa attuale — e in tal caso
   quanti **insiemi distinti di 11 giocatori schierabili** puoi comporre
@@ -213,6 +221,17 @@ ruoli ancora da coprire nella tua squadra.
   (Classic) o una ripartizione approssimativa del budget residuo tra i ruoli
   Mantra più richiesti dai moduli vicini al completamento (Mantra) — una
   guida, non una prenotazione rigida.
+- **Copertura ruoli**: sotto il piano di spesa, il pannello Budget elenca
+  **tutti** i ruoli (P/D/C/A in Classic, tutti i ruoli Mantra in Mantra) con
+  un'icona di avviso su quelli senza un doppione nella tua rosa — nessun
+  titolare (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio"
+  se quel giocatore salta un turno. In Mantra un giocatore multi-ruolo non
+  viene mai contato due volte su due ruoli diversi: il conteggio riusa lo
+  stesso matching bipartito massimo (algoritmo di Kuhn,
+  `lib/bipartiteMatching.ts`) già usato per la copertura dei moduli, con due
+  slot sintetici (titolare + sostituto) per ruolo — così un giocatore
+  "impegnato" a coprire un ruolo non risulta disponibile anche per un altro
+  (`lib/coperturaRuoli.ts`).
 - **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
   budget residuo diviso per i giocatori che mancano ancora per completare una
   rosa valida — **tenendo conto del minimo di portieri richiesto** (in
@@ -247,7 +266,10 @@ ruoli ancora da coprire nella tua squadra.
   Centrocampisti e Attaccanti (un giocatore multi-ruolo va nella prima linea
   che uno dei suoi ruoli copre); in Classic segue già l'ordine
   Portiere/Difensore/Centrocampista/Attaccante, con la letterina colorata del
-  ruolo (P/D/C/A) a sinistra del nome di ogni gruppo.
+  ruolo (P/D/C/A) a sinistra del nome di ogni gruppo. La squadra accanto al
+  nome è abbreviata alle sole prime 3 lettere (es. "Inter" → "INT") per
+  restare compatta nella colonna di destra; il nome completo compare come
+  tooltip al passaggio del mouse.
 - **Aggiornamento dati (in Settings)**: tutti i pulsanti che scaricano dati da
   fonti esterne (notizie, FPEDIA) stanno nella pagina **⚙️ Settings**, non in
   dashboard — sono operazioni di "manutenzione" separate dal seguire l'asta
@@ -282,6 +304,18 @@ ruoli ancora da coprire nella tua squadra.
     diretto dall'ambiente di sviluppo (stesso limite di rete già noto per i
     feed notizie, vedi sotto) — il parsing riusa la struttura già confermata
     delle pagine elenco per ruolo, ma verificane l'esito reale sul sito.
+  - **Ballottaggi e Fuoriclasse**: il pulsante "👑 Importa ballottaggi/
+    fuoriclasse" (stesso pannello) legge con un'unica richiesta la pagina
+    guida-asta di fantacalciopedia.com (tutte le squadre di Serie A insieme,
+    a differenza degli altri aggiornamenti FPEDIA) e marca/smarca
+    `Player.fuoriclasse` (giocatori con il tag "Fuoriclasse" nella rosa di
+    ogni squadra) e `Player.inBallottaggio` (giocatori coinvolti in almeno
+    un ballottaggio titolare/riserva) per l'intera rosa in un solo colpo
+    (`lib/fpediaBallottaggi.ts`, parser testato su un campione HTML reale in
+    `lib/__fixtures__/fpedia-guida-asta-sample.html`). Chi è "Fuoriclasse"
+    mostra una **corona dorata** in alto a sinistra sulla foto (tabella,
+    riquadro "in asta", pop-up Moduli Mantra) — diversa dal cerotto rosso
+    degli infortunati (in basso), così i due badge non si sovrappongono.
   - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori
     numerici FPEDIA con un semaforo a 5 colori (Super azzurro, Buono verde,
     Sufficiente giallo, Mediocre arancione, Negativo rosso — legenda sotto le

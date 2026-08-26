@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calculator, ShieldAlert, Users, Wallet } from "lucide-react";
-import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
+import { AlertTriangle, Calculator, ShieldAlert, Users, Wallet } from "lucide-react";
+import { RUOLI, RUOLI_MANTRA, RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
   computeCoperturaModuli,
@@ -13,9 +13,26 @@ import {
   computeValoreMedioAcquisto,
   SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
+import { computeCoperturaRuoliClassic, computeCoperturaRuoliMantra, LivelloCopertura } from "@/lib/coperturaRuoli";
 import { coloreSfondoSlot, MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
 import { ModuloVisualizzazione } from "@/components/ModuloVisualizzazione";
 import { useAuctionStore } from "@/lib/store";
+
+const TOOLTIP_COPERTURA: Record<LivelloCopertura, string> = {
+  assente: "Nessun titolare per questo ruolo nella tua rosa",
+  senza_sostituto: "Nessun sostituto per questo ruolo nella tua rosa: in ballottaggio se il titolare non gioca",
+  coperto: "Titolare e almeno un sostituto per questo ruolo",
+};
+
+function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
+  if (livello === "coperto") return null;
+  return (
+    <AlertTriangle
+      size={12}
+      className={livello === "assente" ? "text-red-600" : "text-amber-500"}
+    />
+  );
+}
 
 function PannelloClassic() {
   const players = useAuctionStore((s) => s.players);
@@ -23,6 +40,7 @@ function PannelloClassic() {
   const budgetResiduo = computeBudgetResiduoTotale(players, settings);
   const roleStats = computeRoleStats(players, settings);
   const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
+  const coperturaRuoli = useMemo(() => computeCoperturaRuoliClassic(players), [players]);
 
   return (
     <>
@@ -81,6 +99,22 @@ function PannelloClassic() {
           })}
         </tbody>
       </table>
+
+      <h3 className="text-xs uppercase text-slate-400 mb-1">Copertura ruoli</h3>
+      <ul className="text-sm flex flex-wrap gap-1.5">
+        {RUOLI.map((r) => (
+          <li
+            key={r}
+            title={TOOLTIP_COPERTURA[coperturaRuoli[r]]}
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-slate-200"
+          >
+            <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[r] }}>
+              {r}
+            </span>
+            <IconaCopertura livello={coperturaRuoli[r]} />
+          </li>
+        ))}
+      </ul>
     </>
   );
 }
@@ -99,6 +133,7 @@ function PannelloMantra() {
     () => new Map(MODULI_MANTRA.map((m) => [m.nome, computeDettaglioModulo(players, m)])),
     [players]
   );
+  const coperturaRuoli = useMemo(() => computeCoperturaRuoliMantra(players), [players]);
 
   return (
     <>
@@ -195,6 +230,22 @@ function PannelloMantra() {
                 </div>
               ))}
             </div>
+          </li>
+        ))}
+      </ul>
+
+      <h3 className="text-xs uppercase text-slate-400 mb-1 mt-4">Copertura ruoli</h3>
+      <ul className="text-sm flex flex-wrap gap-1.5">
+        {RUOLI_MANTRA.map((r) => (
+          <li
+            key={r}
+            title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]}`}
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-slate-200"
+          >
+            <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
+              {r}
+            </span>
+            <IconaCopertura livello={coperturaRuoli[r]} />
           </li>
         ))}
       </ul>

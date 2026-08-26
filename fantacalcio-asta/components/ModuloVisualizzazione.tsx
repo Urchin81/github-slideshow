@@ -6,7 +6,9 @@ import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
 import { costruisciMatchmaker, generaCombinazioniPerPunteggio } from "@/lib/bipartiteMatching";
 import { Player, RUOLO_MANTRA_COLORE, RuoloMantra } from "@/lib/types";
 import { isSafeHttpUrl } from "@/lib/url";
+import { classeBordoTitolarita } from "@/lib/titolarita";
 import { BadgeInfortunio } from "@/components/BadgeInfortunio";
+import { BadgeFuoriclasse } from "@/components/BadgeFuoriclasse";
 
 function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
@@ -55,13 +57,14 @@ function FotoGiocatore({ player, ruoli, size }: { player: Player; ruoli: RuoloMa
           src={player.fpedia?.immagineUrl}
           alt=""
           style={stile}
-          className="rounded-full object-contain bg-slate-100 border border-white/40"
+          className={`rounded-full object-contain bg-slate-100 ${classeBordoTitolarita(player)}`}
         />
       ) : (
-        <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />
+        <div style={stile} className={`rounded-full bg-slate-700 ${classeBordoTitolarita(player)}`} />
       )}
       <PilloleRuolo ruoli={ruoli} size={size} />
       {player.infortunato && <BadgeInfortunio size={Math.max(10, Math.round(size * 0.3))} />}
+      {player.fuoriclasse && <BadgeFuoriclasse size={Math.max(10, Math.round(size * 0.3))} />}
     </span>
   );
 }

@@ -135,6 +135,14 @@ export interface Player {
    * perché arriva da uno scrape diverso (le liste per ruolo, non la scheda individuale).
    */
   infortunato?: boolean;
+  /**
+   * Giocatore "Fuoriclasse" secondo la guida-squadre di FPEDIA (aggiornato da "Importa
+   * ballottaggi/fuoriclasse" in Settings): non annidato in FpediaStats per lo stesso
+   * motivo di infortunato, uno scrape separato dalla scheda individuale.
+   */
+  fuoriclasse?: boolean;
+  /** In ballottaggio con almeno un altro giocatore della stessa squadra, stessa fonte/scrape di fuoriclasse. */
+  inBallottaggio?: boolean;
   /** Preferito personale: sopravvive al reset dell'asta (non è uno stato d'asta). */
   preferito?: boolean;
 }

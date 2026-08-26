@@ -42,6 +42,8 @@ export function StatsUpdatePanel() {
   const [progresso, setProgresso] = useState<Progresso | null>(null);
   const [infortuniInCorso, setInfortuniInCorso] = useState(false);
   const [esitoInfortuni, setEsitoInfortuni] = useState<string | null>(null);
+  const [ballottaggiInCorso, setBallottaggiInCorso] = useState(false);
+  const [esitoBallottaggi, setEsitoBallottaggi] = useState<string | null>(null);
 
   // Operazione unica e veloce (4 richieste totali, non una per giocatore): recupera
   // i nomi degli infortunati dalle 4 liste per ruolo di FPEDIA e marca/smarca
@@ -72,6 +74,44 @@ export function StatsUpdatePanel() {
       setEsitoInfortuni(`Errore: ${err instanceof Error ? err.message : "richiesta fallita."}`);
     }
     setInfortuniInCorso(false);
+  }
+
+  // Operazione unica (una sola pagina, tutte le squadre di Serie A insieme): recupera
+  // da FPEDIA i giocatori "Fuoriclasse" e quelli in ballottaggio con un compagno di
+  // squadra, e marca/smarca Player.fuoriclasse/inBallottaggio per l'intera rosa.
+  async function aggiornaBallottaggi() {
+    setBallottaggiInCorso(true);
+    setEsitoBallottaggi(null);
+    try {
+      const res = await fetch("/api/fpedia-ballottaggi");
+      const data: { fuoriclasse: string[]; inBallottaggio: string[]; errore?: string } = await res.json();
+      const indiceFuoriclasse: VoceIndiceGiocatore[] = data.fuoriclasse.map((nome) => ({ nome, url: "#" }));
+      const indiceBallottaggio: VoceIndiceGiocatore[] = data.inBallottaggio.map((nome) => ({ nome, url: "#" }));
+
+      const aggiornamenti: Record<string, Partial<Player>> = {};
+      let trovatiFuoriclasse = 0;
+      let trovatiBallottaggio = 0;
+      for (const player of players) {
+        const fuoriclasse = trovaUrlGiocatoreInIndice(indiceFuoriclasse, player.nome, BASE_FITTIZIA) !== null;
+        const inBallottaggio = trovaUrlGiocatoreInIndice(indiceBallottaggio, player.nome, BASE_FITTIZIA) !== null;
+        if (fuoriclasse) trovatiFuoriclasse++;
+        if (inBallottaggio) trovatiBallottaggio++;
+        const partial: Partial<Player> = {};
+        if (fuoriclasse !== !!player.fuoriclasse) partial.fuoriclasse = fuoriclasse;
+        if (inBallottaggio !== !!player.inBallottaggio) partial.inBallottaggio = inBallottaggio;
+        if (Object.keys(partial).length > 0) aggiornamenti[player.id] = partial;
+      }
+      if (Object.keys(aggiornamenti).length > 0) applyNewsResults(aggiornamenti);
+
+      setEsitoBallottaggi(
+        data.errore && data.fuoriclasse.length === 0 && data.inBallottaggio.length === 0
+          ? `Impossibile recuperare ballottaggi/fuoriclasse: ${data.errore}`
+          : `${trovatiFuoriclasse} fuoriclasse e ${trovatiBallottaggio} in ballottaggio trovati e aggiornati.`
+      );
+    } catch (err) {
+      setEsitoBallottaggi(`Errore: ${err instanceof Error ? err.message : "richiesta fallita."}`);
+    }
+    setBallottaggiInCorso(false);
   }
 
   async function aggiornaStatistiche(ambito: Ambito) {
@@ -198,6 +238,22 @@ export function StatsUpdatePanel() {
           4 richieste totali (una per ruolo), non una per giocatore: molto più veloce degli
           aggiornamenti sopra. Il cerotto rosso compare su foto e caratteristiche dei giocatori
           infortunati; chi recupera lo perde al giro successivo.
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+        <button
+          onClick={aggiornaBallottaggi}
+          disabled={ballottaggiInCorso}
+          className="text-sm bg-amber-600 text-white rounded px-3 py-1.5 disabled:opacity-50"
+          title="Legge la pagina guida-asta di FPEDIA (tutte le squadre) e marca/smarca la corona fuoriclasse e il flag ballottaggio su ogni giocatore"
+        >
+          {ballottaggiInCorso ? "Aggiornamento in corso..." : "👑 Importa ballottaggi/fuoriclasse"}
+        </button>
+        {esitoBallottaggi && <span className="text-sm text-slate-500">{esitoBallottaggi}</span>}
+        <span className="text-xs text-slate-400 w-full">
+          Una sola richiesta (tutte le squadre di Serie A in un&apos;unica pagina). La corona dorata
+          compare su foto e simulazione formazione dei giocatori "Fuoriclasse".
         </span>
       </div>
     </div>

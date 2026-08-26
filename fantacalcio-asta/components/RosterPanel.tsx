@@ -44,7 +44,9 @@ function RigaGiocatore({
         <Link href={`/giocatore/${encodeURIComponent(id)}`} className="hover:underline">
           {nome}
         </Link>{" "}
-        <span className="text-slate-400">({squadra})</span>
+        <span className="text-slate-400" title={squadra}>
+          ({squadra.slice(0, 3).toUpperCase()})
+        </span>
         {extra}
       </span>
       <span className="flex items-center gap-1.5">

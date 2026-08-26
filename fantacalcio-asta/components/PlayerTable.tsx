@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
+import { AlarmClock, ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
 import {
   LivelloFpedia,
   RUOLI,
@@ -31,6 +31,7 @@ import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 import { BadgeInfortunio } from "./BadgeInfortunio";
+import { BadgeFuoriclasse } from "./BadgeFuoriclasse";
 
 type CampoOrdinamento =
   | "preferiti"
@@ -407,6 +408,7 @@ export function PlayerTable() {
                 />
               )}
               {inAstaPlayer.infortunato && <BadgeInfortunio size={16} />}
+              {inAstaPlayer.fuoriclasse && <BadgeFuoriclasse size={16} />}
             </span>
 
             <div className="flex flex-col gap-1">
@@ -713,18 +715,24 @@ export function PlayerTable() {
                   onClick={() => alternaOrdinamento("urgenza")}
                   title="Ordina per Urgenza"
                 >
-                  <span className="inline-flex items-center justify-center gap-0.5">Urgenza{indicatoreOrdinamento("urgenza")}</span>
+                  <span className="inline-flex items-center justify-center gap-0.5">
+                    <AlarmClock size={12} />
+                    {indicatoreOrdinamento("urgenza")}
+                  </span>
                 </th>
               )}
-              <th className="pb-2 text-right">Azioni</th>
+              <th className="pb-2 text-right" title="Azioni">
+                <Gavel size={12} className="inline-block" />
+              </th>
             </tr>
           </thead>
           <tbody>
-            {righe.map((p) => {
+            {righe.map((p, i) => {
               const inAsta = inAstaPlayer?.id === p.id;
+              const zebra = i % 2 === 1 ? "bg-slate-50/70" : "bg-white";
               return (
                 <Fragment key={p.id}>
-                <tr className={inAsta ? "bg-amber-50/60" : "hover:bg-slate-50"}>
+                <tr className={inAsta ? "bg-amber-50/60" : `${zebra} hover:bg-slate-100`}>
                   <td className="py-1.5">
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>
@@ -742,6 +750,7 @@ export function PlayerTable() {
                         <span className={`inline-block w-8 h-8 rounded-full bg-slate-50 ${classeBordoTitolarita(p)}`} />
                       )}
                       {p.infortunato && <BadgeInfortunio size={11} />}
+                      {p.fuoriclasse && <BadgeFuoriclasse size={11} />}
                     </span>
                   </td>
                   <td className="py-1.5 font-medium">
@@ -849,7 +858,7 @@ export function PlayerTable() {
                     )}
                   </td>
                 </tr>
-                <tr className="border-b border-slate-50">
+                <tr className={`border-b border-slate-50 ${inAsta ? "bg-amber-50/60" : zebra}`}>
                   <td />
                   <td />
                   <td colSpan={3} className="pb-1.5">
