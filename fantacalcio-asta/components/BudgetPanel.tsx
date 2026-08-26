@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { RUOLI, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
   computeCoperturaModuli,
+  computeDettaglioModulo,
   computeMantraStato,
   computePianoSpesaMantra,
   computeRoleStats,
@@ -85,6 +86,10 @@ function PannelloMantra() {
   const mieiMantra = players.filter((p) => p.stato === "mia");
   const moduliByNome = new Map(MODULI_MANTRA.map((m) => [m.nome, m]));
   const [moduloAperto, setModuloAperto] = useState<Modulo | null>(null);
+  const dettagliByNome = useMemo(
+    () => new Map(MODULI_MANTRA.map((m) => [m.nome, computeDettaglioModulo(players, m)])),
+    [players]
+  );
 
   return (
     <>
@@ -146,7 +151,7 @@ function PannelloMantra() {
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>
       <ul className="text-sm space-y-1">
         {coperture.map((m) => (
-          <li key={m.nome}>
+          <li key={m.nome} className="relative group">
             <button
               onClick={() => setModuloAperto(moduliByNome.get(m.nome) ?? null)}
               className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-1 -mx-1 py-0.5"
@@ -165,12 +170,33 @@ function PannelloMantra() {
                 </span>
               </span>
             </button>
+            <div className="hidden group-hover:block absolute z-20 left-full top-0 ml-2 w-48 bg-white border border-slate-200 rounded shadow-lg p-2 text-xs space-y-0.5">
+              <p className="text-slate-400 uppercase text-[10px] mb-1">{m.nome}</p>
+              {(dettagliByNome.get(m.nome) ?? []).map((r) => (
+                <div
+                  key={r.slot.join("/")}
+                  className={`flex justify-between ${
+                    r.coperti < r.totale ? "text-red-600 font-semibold" : "text-slate-600"
+                  }`}
+                >
+                  <span>{r.slot.join("/")}</span>
+                  <span>
+                    {r.coperti}/{r.totale}
+                  </span>
+                </div>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
 
       {moduloAperto && (
-        <ModuloVisualizzazione modulo={moduloAperto} mieiMantra={mieiMantra} onClose={() => setModuloAperto(null)} />
+        <ModuloVisualizzazione
+          modulo={moduloAperto}
+          mieiMantra={mieiMantra}
+          settings={settings}
+          onClose={() => setModuloAperto(null)}
+        />
       )}
     </>
   );

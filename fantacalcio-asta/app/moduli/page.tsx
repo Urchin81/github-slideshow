@@ -78,6 +78,7 @@ function CampoModulo({ modulo, mieiMantra, onClick }: { modulo: Modulo; mieiMant
 
 export default function ModuliPage() {
   const players = useAuctionStore((s) => s.players);
+  const settings = useAuctionStore((s) => s.settings);
   const mieiMantra = useMemo(() => players.filter((p) => p.stato === "mia"), [players]);
   const [moduloAperto, setModuloAperto] = useState<Modulo | null>(null);
 
@@ -102,7 +103,12 @@ export default function ModuliPage() {
       </div>
 
       {moduloAperto && (
-        <ModuloVisualizzazione modulo={moduloAperto} mieiMantra={mieiMantra} onClose={() => setModuloAperto(null)} />
+        <ModuloVisualizzazione
+          modulo={moduloAperto}
+          mieiMantra={mieiMantra}
+          settings={settings}
+          onClose={() => setModuloAperto(null)}
+        />
       )}
     </div>
   );

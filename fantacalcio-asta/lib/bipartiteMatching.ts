@@ -85,6 +85,35 @@ export function costruisciMatchmaker(
   return matchmaker;
 }
 
+interface Giocatore {
+  id: string;
+  ruoli: RuoloMantra[];
+}
+
+interface SlotConCandidati {
+  /** Indice dello slot in `slots` (l'ordinamento per vincolo crescente qui sotto lo rimescola). */
+  indiceOriginale: number;
+  slot: SlotModulo;
+  candidati: Giocatore[];
+}
+
+/**
+ * Filtra i giocatori eligibili (idonei ad almeno uno slot) e ordina gli slot
+ * per numero di candidati crescente (i piu' vincolati prima), cosi' il
+ * backtracking scarta i rami impossibili il prima possibile: preparazione
+ * condivisa da `contaCombinazioniComplete` e `generaCombinazioniPerPunteggio`.
+ */
+function prepareSlotCandidati(slots: SlotModulo[], giocatori: Giocatore[]): SlotConCandidati[] {
+  const eligibili = giocatori.filter((g) => slots.some((slot) => slotAccetta(slot, g.ruoli)));
+  return slots
+    .map((slot, indiceOriginale) => ({
+      indiceOriginale,
+      slot,
+      candidati: eligibili.filter((g) => slotAccetta(slot, g.ruoli)),
+    }))
+    .sort((a, b) => a.candidati.length - b.candidati.length);
+}
+
 /**
  * Conta quanti insiemi distinti di 11 giocatori schierabili (non
  * assegnazioni slot->giocatore) si possono comporre con la rosa data, fino a
@@ -110,10 +139,7 @@ export function contaCombinazioniComplete(
   capInsiemi = 999,
   capTentativi = 200000
 ): number {
-  const eligibili = giocatori.filter((g) => slots.some((slot) => slotAccetta(slot, g.ruoli)));
-  const slotConCandidati = slots
-    .map((slot) => ({ slot, candidati: eligibili.filter((g) => slotAccetta(slot, g.ruoli)) }))
-    .sort((a, b) => a.candidati.length - b.candidati.length);
+  const slotConCandidati = prepareSlotCandidati(slots, giocatori);
 
   if (slotConCandidati.some((s) => s.candidati.length === 0)) return 0;
 
@@ -139,4 +165,78 @@ export function contaCombinazioniComplete(
 
   backtrack(0);
   return insiemi.size;
+}
+
+export interface CombinazioneClassificata {
+  /** Stesso formato di assegnazioniComplete(): indicizzato sull'ordine originale di `slots`. */
+  assegnazione: (string | undefined)[];
+  punteggioTotale: number;
+}
+
+/**
+ * Genera fino a `maxRisultati` combinazioni distinte di titolari per un
+ * modulo, ordinate per punteggio totale decrescente (somma di `punteggio(id)`
+ * sui giocatori schierati). A differenza di `contaCombinazioniComplete` (che
+ * conta e basta, scartando le assegnazioni), qui si esplorano i candidati di
+ * ogni slot in ordine di punteggio decrescente (cosi' le combinazioni forti
+ * emergono presto) e si conservano le assegnazioni complete trovate, fino a
+ * `capCombinazioniRaccolte` insiemi distinti o `capTentativi` tentativi
+ * grezzi: un risultato "miglior sforzo", non una garanzia di ottimalita'
+ * globale con rose molto simmetriche (stesso spirito del tetto 999/200000 di
+ * `contaCombinazioniComplete`, qui piu' basso perche' si tiene traccia anche
+ * dell'assegnazione, non solo di un conteggio).
+ */
+export function generaCombinazioniPerPunteggio(
+  slots: SlotModulo[],
+  giocatori: { id: string; ruoli: RuoloMantra[] }[],
+  punteggio: (id: string) => number,
+  maxRisultati = 10,
+  capCombinazioniRaccolte = 300,
+  capTentativi = 150000
+): CombinazioneClassificata[] {
+  const slotConCandidati = prepareSlotCandidati(slots, giocatori).map((s) => ({
+    ...s,
+    candidati: [...s.candidati].sort((a, b) => punteggio(b.id) - punteggio(a.id)),
+  }));
+
+  if (slotConCandidati.some((s) => s.candidati.length === 0)) return [];
+
+  const usati = new Set<string>();
+  const assegnazioneParziale: (string | undefined)[] = new Array(slots.length).fill(undefined);
+  const visti = new Set<string>();
+  const raccolte: CombinazioneClassificata[] = [];
+  let tentativi = 0;
+
+  function completo(): boolean {
+    return raccolte.length >= capCombinazioniRaccolte || tentativi >= capTentativi;
+  }
+
+  function backtrack(idx: number): void {
+    if (completo()) return;
+    if (idx === slotConCandidati.length) {
+      tentativi++;
+      const chiave = Array.from(usati).sort().join(",");
+      if (!visti.has(chiave)) {
+        visti.add(chiave);
+        raccolte.push({
+          assegnazione: [...assegnazioneParziale],
+          punteggioTotale: assegnazioneParziale.reduce((sum, id) => sum + (id ? punteggio(id) : 0), 0),
+        });
+      }
+      return;
+    }
+    const { indiceOriginale, candidati } = slotConCandidati[idx];
+    for (const g of candidati) {
+      if (usati.has(g.id)) continue;
+      usati.add(g.id);
+      assegnazioneParziale[indiceOriginale] = g.id;
+      backtrack(idx + 1);
+      assegnazioneParziale[indiceOriginale] = undefined;
+      usati.delete(g.id);
+      if (completo()) return;
+    }
+  }
+
+  backtrack(0);
+  return raccolte.sort((a, b) => b.punteggioTotale - a.punteggioTotale).slice(0, maxRisultati);
 }

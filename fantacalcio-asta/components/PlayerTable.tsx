@@ -16,7 +16,13 @@ import {
 } from "@/lib/types";
 import { computeMantraStato, getSuggestions, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
-import { computeLivelloPriorita, computePriorita, DETTAGLIO_PRIORITA_LABEL, DettaglioPriorita } from "@/lib/priorita";
+import {
+  classeBordoTitolarita,
+  computeLivelloPriorita,
+  computePriorita,
+  DETTAGLIO_PRIORITA_LABEL,
+  DettaglioPriorita,
+} from "@/lib/priorita";
 import { classeLivello } from "@/lib/livelloColori";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
@@ -287,10 +293,10 @@ export function PlayerTable() {
                 <img
                   src={inAstaPlayer.fpedia?.immagineUrl}
                   alt=""
-                  className="w-14 h-14 rounded-full object-contain bg-slate-50 border border-slate-100"
+                  className={`w-14 h-14 rounded-full object-contain bg-slate-50 ${classeBordoTitolarita(inAstaPlayer)}`}
                 />
               ) : (
-                <span className="inline-block w-14 h-14 rounded-full bg-slate-50 border border-slate-100" />
+                <span className={`inline-block w-14 h-14 rounded-full bg-slate-50 ${classeBordoTitolarita(inAstaPlayer)}`} />
               )}
               {inAstaPlayer.infortunato && <BadgeInfortunio size={16} />}
             </span>
@@ -590,10 +596,10 @@ export function PlayerTable() {
                         <img
                           src={p.fpedia?.immagineUrl}
                           alt=""
-                          className="w-8 h-8 rounded-full object-contain bg-slate-50 border border-slate-100"
+                          className={`w-8 h-8 rounded-full object-contain bg-slate-50 ${classeBordoTitolarita(p)}`}
                         />
                       ) : (
-                        <span className="inline-block w-8 h-8 rounded-full bg-slate-50 border border-slate-100" />
+                        <span className={`inline-block w-8 h-8 rounded-full bg-slate-50 ${classeBordoTitolarita(p)}`} />
                       )}
                       {p.infortunato && <BadgeInfortunio size={11} />}
                     </span>

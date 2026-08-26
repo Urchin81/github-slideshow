@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
-import { costruisciMatchmaker } from "@/lib/bipartiteMatching";
-import { Player, RUOLO_MANTRA_COLORE, RuoloMantra } from "@/lib/types";
+import { costruisciMatchmaker, generaCombinazioniPerPunteggio } from "@/lib/bipartiteMatching";
+import { Player, RUOLO_MANTRA_COLORE, RuoloMantra, Settings } from "@/lib/types";
+import { computePriorita } from "@/lib/priorita";
 import { isSafeHttpUrl } from "@/lib/url";
 import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 
@@ -12,23 +13,31 @@ function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
 }
 
-// Pillole dei ruoli raggruppate in alto a destra della foto, in una piccola
-// cascata che si sovrappone leggermente (non sparpagliata sui 4 angoli):
-// restano vicine tra loro ma ognuna resta leggibile grazie al bordo bianco.
-const PASSO_CASCATA_RUOLO = 10;
+// Pillole dei ruoli disposte lungo il bordo della foto, in senso orario a
+// partire da vicino alle ore 12: il passo angolare e' minore della larghezza
+// angolare di una pillola, cosi' restano leggermente sovrapposte (stesso
+// effetto "vicine" di prima) ma seguono il cerchio invece di una cascata
+// diagonale.
+const BADGE_SIZE_RUOLO = 18;
+const ANGOLO_INIZIALE_RUOLO = -10; // gradi, 0 = ore 12, positivo = senso orario
+const PASSO_ANGOLARE_RUOLO = 28; // gradi tra una pillola e la successiva
 
-function styleRuolo(i: number): React.CSSProperties {
-  return { top: -6 + i * PASSO_CASCATA_RUOLO, right: -6 + i * PASSO_CASCATA_RUOLO };
+function styleRuolo(i: number, size: number): React.CSSProperties {
+  const raggio = size / 2;
+  const angolo = ((ANGOLO_INIZIALE_RUOLO + i * PASSO_ANGOLARE_RUOLO) * Math.PI) / 180;
+  const cx = size / 2 + raggio * Math.sin(angolo) - BADGE_SIZE_RUOLO / 2;
+  const cy = size / 2 - raggio * Math.cos(angolo) - BADGE_SIZE_RUOLO / 2;
+  return { left: cx, top: cy };
 }
 
-function PilloleRuolo({ ruoli }: { ruoli: RuoloMantra[] }) {
+function PilloleRuolo({ ruoli, size }: { ruoli: RuoloMantra[]; size: number }) {
   return (
     <>
       {ruoli.slice(0, 4).map((r, i) => (
         <span
           key={r}
           className="absolute text-white text-[9px] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center border border-white/80 leading-none shadow"
-          style={{ ...styleRuolo(i), backgroundColor: RUOLO_MANTRA_COLORE[r], zIndex: 10 - i }}
+          style={{ ...styleRuolo(i, size), backgroundColor: RUOLO_MANTRA_COLORE[r], zIndex: 10 - i }}
         >
           {r}
         </span>
@@ -52,7 +61,7 @@ function FotoGiocatore({ player, ruoli, size }: { player: Player; ruoli: RuoloMa
       ) : (
         <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />
       )}
-      <PilloleRuolo ruoli={ruoli} />
+      <PilloleRuolo ruoli={ruoli} size={size} />
       {player.infortunato && <BadgeInfortunio size={Math.max(10, Math.round(size * 0.3))} />}
     </span>
   );
@@ -70,8 +79,9 @@ interface CartaSlotProps {
   player: Player | undefined;
   sostituti: Player[];
   aperto: boolean;
-  onToggle: () => void;
-  onScegli: (id: string) => void;
+  evidenziato: boolean;
+  onToggleRimuovi: () => void;
+  onToggleSostituti: () => void;
   onRimuovi: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -87,8 +97,9 @@ function CartaSlot({
   player,
   sostituti,
   aperto,
-  onToggle,
-  onScegli,
+  evidenziato,
+  onToggleRimuovi,
+  onToggleSostituti,
   onRimuovi,
   onDragStart,
   onDragEnd,
@@ -97,7 +108,6 @@ function CartaSlot({
   compatibile,
 }: CartaSlotProps) {
   const haSostituti = sostituti.length > 0;
-  const azionabile = haSostituti || !!player;
 
   return (
     <div
@@ -108,28 +118,39 @@ function CartaSlot({
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <button
-        onClick={azionabile ? onToggle : undefined}
-        draggable={!!player}
-        onDragStart={player ? onDragStart : undefined}
-        onDragEnd={player ? onDragEnd : undefined}
-        className={`relative ${azionabile ? "cursor-pointer" : "cursor-default"} ${player ? "cursor-grab active:cursor-grabbing" : ""}`}
-        title={player ? player.nome : `Vuoto (${slot.join("/")})`}
-      >
-        {player ? (
-          <FotoGiocatore player={player} ruoli={player.ruoliMantra ?? []} size={56} />
-        ) : (
-          <div className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center text-white/60 text-[10px]">
-            vuoto
-            <PilloleRuolo ruoli={slot} />
-          </div>
-        )}
+      <div className="relative">
+        <button
+          onClick={player ? onToggleRimuovi : undefined}
+          draggable={!!player}
+          onDragStart={player ? onDragStart : undefined}
+          onDragEnd={player ? onDragEnd : undefined}
+          className={`relative ${player ? "cursor-pointer cursor-grab active:cursor-grabbing" : "cursor-default"}`}
+          title={player ? player.nome : `Vuoto (${slot.join("/")})`}
+        >
+          {player ? (
+            <FotoGiocatore player={player} ruoli={player.ruoliMantra ?? []} size={56} />
+          ) : (
+            <div className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center text-white/60 text-[10px]">
+              vuoto
+              <PilloleRuolo ruoli={slot} size={56} />
+            </div>
+          )}
+        </button>
         {haSostituti && (
-          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center border-2 border-white">
-            +
-          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSostituti();
+            }}
+            title={`${sostituti.length} sostituto/i disponibili in panchina`}
+            className={`absolute -bottom-1 -left-1 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center border-2 border-white ${
+              evidenziato ? "bg-blue-400 ring-2 ring-blue-300" : "bg-blue-600"
+            }`}
+          >
+            {sostituti.length}
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Posizione del modulo per questo slot: sempre il ruolo richiesto, non il ruolo del giocatore che lo occupa (quello è sulla foto) — così resta chiaro quale posizione della formazione questa carta rappresenta anche quando cambia chi la occupa. */}
       <span
@@ -154,30 +175,14 @@ function CartaSlot({
         <span className="text-white/60 text-[10px]">Vuoto</span>
       )}
 
-      {aperto && (
+      {aperto && player && (
         <div className="absolute top-full mt-1 z-10 bg-white rounded shadow-lg border border-slate-200 w-40 py-1 text-slate-800">
-          {sostituti.length > 0 && (
-            <>
-              <p className="text-[10px] uppercase text-slate-400 px-2 pb-1">Sostituisci con</p>
-              {sostituti.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => onScegli(s.id)}
-                  className="w-full text-left text-xs px-2 py-1 hover:bg-slate-100"
-                >
-                  {s.nome} <span className="text-slate-400">({(s.ruoliMantra ?? []).join("/")})</span>
-                </button>
-              ))}
-            </>
-          )}
-          {player && (
-            <button
-              onClick={onRimuovi}
-              className="w-full text-left text-xs px-2 py-1 hover:bg-red-50 text-red-600 border-t border-slate-100 mt-1"
-            >
-              Rimuovi dal campo
-            </button>
-          )}
+          <button
+            onClick={onRimuovi}
+            className="w-full text-left text-xs px-2 py-1 hover:bg-red-50 text-red-600"
+          >
+            Rimuovi dal campo
+          </button>
         </div>
       )}
     </div>
@@ -188,10 +193,16 @@ function CartaPanchina({
   player,
   onDragStart,
   onDragEnd,
+  evidenziato,
+  attenuato,
+  onClick,
 }: {
   player: Player;
   onDragStart: () => void;
   onDragEnd: () => void;
+  evidenziato: boolean;
+  attenuato: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
@@ -199,7 +210,10 @@ function CartaPanchina({
       data-player-id={player.id}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="flex items-center gap-2 bg-slate-800 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing"
+      onClick={onClick}
+      className={`flex items-center gap-2 bg-slate-800 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing transition ${
+        evidenziato ? "ring-2 ring-blue-400 cursor-pointer" : attenuato ? "opacity-40" : ""
+      }`}
     >
       {/* Foto senza pillole di ruolo sovrapposte: a questa dimensione (28px) sarebbero illeggibili, meglio il testo accanto come prima. */}
       <FotoGiocatore player={player} ruoli={[]} size={28} />
@@ -220,23 +234,43 @@ function CartaPanchina({
 export function ModuloVisualizzazione({
   modulo,
   mieiMantra,
+  settings,
   onClose,
 }: {
   modulo: Modulo;
   mieiMantra: Player[];
+  settings: Settings;
   onClose: () => void;
 }) {
-  const assegnazioneIniziale = useMemo(() => {
-    const giocatori = mieiMantra.map((p) => ({ id: p.id, ruoli: p.ruoliMantra ?? [] }));
-    const matcher = costruisciMatchmaker(modulo.slot, giocatori);
-    return matcher.assegnazioniComplete();
-  }, [modulo, mieiMantra]);
+  const playerById = useMemo(() => new Map(mieiMantra.map((p) => [p.id, p])), [mieiMantra]);
+  const priorita = useMemo(() => computePriorita(mieiMantra, settings), [mieiMantra, settings]);
 
-  const [assegnazione, setAssegnazione] = useState<(string | undefined)[]>(assegnazioneIniziale);
+  // Le migliori formazioni possibili (somma punteggio Priorità dei titolari, decrescente): un
+  // risultato "miglior sforzo" entro i tetti di generaCombinazioniPerPunteggio, non una garanzia
+  // di ottimalità globale con rose molto simmetriche (stesso spirito del tetto di
+  // contaCombinazioniComplete). Se non se ne trova nessuna (es. modulo non completamente
+  // coprbile), si ricade sull'assegnazione greedy singola di sempre, per non regredire.
+  const combinazioni = useMemo(() => {
+    const giocatori = mieiMantra.map((p) => ({ id: p.id, ruoli: p.ruoliMantra ?? [] }));
+    const risultato = generaCombinazioniPerPunteggio(
+      modulo.slot,
+      giocatori,
+      (id) => priorita(playerById.get(id) as Player)?.totale ?? 0
+    );
+    if (risultato.length > 0) return risultato;
+    return [
+      { assegnazione: costruisciMatchmaker(modulo.slot, giocatori).assegnazioniComplete(), punteggioTotale: 0 },
+    ];
+  }, [modulo, mieiMantra, priorita, playerById]);
+
+  const [indiceCombinazione, setIndiceCombinazione] = useState(0);
+  const combinazioneAttuale = combinazioni[Math.min(indiceCombinazione, combinazioni.length - 1)];
+
+  const [assegnazione, setAssegnazione] = useState<(string | undefined)[]>(combinazioneAttuale.assegnazione);
   const [slotAperto, setSlotAperto] = useState<number | null>(null);
+  const [slotEvidenziato, setSlotEvidenziato] = useState<number | null>(null);
   const [trascinamento, setTrascinamento] = useState<Trascinamento | null>(null);
 
-  const playerById = useMemo(() => new Map(mieiMantra.map((p) => [p.id, p])), [mieiMantra]);
   const titolariIds = new Set(assegnazione.filter((id): id is string => !!id));
   const panchina = mieiMantra.filter((p) => !titolariIds.has(p.id));
 
@@ -251,6 +285,12 @@ export function ModuloVisualizzazione({
       return next;
     });
     setSlotAperto(null);
+    setSlotEvidenziato(null);
+  }
+
+  function scegliDaPanchina(playerId: string) {
+    if (slotEvidenziato === null) return;
+    scegli(slotEvidenziato, playerId);
   }
 
   function rimuovi(slotIndex: number) {
@@ -262,9 +302,18 @@ export function ModuloVisualizzazione({
     setSlotAperto(null);
   }
 
-  function ripristina() {
-    setAssegnazione(assegnazioneIniziale);
+  function vaiAllaCombinazione(indice: number) {
+    setIndiceCombinazione(indice);
+    setAssegnazione(combinazioni[indice].assegnazione);
     setSlotAperto(null);
+    setSlotEvidenziato(null);
+    setTrascinamento(null);
+  }
+
+  function ripristina() {
+    setAssegnazione(combinazioneAttuale.assegnazione);
+    setSlotAperto(null);
+    setSlotEvidenziato(null);
   }
 
   function iniziaTrascinamentoCampo(playerId: string, origine: number) {
@@ -329,9 +378,29 @@ export function ModuloVisualizzazione({
         className="bg-slate-900 rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 className="text-white font-bold text-lg">{modulo.nome}</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => vaiAllaCombinazione(indiceCombinazione - 1)}
+              disabled={indiceCombinazione <= 0}
+              className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 text-white hover:bg-slate-600 disabled:opacity-30 disabled:hover:bg-slate-700"
+              title="Formazione precedente (punteggio più alto)"
+            >
+              ‹
+            </button>
+            <span className="text-xs text-white/60 whitespace-nowrap">
+              Formazione {indiceCombinazione + 1}/{combinazioni.length} · Punteggio{" "}
+              {Math.round(combinazioneAttuale.punteggioTotale)}
+            </span>
+            <button
+              onClick={() => vaiAllaCombinazione(indiceCombinazione + 1)}
+              disabled={indiceCombinazione >= combinazioni.length - 1}
+              className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 text-white hover:bg-slate-600 disabled:opacity-30 disabled:hover:bg-slate-700"
+              title="Formazione successiva (punteggio più basso)"
+            >
+              ›
+            </button>
             <button onClick={ripristina} className="text-xs bg-slate-700 text-white rounded px-2 py-1 hover:bg-slate-600">
               Ripristina automatica
             </button>
@@ -342,9 +411,11 @@ export function ModuloVisualizzazione({
         </div>
 
         <p className="text-white/60 text-xs mb-3">
-          Clicca su un giocatore o su uno slot vuoto con il segno <strong className="text-white">+</strong> per
-          sostituirlo con un panchinaro compatibile, oppure trascina un giocatore dal campo alla panchina e
-          viceversa: si entra in campo solo negli slot con un ruolo compatibile.
+          Le migliori {combinazioni.length} formazioni trovate, ordinate per punteggio Priorità totale dei
+          titolari (‹/› per scorrerle). Clicca sul cerchietto blu di un giocatore per evidenziare i panchinari
+          compatibili e sceglierne uno al posto suo, clicca sulla foto di un titolare per rimuoverlo dal campo,
+          oppure trascina un giocatore dal campo alla panchina e viceversa: si entra in campo solo negli slot con
+          un ruolo compatibile.
         </p>
 
         <div className="flex flex-col lg:flex-row gap-4">
@@ -362,6 +433,14 @@ export function ModuloVisualizzazione({
               <div className="absolute bottom-[14%] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white/30" />
               {/* Porta vista dall'alto */}
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[16%] h-2 border-2 border-white/40 border-b-0" />
+              {/* Linea di centrocampo */}
+              <div className="absolute top-1/2 inset-x-0 border-t-2 border-white/20" />
+              {/* Area di rigore avversaria */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[64%] h-[20%] border-2 border-white/20 border-t-0" />
+              {/* Area piccola avversaria */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[34%] h-[9%] border-2 border-white/20 border-t-0" />
+              {/* Porta avversaria vista dall'alto */}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-[16%] h-2 border-2 border-white/40 border-t-0" />
             </div>
             {/* modulo.righe è portiere->attacco; qui si inverte per avere il portiere in basso e l'attacco in alto (direzione di gioco verso l'alto). */}
             {[...modulo.righe].reverse().map((riga, i) => (
@@ -374,8 +453,15 @@ export function ModuloVisualizzazione({
                     player={assegnazione[idx] ? playerById.get(assegnazione[idx] as string) : undefined}
                     sostituti={sostitutiPer(idx)}
                     aperto={slotAperto === idx}
-                    onToggle={() => setSlotAperto((cur) => (cur === idx ? null : idx))}
-                    onScegli={(id) => scegli(idx, id)}
+                    evidenziato={slotEvidenziato === idx}
+                    onToggleRimuovi={() => {
+                      setSlotAperto((cur) => (cur === idx ? null : idx));
+                      setSlotEvidenziato(null);
+                    }}
+                    onToggleSostituti={() => {
+                      setSlotEvidenziato((cur) => (cur === idx ? null : idx));
+                      setSlotAperto(null);
+                    }}
                     onRimuovi={() => rimuovi(idx)}
                     onDragStart={() => iniziaTrascinamentoCampo(assegnazione[idx] as string, idx)}
                     onDragEnd={fineTrascinamento}
@@ -401,14 +487,21 @@ export function ModuloVisualizzazione({
               <p className="text-white/40 text-xs">Nessun giocatore in panchina.</p>
             ) : (
               <div className="flex flex-col gap-2">
-                {panchina.map((p) => (
-                  <CartaPanchina
-                    key={p.id}
-                    player={p}
-                    onDragStart={() => iniziaTrascinamentoPanchina(p.id)}
-                    onDragEnd={fineTrascinamento}
-                  />
-                ))}
+                {panchina.map((p) => {
+                  const sostitutoDelloSlotEvidenziato =
+                    slotEvidenziato !== null && ruoliCompatibiliConSlot(p, modulo.slot[slotEvidenziato]);
+                  return (
+                    <CartaPanchina
+                      key={p.id}
+                      player={p}
+                      onDragStart={() => iniziaTrascinamentoPanchina(p.id)}
+                      onDragEnd={fineTrascinamento}
+                      evidenziato={sostitutoDelloSlotEvidenziato}
+                      attenuato={slotEvidenziato !== null && !sostitutoDelloSlotEvidenziato}
+                      onClick={sostitutoDelloSlotEvidenziato ? () => scegliDaPanchina(p.id) : undefined}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>

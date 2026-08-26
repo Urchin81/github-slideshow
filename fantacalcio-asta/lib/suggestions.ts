@@ -1,5 +1,5 @@
 import { LivelloFpedia, Player, RUOLI, Ruolo, RuoloMantra, Settings } from "./types";
-import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
+import { MODULI_MANTRA, Modulo, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
 import { livelloRelativoInCampione } from "./percentile";
 
@@ -221,10 +221,14 @@ interface CoperturaModuliInterna {
   matchers: Map<string, MatchmakerModulo>;
 }
 
-function calcolaCoperturaModuli(players: Player[]): CoperturaModuliInterna {
-  const posseduti = players
+function giocatoriMantraPosseduti(players: Player[]): { id: string; ruoli: RuoloMantra[] }[] {
+  return players
     .filter((p) => p.stato === "mia" && p.ruoliMantra && p.ruoliMantra.length > 0)
     .map((p) => ({ id: p.id, ruoli: p.ruoliMantra as RuoloMantra[] }));
+}
+
+function calcolaCoperturaModuli(players: Player[]): CoperturaModuliInterna {
+  const posseduti = giocatoriMantraPosseduti(players);
 
   const matchers = new Map<string, MatchmakerModulo>();
   const coperture: ModuloCoverage[] = MODULI_MANTRA.map((modulo) => {
@@ -245,6 +249,34 @@ function calcolaCoperturaModuli(players: Player[]): CoperturaModuliInterna {
 /** Copertura degli 11 moduli Mantra con la rosa attuale, ordinati dal piu' vicino al completamento. */
 export function computeCoperturaModuli(players: Player[]): ModuloCoverage[] {
   return calcolaCoperturaModuli(players).coperture;
+}
+
+export interface RigaDettaglioModulo {
+  /** Set di ruoli accettato da questo/questi slot (es. ["Dc"] oppure ["Dc","B"]): stesso set = stessa riga. */
+  slot: SlotModulo;
+  coperti: number;
+  totale: number;
+}
+
+/**
+ * Per un modulo, i ruoli previsti raggruppati per set di ruoli accettato
+ * (stesso set = stessa riga, es. i 2 slot "Dc" del 3-4-3 diventano un'unica
+ * riga "Dc: 2/2") con quanti sono coperti dalla rosa posseduta: usato per il
+ * tooltip di dettaglio sui moduli nel pannello Budget.
+ */
+export function computeDettaglioModulo(players: Player[], modulo: Modulo): RigaDettaglioModulo[] {
+  const matcher = costruisciMatchmaker(modulo.slot, giocatoriMantraPosseduti(players));
+  const assegnazione = matcher.assegnazioniComplete();
+
+  const righe = new Map<string, RigaDettaglioModulo>();
+  modulo.slot.forEach((slot, idx) => {
+    const chiave = slot.join("/");
+    const riga = righe.get(chiave) ?? { slot, coperti: 0, totale: 0 };
+    riga.totale += 1;
+    if (assegnazione[idx]) riga.coperti += 1;
+    righe.set(chiave, riga);
+  });
+  return Array.from(righe.values());
 }
 
 const MODULI_CONSIDERATI = 3;

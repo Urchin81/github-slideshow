@@ -52,6 +52,17 @@ ruoli ancora da coprire nella tua squadra.
   disponibili, il menu **"Ordina per"** sceglie se ordinare per
   **Convenienza** (il Punteggio: rapporto qualità/prezzo, default) o per
   **Priorità** (vedi sotto).
+- **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
+  nel riquadro "in asta") ha un bordo spesso colorato in base a quanto è
+  probabile che giochi — **verde** (titolarità alta: trend "Titolare
+  fisso"/"In buona forma" dalle notizie o tag FPEDIA "Titolare"), **giallo**
+  (titolarità media: un segnale di panchina ma con ancora un buon numero di
+  presenze previste, oppure nessun segnale testuale ma presenze previste
+  comunque discrete), **rosso** (titolarità bassa: infortunato, squalificato,
+  o poche presenze previste), **grigio** (nessuna informazione disponibile).
+  Riusa esattamente gli stessi segnali del punteggio Priorità
+  (`classificaTitolarita` in `lib/priorita.ts`), solo raggruppati in 4 fasce
+  invece che in un punteggio continuo.
 - **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
   disegno del campo, se è completabile con la rosa attuale — e in tal caso
   quanti **insiemi distinti di 11 giocatori schierabili** puoi comporre
@@ -61,22 +72,37 @@ ruoli ancora da coprire nella tua squadra.
   anche con rose molto simmetriche) — oppure quali ruoli mancano ancora e
   quanti. Il conteggio deduplica sull'insieme di giocatori in campo: se due
   giocatori intercambiabili si scambiano solo lo slot restando entrambi
-  schierati, non conta come una combinazione diversa. Lo stesso pop-up si
-  apre sia dalla pagina **Moduli Mantra** sia cliccando su una qualsiasi voce
-  dell'elenco "Moduli (dal più vicino al completamento)" nel pannello
-  Budget della dashboard (mostra tutti gli 11 moduli, non solo i primi 5; la
-  barra di completamento è verde solo a modulo completo, gialla finché manca
-  ancora qualche slot). Nel pop-up il campo ha il portiere in basso e l'attacco in alto
-  (direzione di gioco verso l'alto) con i giocatori posizionati (foto, ruoli,
-  nome, squadra) e la panchina a destra con chi non ha trovato posto; chi ha
-  un sostituto compatibile in panchina mostra un cerchietto "+" sopra la
-  foto — cliccandolo si apre un elenco per scegliere con chi far cambiare
-  posto (o per toglierlo dal campo) — oppure si può trascinare (drag & drop)
-  un giocatore dal campo alla panchina e viceversa: si entra in campo solo
-  se il ruolo del giocatore corrisponde a quello richiesto dallo slot, altri
-  tentativi vengono ignorati. È solo una simulazione locale nella finestra:
-  non tocca lo stato dell'asta, e "Ripristina automatica" torna in qualsiasi
-  momento alla formazione calcolata dall'algoritmo di matching.
+  schierati, non conta come una combinazione diversa. Passando il mouse su
+  una voce dell'elenco "Moduli (dal più vicino al completamento)" nel
+  pannello Budget compare un riepilogo di tutti i ruoli previsti dal modulo
+  col numero di giocatori posseduti che li coprono (es. "Dc 2/2", "E 1/2"),
+  con le righe incomplete evidenziate in rosso — utile per capire a colpo
+  d'occhio cosa manca senza aprire il pop-up.
+- **Pop-up formazione**: si apre sia dalla pagina **Moduli Mantra** sia
+  cliccando su una voce dei moduli nel pannello Budget (la barra di
+  completamento è verde solo a modulo completo, gialla finché manca ancora
+  qualche slot). Mostra **le migliori formazioni possibili** con la rosa
+  attuale, ordinate per punteggio Priorità totale dei titolari (somma del
+  punteggio Priorità di ciascuno, vedi sotto) decrescente — i pulsanti
+  **‹ ›** accanto al nome del modulo scorrono tra queste alternative, dalla
+  più forte alla più debole (un risultato "migliori trovate", non una
+  garanzia di aver esplorato ogni combinazione possibile con rose molto
+  simmetriche). Il campo è disegnato per intero (area, dischetto e porta di
+  entrambe le squadre, linea di centrocampo), col portiere in basso e
+  l'attacco in alto (direzione di gioco verso l'alto); i giocatori multi-ruolo
+  mostrano le pillole dei rispettivi ruoli disposte lungo il bordo della
+  foto in senso orario. Ogni titolare con almeno un panchinaro compatibile
+  ha un cerchietto blu in basso a sinistra sulla foto col **numero di
+  sostituti disponibili**: cliccandolo evidenzia in panchina solo i
+  panchinari compatibili (gli altri si attenuano) — un click su uno di loro
+  lo schiera al suo posto. Cliccare invece sulla foto di un titolare apre un
+  piccolo menu per rimuoverlo dal campo. È anche possibile trascinare
+  (drag & drop) un giocatore dal campo alla panchina e viceversa: si entra
+  in campo solo se il ruolo del giocatore corrisponde a quello richiesto
+  dallo slot, altri tentativi vengono ignorati. È solo una simulazione
+  locale nella finestra: non tocca lo stato dell'asta, e "Ripristina
+  automatica" torna in qualsiasi momento alla formazione (tra quelle
+  proposte) attualmente selezionata, scartando le modifiche manuali.
 - **Suggerimenti in tempo reale**: punteggio che premia una quotazione alta
   rispetto al budget medio ancora spendibile (Classic: per slot di ruolo;
   Mantra: per posto rimanente in rosa), penalizza chi supera quella media, e
