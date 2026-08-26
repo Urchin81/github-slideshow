@@ -100,31 +100,42 @@ ruoli ancora da coprire nella tua squadra.
   rimette tutti i giocatori disponibili senza toccare il listino importato
   **né i preferiti** (vedi sotto) — entrambi chiedono conferma prima di agire.
 - **Giocatore in asta (martello 🔨)**: nella tabella, ogni giocatore
-  disponibile mostra solo l'icona del martello d'asta al posto dei due
-  pulsanti "Preso da me"/"Preso da altri". Cliccandoci sopra si entra in
-  modalità "focus": quel giocatore resta fissato in cima alla tabella — con i
-  veri pulsanti di assegnazione — mentre sotto compaiono, ordinati per
-  punteggio, solo gli altri giocatori ancora disponibili con ruolo
-  compatibile (stesso ruolo in Classic; almeno un ruolo Mantra in comune in
-  Mantra), utile per confrontare al volo le alternative durante il rilancio.
-  Un banner sostituisce i filtri normali con un pulsante "Torna alla lista
-  completa"; la modalità si chiude anche da sola non appena il giocatore
-  fissato viene assegnato (a te o ad altri).
-- **Prezzo massimo e rischio sforamento**: mentre un giocatore è "in asta",
-  il banner mostra un "Max consigliato" (la stessa soglia usata per il segno
-  ✓ "consigliato" in tabella, +30% del budget medio ancora disponibile per
-  quel ruolo/posto, con un bonus se l'FVM supera la quotazione) e un "tetto"
-  aritmetico (oltre il quale non resterebbe almeno 1 credito per ognuno degli
-  altri slot/posti ancora da riempire). Aprendo "Preso da me", digitando un
-  prezzo che supera una delle due soglie compare un avviso live (ambra =
-  attenzione, rosso = sforamento) insieme a un simulatore "cosa succede se"
-  che mostra, prima di confermare, come cambierebbero budget residuo,
-  slot/posti rimanenti e media/slot dopo l'acquisto (in Mantra, anche quali
-  moduli aiuterebbe a sbloccare). Nel pannello Budget, un "Piano di spesa per
-  ruolo residuo" mostra lo stesso tetto prudente per ogni ruolo (Classic) o
-  una ripartizione approssimativa del budget residuo tra i ruoli Mantra più
-  richiesti dai moduli vicini al completamento (Mantra) — una guida, non una
-  prenotazione rigida.
+  disponibile mostra solo l'icona del martello d'asta. Cliccandoci sopra si
+  entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
+  la tabella con tutto il necessario per seguire il rilancio senza scorrere
+  la riga: foto (con il cerotto 🩹 se infortunato), ruolo/i, squadra,
+  quotazione, FVM, titolarità (dedotta dalle notizie), Punteggio, Valore
+  atteso (🪄), Max consigliato/tetto, tutte le icone caratteristiche, e il
+  controllo prezzo con tasti **−**/**+** (passo 1) accanto a un campo
+  numerico che parte da **0** — modificabile anche digitando direttamente.
+  Da lì si conferma con **"Preso da me"** (richiede un prezzo maggiore di
+  zero, disabilitato altrimenti e se hai raggiunto il numero massimo di
+  giocatori) o **"Preso da altri"** (prezzo facoltativo: lasciandolo a 0 non
+  viene registrato, un valore diverso da zero registra quanto ha pagato
+  l'avversario — utile per seguire l'andamento delle puntate — e resta poi
+  visibile in tabella sulla riga del giocatore). Sotto la tabella compaiono,
+  ordinati per punteggio, solo gli altri giocatori ancora disponibili con
+  ruolo compatibile (stesso ruolo in Classic; almeno un ruolo Mantra in
+  comune in Mantra) — click sul loro martello per spostare il focus e
+  confrontare al volo le alternative durante il rilancio, senza dover uscire
+  dal riquadro. Un pulsante "Torna alla lista completa" nel riquadro chiude
+  la modalità, che si chiude anche da sola non appena il giocatore fissato
+  viene assegnato (a te o ad altri).
+- **Prezzo massimo e rischio sforamento**: nel riquadro "in asta", "Max
+  consigliato" (la stessa soglia usata per il segno ✓ "consigliato" in
+  tabella, +30% del budget medio ancora disponibile per quel ruolo/posto, con
+  un bonus se l'FVM supera la quotazione) e "tetto" (aritmetico: oltre questo
+  prezzo non resterebbe almeno 1 credito per ognuno degli altri slot/posti
+  ancora da riempire) sono sempre visibili. Cambiando il prezzo con i tasti
+  −/+ o digitandolo, superare una delle due soglie mostra un avviso live
+  (ambra = attenzione, rosso = sforamento) insieme a un simulatore "cosa
+  succede se" che mostra, prima di confermare, come cambierebbero budget
+  residuo, slot/posti rimanenti e media/slot dopo l'acquisto (in Mantra,
+  anche quali moduli aiuterebbe a sbloccare). Nel pannello Budget, un "Piano
+  di spesa per ruolo residuo" mostra lo stesso tetto prudente per ogni ruolo
+  (Classic) o una ripartizione approssimativa del budget residuo tra i ruoli
+  Mantra più richiesti dai moduli vicini al completamento (Mantra) — una
+  guida, non una prenotazione rigida.
 - **Valore atteso fantacalcistico**: quando un giocatore ha statistiche
   FPEDIA, la tabella mostra (colonna "Valore atteso", accanto al Punteggio) e
   la scheda giocatore mostrano la **previsione di fantacalciopedia.com**
@@ -176,6 +187,20 @@ ruoli ancora da coprire nella tua squadra.
     voto delle ultime stagioni, previsionali, ecc. — qualunque cosa il sito
     mostri, senza un elenco fisso di campi), i tag di scouting, l'immagine del
     giocatore e lo stemma della squadra, e la nota di scouting.
+  - **Infortunati**: il pulsante "🩹 Aggiorna infortunati" (nello stesso
+    pannello) legge le 4 pagine elenco "infortunati" di fantacalciopedia.com
+    (una per ruolo) e marca/smarca `Player.infortunato` per l'intera rosa in
+    un solo colpo — solo 4 richieste totali, non una per giocatore, quindi
+    molto più veloce degli aggiornamenti sopra. Chi è infortunato mostra un
+    **cerotto rosso** in basso a sinistra sulla foto (tabella, scheda
+    giocatore, pop-up Moduli Mantra) e una nuova icona 🩹 tra le
+    caratteristiche (rossa se infortunato, grigia se no, filtrabile come le
+    altre); chi recupera perde cerotto e icona al giro successivo, perché lo
+    stato riflette sempre l'ultimo giro letto dalle 4 liste, non uno storico.
+    Nota: le pagine "infortunati" non sono state verificabili con un fetch
+    diretto dall'ambiente di sviluppo (stesso limite di rete già noto per i
+    feed notizie, vedi sotto) — il parsing riusa la struttura già confermata
+    delle pagine elenco per ruolo, ma verificane l'esito reale sul sito.
   - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori
     numerici FPEDIA con un semaforo a 5 colori (Super azzurro, Buono verde,
     Sufficiente giallo, Mediocre arancione, Negativo rosso — legenda sotto le

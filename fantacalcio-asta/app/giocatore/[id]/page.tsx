@@ -12,6 +12,7 @@ import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
 import { CaratteristicheGiocatore } from "@/components/CaratteristicheGiocatore";
 import { Pillola } from "@/components/Pillola";
+import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 import { isSafeHttpUrl } from "@/lib/url";
 
 // Le "pillole" FPEDIA con un'annata nell'etichetta (es. "Media Fanta Voto
@@ -100,7 +101,7 @@ export default function GiocatorePage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex gap-4">
-          <div className="shrink-0">
+          <div className="shrink-0 relative">
             {isSafeHttpUrl(player.fpedia?.immagineUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -113,6 +114,7 @@ export default function GiocatorePage() {
                 Nessuna foto
               </div>
             )}
+            {player.infortunato && <BadgeInfortunio size={20} />}
           </div>
 
           <div className="flex-1 min-w-0">

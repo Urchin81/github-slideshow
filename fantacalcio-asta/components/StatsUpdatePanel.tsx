@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { FpediaStats, Player } from "@/lib/types";
+import { trovaUrlGiocatoreInIndice, VoceIndiceGiocatore } from "@/lib/indiceGiocatori";
 import { useAuctionStore } from "@/lib/store";
+
+// Base fittizia: trovaUrlGiocatoreInIndice ha bisogno di un baseUrl per risolvere
+// l'URL della voce trovata, ma qui interessa solo SE c'e' un match, non l'URL.
+const BASE_FITTIZIA = "https://fpedia.invalid/";
 
 const TOP_N = 200;
 const CAMPIONE_N = 8;
@@ -35,6 +40,39 @@ export function StatsUpdatePanel() {
   const applyNewsResults = useAuctionStore((s) => s.applyNewsResults);
   const [inCorso, setInCorso] = useState<Ambito | null>(null);
   const [progresso, setProgresso] = useState<Progresso | null>(null);
+  const [infortuniInCorso, setInfortuniInCorso] = useState(false);
+  const [esitoInfortuni, setEsitoInfortuni] = useState<string | null>(null);
+
+  // Operazione unica e veloce (4 richieste totali, non una per giocatore): recupera
+  // i nomi degli infortunati dalle 4 liste per ruolo di FPEDIA e marca/smarca
+  // Player.infortunato per l'intera rosa in un solo aggiornamento allo store.
+  async function aggiornaInfortunati() {
+    setInfortuniInCorso(true);
+    setEsitoInfortuni(null);
+    try {
+      const res = await fetch("/api/fpedia-infortuni");
+      const data: { nomi: string[]; errore?: string } = await res.json();
+      const indice: VoceIndiceGiocatore[] = data.nomi.map((nome) => ({ nome, url: "#" }));
+
+      const aggiornamenti: Record<string, Partial<Player>> = {};
+      let trovati = 0;
+      for (const player of players) {
+        const infortunato = trovaUrlGiocatoreInIndice(indice, player.nome, BASE_FITTIZIA) !== null;
+        if (infortunato) trovati++;
+        if (infortunato !== !!player.infortunato) aggiornamenti[player.id] = { infortunato };
+      }
+      if (Object.keys(aggiornamenti).length > 0) applyNewsResults(aggiornamenti);
+
+      setEsitoInfortuni(
+        data.errore && data.nomi.length === 0
+          ? `Impossibile recuperare gli infortunati: ${data.errore}`
+          : `${trovati} giocatori infortunati trovati e aggiornati.`
+      );
+    } catch (err) {
+      setEsitoInfortuni(`Errore: ${err instanceof Error ? err.message : "richiesta fallita."}`);
+    }
+    setInfortuniInCorso(false);
+  }
 
   async function aggiornaStatistiche(ambito: Ambito) {
     setInCorso(ambito);
@@ -145,6 +183,23 @@ export function StatsUpdatePanel() {
           </table>
         </div>
       )}
+
+      <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+        <button
+          onClick={aggiornaInfortunati}
+          disabled={infortuniInCorso}
+          className="text-sm bg-red-600 text-white rounded px-3 py-1.5 disabled:opacity-50"
+          title="Legge le 4 liste infortunati di FPEDIA (una per ruolo) e marca/smarca il cerotto rosso su ogni giocatore"
+        >
+          {infortuniInCorso ? "Aggiornamento in corso..." : "🩹 Aggiorna infortunati"}
+        </button>
+        {esitoInfortuni && <span className="text-sm text-slate-500">{esitoInfortuni}</span>}
+        <span className="text-xs text-slate-400 w-full">
+          4 richieste totali (una per ruolo), non una per giocatore: molto più veloce degli
+          aggiornamenti sopra. Il cerotto rosso compare su foto e caratteristiche dei giocatori
+          infortunati; chi recupera lo perde al giro successivo.
+        </span>
+      </div>
     </div>
   );
 }

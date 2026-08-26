@@ -129,6 +129,12 @@ export interface Player {
   notizie?: NewsItem[];
   notizieAggiornateIl?: string;
   fpedia?: FpediaStats;
+  /**
+   * Infortunato secondo le liste "infortunati" di FPEDIA (una per ruolo, aggiornate
+   * separatamente da "Aggiorna infortunati" in Settings): non annidato in FpediaStats
+   * perché arriva da uno scrape diverso (le liste per ruolo, non la scheda individuale).
+   */
+  infortunato?: boolean;
   /** Preferito personale: sopravvive al reset dell'asta (non è uno stato d'asta). */
   preferito?: boolean;
 }

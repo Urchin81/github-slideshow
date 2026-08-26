@@ -1,61 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { estraiIndiceGiocatori, FPEDIA_RUOLI_ELENCO, parseFpediaHtml } from "@/lib/fpedia";
 import { trovaUrlGiocatoreInIndice, VoceIndiceGiocatore } from "@/lib/indiceGiocatori";
+import { FPEDIA_BASE_URL, fetchTesto } from "@/lib/fpediaFetch";
 
 export const dynamic = "force-dynamic";
 
-const USER_AGENT =
-  "Mozilla/5.0 (compatible; AssistenteAstaFantacalcio/1.0; uso personale, non massivo)";
-// Configurabile solo per i test locali (server HTML finto); in produzione resta il sito reale.
-const FPEDIA_BASE_URL = process.env.FPEDIA_BASE_URL ?? "https://www.fantacalciopedia.com";
-const FPEDIA_HOST = new URL(FPEDIA_BASE_URL).host;
-
-const FETCH_TIMEOUT_MS = 15000;
 const NOME_MAX_LEN = 200;
-
-/**
- * Il server deve scaricare SOLO pagine di fantacalciopedia.com. L'indice dei
- * giocatori (nome -> URL scheda) viene costruito dagli <a href> trovati
- * dentro l'HTML scaricato dal sito stesso: se quella pagina fosse mai
- * compromessa o alterata, un link malevolo potrebbe puntare altrove (es. un
- * indirizzo di rete interna) e far diventare questo endpoint un proxy SSRF
- * verso qualunque destinazione (OWASP A10). Prima di ogni fetch verifichiamo
- * quindi che l'host coincida con quello atteso.
- */
-function assicuraHostFpedia(url: string): void {
-  const host = new URL(url).host;
-  if (host !== FPEDIA_HOST) {
-    throw new Error("URL esterno all'host FPEDIA atteso, richiesta bloccata.");
-  }
-}
-
-async function fetchTesto(url: string): Promise<string> {
-  assicuraHostFpedia(url);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  let res: Response;
-  try {
-    res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: controller.signal });
-  } catch (err) {
-    // "fetch failed" da solo non dice nulla: Node incapsula il motivo reale
-    // (DNS, connessione rifiutata, TLS, timeout...) nella proprieta' "cause".
-    // Il dettaglio va comunque solo nei log server: al client basta sapere
-    // che il recupero e' fallito, senza esporre dettagli di rete interni.
-    const causa = err instanceof Error ? (err.cause as unknown) : undefined;
-    const dettaglioCausa = causa instanceof Error ? causa.message : causa ? String(causa) : undefined;
-    const messaggioBase = err instanceof Error ? err.message : "Richiesta di rete fallita.";
-    console.error(`[fpedia] fetch fallito per ${url}: ${messaggioBase}${dettaglioCausa ? ` — ${dettaglioCausa}` : ""}`);
-    throw new Error("Impossibile raggiungere FPEDIA (rete o timeout).");
-  } finally {
-    clearTimeout(timeoutId);
-  }
-  if (!res.ok) {
-    console.error(`[fpedia] risposta non ok (HTTP ${res.status}) su ${url}`);
-    throw new Error("FPEDIA ha risposto con un errore.");
-  }
-  return res.text();
-}
 
 let indiceCache: { voci: VoceIndiceGiocatore[]; scaricatoIl: number } | null = null;
 const INDICE_TTL_MS = 30 * 60 * 1000;

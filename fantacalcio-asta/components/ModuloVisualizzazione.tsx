@@ -6,6 +6,7 @@ import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
 import { costruisciMatchmaker } from "@/lib/bipartiteMatching";
 import { Player, RUOLO_MANTRA_COLORE } from "@/lib/types";
 import { isSafeHttpUrl } from "@/lib/url";
+import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 
 function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
@@ -13,18 +14,22 @@ function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
 
 function FotoGiocatore({ player, size }: { player: Player; size: number }) {
   const stile = { width: size, height: size };
-  if (isSafeHttpUrl(player.fpedia?.immagineUrl)) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={player.fpedia?.immagineUrl}
-        alt=""
-        style={stile}
-        className="rounded-full object-contain bg-slate-100 border border-white/40"
-      />
-    );
-  }
-  return <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />;
+  return (
+    <span className="relative inline-block">
+      {isSafeHttpUrl(player.fpedia?.immagineUrl) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={player.fpedia?.immagineUrl}
+          alt=""
+          style={stile}
+          className="rounded-full object-contain bg-slate-100 border border-white/40"
+        />
+      ) : (
+        <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />
+      )}
+      {player.infortunato && <BadgeInfortunio size={Math.max(10, Math.round(size * 0.3))} />}
+    </span>
+  );
 }
 
 /** Stato del trascinamento in corso: il giocatore preso e, se veniva dal campo, lo slot di origine (null = veniva dalla panchina). */

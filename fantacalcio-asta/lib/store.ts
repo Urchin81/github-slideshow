@@ -8,7 +8,7 @@ interface AuctionState {
   loadPlayers: (players: Player[]) => void;
   setSettings: (settings: Settings) => void;
   assignToMe: (id: string, prezzoPagato: number) => void;
-  assignToOthers: (id: string) => void;
+  assignToOthers: (id: string, prezzoPagato?: number) => void;
   resetPlayer: (id: string) => void;
   resetAll: () => void;
   applyNewsResults: (updates: Record<string, Partial<Player>>) => void;
@@ -26,11 +26,9 @@ export const useAuctionStore = create<AuctionState>()(
         set((state) => ({
           players: state.players.map((p) => (p.id === id ? { ...p, stato: "mia", prezzoPagato } : p)),
         })),
-      assignToOthers: (id) =>
+      assignToOthers: (id, prezzoPagato) =>
         set((state) => ({
-          players: state.players.map((p) =>
-            p.id === id ? { ...p, stato: "altrui", prezzoPagato: undefined } : p
-          ),
+          players: state.players.map((p) => (p.id === id ? { ...p, stato: "altrui", prezzoPagato } : p)),
         })),
       resetPlayer: (id) =>
         set((state) => ({
