@@ -17,13 +17,7 @@ import {
 } from "@/lib/types";
 import { computeMantraStato, getSuggerimentiAsta, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
-import {
-  classeBordoTitolarita,
-  computeLivelloScore,
-  computeScore,
-  DETTAGLIO_SCORE_LABEL,
-  DettaglioScore,
-} from "@/lib/score";
+import { classeBordoTitolarita } from "@/lib/titolarita";
 import {
   computeLivelloUrgenza,
   computePercentualeUrgenza,
@@ -46,7 +40,6 @@ type CampoOrdinamento =
   | "quotazione"
   | "algFcp"
   | "punteggioFcp"
-  | "score"
   | "urgenza";
 type DirezioneOrdinamento = "asc" | "desc";
 interface StatoOrdinamento {
@@ -63,7 +56,6 @@ const DIREZIONE_DEFAULT: Record<CampoOrdinamento, DirezioneOrdinamento> = {
   quotazione: "desc",
   algFcp: "desc",
   punteggioFcp: "desc",
-  score: "desc",
   urgenza: "desc",
 };
 
@@ -80,9 +72,9 @@ function indiceRuolo(p: { ruolo: Ruolo; ruoliMantra?: RuoloMantra[] }, isMantra:
 /**
  * Bordo a 4 livelli di "quanto è forte questo giocatore" (rosso chiaro/giallo/verde/blu),
  * per il box "in asta" — diverso dal bordo titolarità (verde/giallo/rosso/grigio) usato in
- * tabella, che riguarda invece la probabilità di scendere in campo, non la qualità.
- * Riusa il semaforo a 5 fasce già calcolato per il badge Score (livelloScore), fondendo
- * mediocre/negativo in un'unica fascia "scarso".
+ * tabella, che riguarda invece la probabilità di scendere in campo, non il valore.
+ * Riusa il semaforo a 5 fasce già calcolato per il badge ALG FCP (livelloFantasolidita),
+ * fondendo mediocre/negativo in un'unica fascia "scarso".
  */
 function classeBordoQualita(livello: LivelloFpedia): string {
   switch (livello) {
@@ -98,15 +90,6 @@ function classeBordoQualita(livello: LivelloFpedia): string {
     default:
       return "border-4 border-slate-300";
   }
-}
-
-/** Scomposizione dello Score come tooltip leggibile: solo le componenti che pesano davvero, con segno esplicito. */
-function tooltipScore(d: DettaglioScore): string {
-  const voci = (Object.keys(DETTAGLIO_SCORE_LABEL) as (keyof typeof DETTAGLIO_SCORE_LABEL)[])
-    .map((chiave) => ({ label: DETTAGLIO_SCORE_LABEL[chiave], valore: d[chiave] }))
-    .filter((v) => Math.abs(v.valore) >= 0.05)
-    .map((v) => `${v.label}: ${v.valore > 0 ? "+" : ""}${v.valore.toFixed(1)}`);
-  return voci.length > 0 ? `Score ${Math.round(d.totale)}\n${voci.join("\n")}` : "Nessun dato sufficiente per calcolare lo Score";
 }
 
 /**
@@ -160,7 +143,7 @@ export function PlayerTable() {
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
-  const [ordinamento, setOrdinamento] = useState<StatoOrdinamento>({ campo: "score", direzione: "desc" });
+  const [ordinamento, setOrdinamento] = useState<StatoOrdinamento>({ campo: "algFcp", direzione: "desc" });
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
@@ -184,8 +167,6 @@ export function PlayerTable() {
     return map;
   }, [suggerimenti]);
   const livelloFantasolidita = useMemo(() => computeLivelliFantasolidita(players), [players]);
-  const score = useMemo(() => computeScore(players, settings), [players, settings]);
-  const livelloScore = useMemo(() => computeLivelloScore(players, score), [players, score]);
   const urgenza = useMemo(() => computeUrgenza(players, settings), [players, settings]);
   const livelloUrgenza = useMemo(() => computeLivelloUrgenza(players, urgenza), [players, urgenza]);
   const percentualeUrgenza = useMemo(() => computePercentualeUrgenza(players, urgenza), [players, urgenza]);
@@ -209,7 +190,7 @@ export function PlayerTable() {
     if (inAstaPlayer) {
       const compatibili = players
         .filter((p) => p.id !== inAstaPlayer.id && p.stato === "disponibile" && ruoliCompatibili(p, inAstaPlayer))
-        .sort((a, b) => (score(b)?.totale ?? -Infinity) - (score(a)?.totale ?? -Infinity));
+        .sort((a, b) => (b.fpedia?.algFcp ?? -Infinity) - (a.fpedia?.algFcp ?? -Infinity));
       return [inAstaPlayer, ...compatibili];
     }
 
@@ -259,9 +240,8 @@ export function PlayerTable() {
         case "urgenza":
           cmp = (urgenza(a)?.totale ?? -Infinity) - (urgenza(b)?.totale ?? -Infinity);
           break;
-        case "score":
         default:
-          cmp = (score(a)?.totale ?? -Infinity) - (score(b)?.totale ?? -Infinity);
+          cmp = (a.fpedia?.algFcp ?? -Infinity) - (b.fpedia?.algFcp ?? -Infinity);
           break;
       }
       return ordinamento.direzione === "desc" ? -cmp : cmp;
@@ -276,7 +256,6 @@ export function PlayerTable() {
     isMantra,
     inAstaPlayer,
     ordinamento,
-    score,
     urgenza,
   ]);
 
@@ -409,7 +388,7 @@ export function PlayerTable() {
           <div className="flex flex-wrap items-center gap-4 bg-white border border-amber-100 rounded p-2.5">
             <span
               className="relative inline-block shrink-0"
-              title="Bordo colorato in base allo Score: quanto è forte questo giocatore (rosso chiaro = scarso, giallo = medio, verde = buono, blu = fuoriclasse)."
+              title="Bordo colorato in base all'algoritmo FCP: quanto vale questo giocatore (rosso chiaro = scarso, giallo = medio, verde = buono, blu = fuoriclasse)."
             >
               {isSafeHttpUrl(inAstaPlayer.fpedia?.immagineUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -417,13 +396,13 @@ export function PlayerTable() {
                   src={inAstaPlayer.fpedia?.immagineUrl}
                   alt=""
                   className={`w-14 h-14 rounded-full object-contain bg-slate-50 ${classeBordoQualita(
-                    livelloScore(inAstaPlayer)
+                    livelloFantasolidita(inAstaPlayer, "algFcp")
                   )}`}
                 />
               ) : (
                 <span
                   className={`inline-block w-14 h-14 rounded-full bg-slate-50 ${classeBordoQualita(
-                    livelloScore(inAstaPlayer)
+                    livelloFantasolidita(inAstaPlayer, "algFcp")
                   )}`}
                 />
               )}
@@ -468,18 +447,6 @@ export function PlayerTable() {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {score(inAstaPlayer) && (
-              <div className="text-center">
-                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Score</div>
-                <div
-                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloScore(inAstaPlayer))}`}
-                  title={tooltipScore(score(inAstaPlayer)!)}
-                >
-                  {Math.round(score(inAstaPlayer)!.totale)}
-                </div>
               </div>
             )}
 
@@ -743,15 +710,6 @@ export function PlayerTable() {
               {mostraValutazioni && (
                 <th
                   className="pb-2 text-center cursor-pointer select-none hover:text-slate-600"
-                  onClick={() => alternaOrdinamento("score")}
-                  title="Ordina per Score"
-                >
-                  <span className="inline-flex items-center justify-center gap-0.5">Score{indicatoreOrdinamento("score")}</span>
-                </th>
-              )}
-              {mostraValutazioni && (
-                <th
-                  className="pb-2 text-center cursor-pointer select-none hover:text-slate-600"
                   onClick={() => alternaOrdinamento("urgenza")}
                   title="Ordina per Urgenza"
                 >
@@ -806,22 +764,6 @@ export function PlayerTable() {
                     </span>
                   </td>
                   <td className="py-1.5 text-center">{celleFCPedia(p)}</td>
-                  {mostraValutazioni && (
-                    <td className="py-1.5 text-center">
-                      {score(p) ? (
-                        <span
-                          className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
-                            livelloScore(p)
-                          )}`}
-                          title={tooltipScore(score(p)!)}
-                        >
-                          {Math.round(score(p)!.totale)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                  )}
                   {mostraValutazioni && (
                     <td className="py-1.5 text-center">
                       {urgenza(p) ? (
@@ -920,7 +862,6 @@ export function PlayerTable() {
                   </td>
                   <td />
                   <td />
-                  {mostraValutazioni && <td />}
                   {mostraValutazioni && <td />}
                   <td />
                 </tr>

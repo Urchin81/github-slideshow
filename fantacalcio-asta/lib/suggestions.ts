@@ -33,7 +33,7 @@ export interface PrezzoMassimo {
  * con un bonus se l'FVM supera la quotazione) e "tetto di sicurezza"
  * (aritmetico, oltre il quale non basterebbe almeno 1 credito a testa per gli
  * altri slot/posti rimanenti) — un allarme sul prezzo, indipendente da quanto
- * il giocatore sia forte (vedi invece Score in lib/score.ts).
+ * il giocatore valga (vedi invece l'ALG FCP di FPEDIA).
  */
 export function computePrezzoMassimo(
   quotazione: number,

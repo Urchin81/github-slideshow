@@ -46,20 +46,22 @@ ruoli ancora da coprire nella tua squadra.
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
   disponibile), Quotazione (header con il solo simbolo €), FCP×2 (icona
   bacchetta magica per ALG FCP, icona blocco note per Punteggio
-  FantaCalcioPedia — senza testo, solo tooltip), Score e Urgenza (solo tra i
-  disponibili o mentre un giocatore è "in asta", vedi sotto entrambi) e
-  Azioni — sempre in quest'ordine. I valori di Quotazione, FCP×2, Score e
+  FantaCalcioPedia — senza testo, solo tooltip) e Urgenza (solo tra i
+  disponibili o mentre un giocatore è "in asta", vedi sotto) e
+  Azioni — sempre in quest'ordine. I valori di Quotazione, FCP×2 e
   Urgenza sono centrati nella loro colonna; Quotazione è mostrata in un
-  riquadrino grigio chiaro con bordo grigio scuro, mentre FCP/Score/Urgenza
+  riquadrino grigio chiaro con bordo grigio scuro, mentre FCP/Urgenza
   restano nei rettangolini colorati in base al livello. L'intestazione resta
   visibile ("sticky") mentre si scorre l'elenco verso il basso, cosí si vede
   sempre a quale colonna corrisponde ogni valore.
 - **Ordinamento cliccando sugli header**: ogni header ordinabile (★, Ruolo,
-  Nome, Squadra, €, bacchetta FCP, blocco note FCP, Score, Urgenza) ordina
+  Nome, Squadra, €, bacchetta FCP, blocco note FCP, Urgenza) ordina
   l'elenco al click, con una freccetta che indica quale colonna è attiva e in
   che verso; un secondo click sullo stesso header inverte il verso (es.
   quotazione parte decrescente — i più cari prima — e al secondo click
-  diventa crescente). Il default all'apertura è **Score** decrescente.
+  diventa crescente). Il default all'apertura è **ALG FCP** decrescente —
+  l'algoritmo FCP di FantaCalcioPedia è l'indicatore di riferimento per
+  quanto vale un giocatore (a prescindere dal prezzo).
   L'ordinamento si applica a qualsiasi filtro (Disponibili/Mia
   squadra/Prese da altri/Tutti), non solo ai disponibili.
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
@@ -70,9 +72,8 @@ ruoli ancora da coprire nella tua squadra.
   presenze previste, oppure nessun segnale testuale ma presenze previste
   comunque discrete), **rosso** (titolarità bassa: infortunato, squalificato,
   o poche presenze previste), **grigio** (nessuna informazione disponibile).
-  Riusa esattamente gli stessi segnali dello Score
-  (`classificaTitolarita` in `lib/score.ts`), solo raggruppati in 4 fasce
-  invece che in un punteggio continuo.
+  Calcolata da `classificaTitolarita` in `lib/titolarita.ts`, a partire dal
+  trend delle notizie, dai tag FPEDIA e dalle presenze previste.
 - **Pagina Moduli Mantra interattiva**: ogni riquadro modulo mostra, sotto il
   disegno del campo, se è completabile con la rosa attuale — e in tal caso
   quanti **insiemi distinti di 11 giocatori schierabili** puoi comporre
@@ -92,8 +93,8 @@ ruoli ancora da coprire nella tua squadra.
   cliccando su una voce dei moduli nel pannello Budget (la barra di
   completamento è verde solo a modulo completo, gialla finché manca ancora
   qualche slot). Mostra **le migliori formazioni possibili** con la rosa
-  attuale, ordinate per Score totale dei titolari (somma dello Score di
-  ciascuno, vedi sotto) decrescente — i pulsanti
+  attuale, ordinate per ALG FCP totale dei titolari (somma dell'ALG FCP di
+  ciascuno) decrescente — i pulsanti
   **‹ ›** accanto al nome del modulo scorrono tra queste alternative, dalla
   più forte alla più debole (un risultato "migliori trovate", non una
   garanzia di aver esplorato ogni combinazione possibile con rose molto
@@ -113,68 +114,23 @@ ruoli ancora da coprire nella tua squadra.
   locale nella finestra: non tocca lo stato dell'asta, e "Ripristina
   automatica" torna in qualsiasi momento alla formazione (tra quelle
   proposte) attualmente selezionata, scartando le modifiche manuali.
-- **Score**: l'unico punteggio-qualità dell'app (il vecchio "Punteggio" di
-  convenienza economica quotazione/budget è stato rimosso), pensato per
-  aiutare a scegliere — a parità di budget — i giocatori più forti in campo:
-  quelli con più potenziale di gol e assist, voti costanti e pochi cartellini.
-  Combina (`lib/score.ts`, pesi tutti nominati in cima al file e
-  facilmente ritoccabili) solo dati già raccolti dall'app, mai un punteggio
-  esterno opaco:
-  - **Gol e assist attesi** (da FPEDIA): un gol vale di più per un difensore
-    o un centrocampista che per un attaccante puro (per cui è "normale"); un
-    assist vale uguale per tutti i ruoli.
-  - **Media voto e costanza**: bonus se la media voto è sopra la sufficienza
-    (e malus se sotto), più un piccolo bonus se è vicina a quella dell'ultima
-    stagione precedente disponibile (affidabilità, non solo media assoluta).
-  - **Cartellini**: malus proporzionale al tasso ammonizioni/espulsioni sulle
-    presenze già giocate (non un conteggio assoluto, per non penalizzare chi
-    ha giocato meno partite finora), rinforzato dal tag FPEDIA "Falloso".
-  - **Presenze attese** e **calci piazzati** (rigorista/punizioni/angoli, più
-    i tag FPEDIA "Piazzati"/"Outsider"/"Buona Media" già scaricati e prima
-    inutilizzati): bonus, gol/assist extra spesso non catturati nel solo
-    range previsionale.
-  - **Titolarità**: combina il trend dedotto dalle notizie (es. "Titolare
-    fisso" vs "In panchina") e i tag FPEDIA "Titolare"/"Panchinaro" (due
-    segnali indipendenti ma da soli poco affidabili, sommati con un tetto per
-    non doppiare lo stesso segnale), più un malus forte a parte per il flag
-    "infortunato" strutturato (le liste infortunati di FPEDIA, più affidabile
-    del solo trend testuale) — fondamentale per non restare scoperti in una
-    posizione durante l'asta.
-  - **Versatilità offensiva (solo Mantra)**: bonus per i giocatori con doppio
-    ruolo il cui ruolo secondario è più avanzato/offensivo del primario (es.
-    un Dc/E vale di più di un Dc puro; un C/T di più di un C puro), in base a
-    un nuovo ranking di "avanzamento offensivo" dei 12 ruoli Mantra
-    (`RUOLO_MANTRA_AVANZAMENTO` in `lib/types.ts`, da 0 il portiere a 5.5 la
-    punta pura) — generalizza il criterio a qualunque coppia di ruoli, senza
-    hard-codare casi specifici.
-  - **Assicurazione titolare**: bonus automatico (nessun interruttore da
-    attivare) per un giocatore disponibile che gioca nella stessa squadra
-    reale di un titolare già nella tua rosa, con ruolo compatibile — utile
-    soprattutto per gli ultimi slot di rosa, come "panchinaro" di un
-    titolare che già possiedi in caso di rotazioni o infortuni; si attiva da
-    solo sempre più spesso man mano che possiedi titolari, senza bisogno di
-    sapere esplicitamente di essere agli ultimi slot.
-
-  Il numero mostrato (in tabella e nel riquadro "in asta") è colorato con lo
-  stesso semaforo relativo a 5 fasce delle altre statistiche FPEDIA, e
-  passandoci sopra il mouse compare la scomposizione completa punto per
-  punto — mai un numero "magico" senza spiegazione. Un giocatore senza alcun
-  dato FPEDIA mostra "—" (nessuna base per stimare nulla).
-- **Urgenza**: un secondo punteggio, indipendente dallo Score sopra (quello
-  misura quanto è forte il giocatore in assoluto; questo quanto conviene
-  assicurarselo **ora**, in base a come sta evolvendo l'asta) — si ricalcola
-  da solo ad ogni acquisto, mio o degli avversari, perché letto sempre dalla
-  rosa/mercato live. Combina (`lib/urgenza.ts`, stesso stile a pesi nominati
-  di Score) quattro segnali, e a differenza di Score **non richiede dati
-  FPEDIA** (basta un ruolo valido, quindi dà un segnale anche su chi non ha
-  ancora la scheda scaricata):
+- **Urgenza**: un punteggio dinamico, indipendente dall'ALG FCP (quello,
+  descritto più sotto insieme alle altre statistiche FPEDIA, misura quanto
+  vale il giocatore in assoluto; questo quanto conviene assicurarselo
+  **ora**, in base a come sta evolvendo l'asta) — si ricalcola da solo ad
+  ogni acquisto, mio o degli avversari, perché letto sempre dalla
+  rosa/mercato live. Combina (`lib/urgenza.ts`, pesi tutti nominati in cima
+  al file) quattro segnali; solo il secondo usa l'ALG FCP (quando manca, il
+  giocatore è trattato come in fondo alla fascia), gli altri tre bastano un
+  ruolo valido, quindi danno un segnale anche su chi non ha ancora la scheda
+  FPEDIA scaricata:
   - **Bisogno di ruolo**: sale se possiedi ancora pochi giocatori di quel
     ruolo rispetto a quanti te ne servono (Classic: slot configurati in
     Settings; Mantra: riusa i gap dei moduli più vicini al completamento),
     scende quando il ruolo è già coperto a sufficienza.
   - **Esaurimento fasce**: divide tutti i giocatori di un ruolo (di
     chiunque) in fasce da *numero di partecipanti* ciascuna, ordinate per
-    Score decrescente — la fascia 0 sono i migliori "uno a testa" in
+    ALG FCP decrescente — la fascia 0 sono i migliori "uno a testa" in
     un'asta equilibrata. Sale quando le fasce migliori del ruolo si stanno
     esaurendo (prese da chiunque) e il giocatore in questione è ancora in
     una fascia alta: prenderlo ora, prima che sparisca, vale di più che
@@ -197,7 +153,7 @@ ruoli ancora da coprire nella tua squadra.
   `lib/percentile.ts`, stessa tecnica di rango già usata per il semaforo a 5
   colori). L'ordinamento "Ordina per: Urgenza" resta comunque coerente col
   totale grezzo (la trasformazione in percentile non cambia l'ordine
-  relativo). Stesso trattamento di Score per il resto: badge colorato con lo
+  relativo). Badge colorato con lo
   stesso semaforo, in tabella (solo tra i disponibili) e nel riquadro "in
   asta", con tooltip di scomposizione (che mostra i 4 contributi grezzi e su
   quale ruolo è stata calcolata, per i multi-ruolo Mantra) e selezionabile dal
@@ -215,11 +171,11 @@ ruoli ancora da coprire nella tua squadra.
   entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
   la riga: foto — con il cerotto 🩹 se infortunato e un **bordo colorato in
-  base allo Score** (rosso chiaro = scarso, giallo = medio, verde = buono,
+  base all'ALG FCP** (rosso chiaro = scarso, giallo = medio, verde = buono,
   blu = fuoriclasse; diverso dal bordo titolarità della tabella, qui conta
-  quanto è forte il giocatore, non quanto è probabile che scenda in campo) —
-  ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP, Score e Urgenza
-  (vedi sopra entrambi), e — a differenza della fila di icone
+  quanto vale il giocatore, non quanto è probabile che scenda in campo) —
+  ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP e Urgenza
+  (vedi sopra), e — a differenza della fila di icone
   sempre-tutte-visibili altrove nell'app — **solo le caratteristiche
   effettivamente presenti**, ognuna con l'etichetta testuale accanto
   all'icona invece del solo tooltip (qui c'è spazio, e serve capire a colpo
@@ -234,7 +190,7 @@ ruoli ancora da coprire nella tua squadra.
   facoltativo: lasciandolo a 0 non viene registrato, un valore diverso da
   zero registra quanto ha pagato l'avversario — utile per seguire
   l'andamento delle puntate — e resta poi visibile in tabella sulla riga del
-  giocatore). Sotto la tabella compaiono, ordinati per Score, solo gli altri
+  giocatore). Sotto la tabella compaiono, ordinati per ALG FCP, solo gli altri
   giocatori ancora disponibili con ruolo compatibile (stesso ruolo in
   Classic; almeno un ruolo Mantra in comune in Mantra) — click sul loro
   martello per spostare il focus e confrontare al volo le alternative
@@ -244,8 +200,8 @@ ruoli ancora da coprire nella tua squadra.
 - **Prezzo massimo e rischio sforamento**: nel box "Valore Asta", "Max
   consigliato" (soglia prudente: +30% del budget medio ancora disponibile per
   quel ruolo/posto, con un bonus se l'FVM supera la quotazione — un allarme
-  sul prezzo, indipendente da quanto il giocatore sia forte, vedi Score
-  sopra) e "tetto" (aritmetico: oltre questo
+  sul prezzo, indipendente da quanto valga il giocatore — vedi ALG FCP
+  più sotto) e "tetto" (aritmetico: oltre questo
   prezzo non resterebbe almeno 1 credito per ognuno degli altri slot/posti
   ancora da riempire) sono sempre visibili. Cambiando il prezzo con i tasti
   −/+ o digitandolo, superare una delle due soglie mostra un avviso live
@@ -275,7 +231,7 @@ ruoli ancora da coprire nella tua squadra.
   (confrontato con gli altri giocatori del tuo listino, non i colori fissi
   del sito). Nella tabella e nel riquadro "in asta" restano visibili solo
   Algoritmo FCP e Punteggio FantaCalcioPedia, come rettangoli colorati con
-  angoli smussati — stesso stile di Score/Urgenza, per uniformità — con
+  angoli smussati — stesso stile di Urgenza, per uniformità — con
   l'header della colonna che mostra due icone (bacchetta magica per ALG FCP,
   blocco note per Punteggio FCP) più "FCP", con il nome completo nel tooltip
   al passaggio del mouse invece che come etichetta sotto il numero. La

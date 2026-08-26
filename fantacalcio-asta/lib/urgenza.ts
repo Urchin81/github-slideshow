@@ -1,15 +1,16 @@
 import { LivelloFpedia, Player, Ruolo, RuoloMantra, Settings } from "./types";
-import { computeScore } from "./score";
 import { computeCoperturaModuli, computeRoleStats, computeRuoliNecessari } from "./suggestions";
 import { livelloRelativoInCampione, percentualeRelativaInCampione } from "./percentile";
 
 // ---------------------------------------------------------------------------
 // "Urgenza": quanto e' urgente assicurarsi QUESTO giocatore ORA, in base a
 // come sta evolvendo l'asta (la mia rosa + gli acquisti di chiunque altro) —
-// non quanto e' forte in assoluto (quello e' Score, lib/score.ts). Si
-// ricalcola da solo ad ogni acquisto perche' letto sempre dal roster live
-// dello store, come Score. A differenza di Score non richiede dati FPEDIA:
-// basta un ruolo valido. Pesi nominati qui sotto, facili da ritoccare.
+// non quanto vale in assoluto (quello e' l'ALG FCP di FPEDIA). Si ricalcola
+// da solo ad ogni acquisto perche' letto sempre dal roster live dello store.
+// A differenza dell'ALG FCP, il resto del calcolo non richiede dati FPEDIA:
+// basta un ruolo valido, solo il segnale "esaurimento fasce" (sotto) usa
+// l'ALG FCP e quindi lo ignora per i giocatori che ne sono privi. Pesi
+// nominati qui sotto, facili da ritoccare.
 // ---------------------------------------------------------------------------
 
 const PESO_BISOGNO_RUOLO = 20;
@@ -38,18 +39,14 @@ interface FasceRuolo {
 
 /**
  * Divide tutti i giocatori di un ruolo in fasce da `numeroPartecipanti`
- * ciascuna, ordinate per Score decrescente (chi non ha Score va in fondo):
+ * ciascuna, ordinate per ALG FCP decrescente (chi non ce l'ha va in fondo):
  * la fascia 0 sono i migliori `numeroPartecipanti` giocatori del ruolo — "in
  * un'asta equilibrata uno a testa", prenderne di piu' e' un vantaggio.
  */
-function costruisciFasce(
-  giocatoriRuolo: Player[],
-  score: (p: Player) => { totale: number } | null,
-  numeroPartecipanti: number
-): FasceRuolo {
+function costruisciFasce(giocatoriRuolo: Player[], numeroPartecipanti: number): FasceRuolo {
   const dimensioneFascia = Math.max(1, numeroPartecipanti);
   const ordinati = [...giocatoriRuolo].sort(
-    (a, b) => (score(b)?.totale ?? -Infinity) - (score(a)?.totale ?? -Infinity)
+    (a, b) => (b.fpedia?.algFcp ?? -Infinity) - (a.fpedia?.algFcp ?? -Infinity)
   );
   const numFasce = Math.max(1, Math.floor(ordinati.length / dimensioneFascia));
 
@@ -112,7 +109,6 @@ function bisognoRuoloMantraMap(players: Player[]): Map<RuoloMantra, number> {
  */
 export function computeUrgenza(players: Player[], settings: Settings): (player: Player) => DettaglioUrgenza | null {
   const isMantra = settings.modalita === "mantra";
-  const score = computeScore(players, settings);
   const numeroPartecipanti = Math.max(1, settings.numeroPartecipanti);
 
   const giocatoriPerRuolo = new Map<string, Player[]>();
@@ -133,7 +129,7 @@ export function computeUrgenza(players: Player[], settings: Settings): (player: 
   function fasceDi(ruolo: string): FasceRuolo {
     let f = fascePerRuolo.get(ruolo);
     if (!f) {
-      f = costruisciFasce(giocatoriPerRuolo.get(ruolo) ?? [], score, numeroPartecipanti);
+      f = costruisciFasce(giocatoriPerRuolo.get(ruolo) ?? [], numeroPartecipanti);
       fascePerRuolo.set(ruolo, f);
     }
     return f;
@@ -177,7 +173,7 @@ export function computeUrgenza(players: Player[], settings: Settings): (player: 
   };
 }
 
-/** Stesso semaforo relativo a 5 fasce di Score, sul campione dei totali di Urgenza. */
+/** Stesso semaforo relativo a 5 fasce usato per l'ALG FCP, sul campione dei totali di Urgenza. */
 export function computeLivelloUrgenza(
   players: Player[],
   urgenza: (player: Player) => DettaglioUrgenza | null

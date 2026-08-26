@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
 import { costruisciMatchmaker, generaCombinazioniPerPunteggio } from "@/lib/bipartiteMatching";
-import { Player, RUOLO_MANTRA_COLORE, RuoloMantra, Settings } from "@/lib/types";
-import { computeScore } from "@/lib/score";
+import { Player, RUOLO_MANTRA_COLORE, RuoloMantra } from "@/lib/types";
 import { isSafeHttpUrl } from "@/lib/url";
 import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 
@@ -234,18 +233,15 @@ function CartaPanchina({
 export function ModuloVisualizzazione({
   modulo,
   mieiMantra,
-  settings,
   onClose,
 }: {
   modulo: Modulo;
   mieiMantra: Player[];
-  settings: Settings;
   onClose: () => void;
 }) {
   const playerById = useMemo(() => new Map(mieiMantra.map((p) => [p.id, p])), [mieiMantra]);
-  const score = useMemo(() => computeScore(mieiMantra, settings), [mieiMantra, settings]);
 
-  // Le migliori formazioni possibili (somma Score dei titolari, decrescente): un
+  // Le migliori formazioni possibili (somma ALG FCP dei titolari, decrescente): un
   // risultato "miglior sforzo" entro i tetti di generaCombinazioniPerPunteggio, non una garanzia
   // di ottimalità globale con rose molto simmetriche (stesso spirito del tetto di
   // contaCombinazioniComplete). Se non se ne trova nessuna (es. modulo non completamente
@@ -255,13 +251,13 @@ export function ModuloVisualizzazione({
     const risultato = generaCombinazioniPerPunteggio(
       modulo.slot,
       giocatori,
-      (id) => score(playerById.get(id) as Player)?.totale ?? 0
+      (id) => playerById.get(id)?.fpedia?.algFcp ?? 0
     );
     if (risultato.length > 0) return risultato;
     return [
       { assegnazione: costruisciMatchmaker(modulo.slot, giocatori).assegnazioniComplete(), punteggioTotale: 0 },
     ];
-  }, [modulo, mieiMantra, score, playerById]);
+  }, [modulo, mieiMantra, playerById]);
 
   const [indiceCombinazione, setIndiceCombinazione] = useState(0);
   const combinazioneAttuale = combinazioni[Math.min(indiceCombinazione, combinazioni.length - 1)];
@@ -411,7 +407,7 @@ export function ModuloVisualizzazione({
         </div>
 
         <p className="text-white/60 text-xs mb-3">
-          Le migliori {combinazioni.length} formazioni trovate, ordinate per Score totale dei
+          Le migliori {combinazioni.length} formazioni trovate, ordinate per ALG FCP totale dei
           titolari (‹/› per scorrerle). Clicca sul cerchietto blu di un giocatore per evidenziare i panchinari
           compatibili e sceglierne uno al posto suo, clicca sulla foto di un titolare per rimuoverlo dal campo,
           oppure trascina un giocatore dal campo alla panchina e viceversa: si entra in campo solo negli slot con

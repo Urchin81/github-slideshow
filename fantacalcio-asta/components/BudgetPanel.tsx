@@ -203,7 +203,6 @@ function PannelloMantra() {
         <ModuloVisualizzazione
           modulo={moduloAperto}
           mieiMantra={mieiMantra}
-          settings={settings}
           onClose={() => setModuloAperto(null)}
         />
       )}
