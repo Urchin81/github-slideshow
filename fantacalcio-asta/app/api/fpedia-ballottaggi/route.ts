@@ -17,11 +17,11 @@ export async function GET() {
     const html = await fetchTesto(URL_GUIDA_ASTA);
     const squadre = parseFpediaGuidaAsta(html);
     const fuoriclasse = Array.from(new Set(squadre.flatMap((s) => s.fuoriclasse)));
-    const inBallottaggio = Array.from(new Set(squadre.flatMap((s) => s.inBallottaggio)));
-    return NextResponse.json({ fuoriclasse, inBallottaggio });
+    const ballottaggi = squadre.flatMap((s) => s.ballottaggi);
+    return NextResponse.json({ fuoriclasse, ballottaggi });
   } catch (err) {
     console.error("[fpedia-ballottaggi] fetch fallito:", err);
     const errore = err instanceof Error ? err.message : "Errore imprevisto.";
-    return NextResponse.json({ fuoriclasse: [], inBallottaggio: [], errore });
+    return NextResponse.json({ fuoriclasse: [], ballottaggi: [], errore });
   }
 }

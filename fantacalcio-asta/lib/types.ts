@@ -141,10 +141,29 @@ export interface Player {
    * motivo di infortunato, uno scrape separato dalla scheda individuale.
    */
   fuoriclasse?: boolean;
-  /** In ballottaggio con almeno un altro giocatore della stessa squadra, stessa fonte/scrape di fuoriclasse. */
-  inBallottaggio?: boolean;
+  /**
+   * Ballottaggio con altri giocatori del listino per lo stesso posto da titolare,
+   * stessa fonte/scrape di fuoriclasse. Solo gli avversari presenti anche nel listino
+   * locale sono risolti (un contendente FPEDIA assente dalle quotazioni non serve a
+   * un'asta fantacalcio): vedi `lib/ballottaggioResolve.ts`.
+   */
+  ballottaggio?: BallottaggioInfo;
   /** Preferito personale: sopravvive al reset dell'asta (non è uno stato d'asta). */
   preferito?: boolean;
+}
+
+/** Un avversario locale nello stesso ballottaggio di un giocatore, con la percentuale FPEDIA. */
+export interface BallottaggioContendente {
+  playerId: string;
+  nome: string;
+  percentuale: number;
+}
+
+export interface BallottaggioInfo {
+  /** Percentuale FPEDIA di questo giocatore nel ballottaggio. */
+  percentuale: number;
+  /** Gli altri contendenti locali per lo stesso posto (non include questo giocatore). */
+  avversari: BallottaggioContendente[];
 }
 
 export type LineaMantra = "Portieri" | "Difensori" | "Centrocampisti" | "Attaccanti";

@@ -2,9 +2,51 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { LINEE_MANTRA, lineaMantraGiocatore, RUOLI, RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE } from "@/lib/types";
+import { Armchair, EllipsisVertical } from "lucide-react";
+import {
+  LINEE_MANTRA,
+  lineaMantraGiocatore,
+  Player,
+  RUOLI,
+  RUOLO_COLORE,
+  RUOLO_LABEL,
+  RUOLO_MANTRA_COLORE,
+} from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
+
+/** Bottone panchina: numero di avversari dello stesso ballottaggio ancora disponibili, click = filtra PlayerTable su di loro. */
+function BadgeBallottaggio({
+  id,
+  ballottaggio,
+  players,
+  onFiltraBallottaggio,
+}: {
+  id: string;
+  ballottaggio: Player["ballottaggio"];
+  players: Player[];
+  onFiltraBallottaggio: (id: string) => void;
+}) {
+  if (!ballottaggio) return null;
+  const disponibili = ballottaggio.avversari.filter(
+    (a) => players.find((p) => p.id === a.playerId)?.stato === "disponibile"
+  ).length;
+
+  return (
+    <button
+      onClick={() => onFiltraBallottaggio(id)}
+      className="relative inline-flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 text-slate-500 shrink-0"
+      title={`${disponibili} avversari del ballottaggio ancora disponibili — clicca per filtrarli`}
+    >
+      <Armchair size={14} />
+      {disponibili > 0 && (
+        <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold">
+          {disponibili}
+        </span>
+      )}
+    </button>
+  );
+}
 
 function RigaGiocatore({
   id,
@@ -12,6 +54,9 @@ function RigaGiocatore({
   squadra,
   prezzoPagato,
   preferito,
+  ballottaggio,
+  players,
+  onFiltraBallottaggio,
   extra,
 }: {
   id: string;
@@ -19,11 +64,15 @@ function RigaGiocatore({
   squadra: string;
   prezzoPagato?: number;
   preferito?: boolean;
+  ballottaggio: Player["ballottaggio"];
+  players: Player[];
+  onFiltraBallottaggio: (id: string) => void;
   extra?: React.ReactNode;
 }) {
   const resetPlayer = useAuctionStore((s) => s.resetPlayer);
   const assignToMe = useAuctionStore((s) => s.assignToMe);
   const [modifica, setModifica] = useState(false);
+  const [azioniAperte, setAzioniAperte] = useState(false);
   const [prezzoInput, setPrezzoInput] = useState(String(prezzoPagato ?? 1));
 
   function confermaRimozione() {
@@ -38,18 +87,19 @@ function RigaGiocatore({
   }
 
   return (
-    <li className="flex justify-between items-center">
-      <span className="flex items-center gap-1.5">
+    <li className="flex justify-between items-center gap-1">
+      <span className="flex items-center gap-1.5 min-w-0 truncate">
         <FavoriteStar id={id} preferito={preferito} />
-        <Link href={`/giocatore/${encodeURIComponent(id)}`} className="hover:underline">
+        <Link href={`/giocatore/${encodeURIComponent(id)}`} className="hover:underline truncate">
           {nome}
         </Link>{" "}
-        <span className="text-slate-400" title={squadra}>
+        <span className="text-slate-400 shrink-0" title={squadra}>
           ({squadra.slice(0, 3).toUpperCase()})
         </span>
         {extra}
       </span>
-      <span className="flex items-center gap-1.5">
+      <span className="flex items-center gap-1 shrink-0">
+        <BadgeBallottaggio id={id} ballottaggio={ballottaggio} players={players} onFiltraBallottaggio={onFiltraBallottaggio} />
         {modifica ? (
           <>
             <input
@@ -81,15 +131,26 @@ function RigaGiocatore({
         ) : (
           <>
             <span className="font-medium">{prezzoPagato}</span>
-            <button onClick={() => setModifica(true)} className="text-sm px-1" title="Modifica prezzo">
-              ✏️
-            </button>
+            {azioniAperte && (
+              <>
+                <button onClick={() => setModifica(true)} className="text-sm px-0.5" title="Modifica prezzo">
+                  ✏️
+                </button>
+                <button
+                  onClick={confermaRimozione}
+                  className="text-sm text-red-600 hover:text-red-700 px-0.5"
+                  title="Rimuovi dalla rosa"
+                >
+                  ✕
+                </button>
+              </>
+            )}
             <button
-              onClick={confermaRimozione}
-              className="text-sm text-red-600 hover:text-red-700 px-1"
-              title="Rimuovi dalla rosa"
+              onClick={() => setAzioniAperte((a) => !a)}
+              className={`px-0.5 ${azioniAperte ? "text-slate-600" : "text-slate-300 hover:text-slate-500"}`}
+              title="Azioni"
             >
-              ✕
+              <EllipsisVertical size={14} />
             </button>
           </>
         )}
@@ -98,7 +159,7 @@ function RigaGiocatore({
   );
 }
 
-function RosterClassic() {
+function RosterClassic({ onFiltraBallottaggio }: { onFiltraBallottaggio: (id: string) => void }) {
   const players = useAuctionStore((s) => s.players);
   const mine = players.filter((p) => p.stato === "mia");
 
@@ -127,6 +188,9 @@ function RosterClassic() {
                   squadra={p.squadra}
                   prezzoPagato={p.prezzoPagato}
                   preferito={p.preferito}
+                  ballottaggio={p.ballottaggio}
+                  players={players}
+                  onFiltraBallottaggio={onFiltraBallottaggio}
                 />
               ))}
             </ul>
@@ -137,7 +201,7 @@ function RosterClassic() {
   );
 }
 
-function RosterMantra() {
+function RosterMantra({ onFiltraBallottaggio }: { onFiltraBallottaggio: (id: string) => void }) {
   const players = useAuctionStore((s) => s.players);
   const mine = players.filter((p) => p.stato === "mia");
 
@@ -162,6 +226,9 @@ function RosterMantra() {
         squadra={p.squadra}
         prezzoPagato={p.prezzoPagato}
         preferito={p.preferito}
+        ballottaggio={p.ballottaggio}
+        players={players}
+        onFiltraBallottaggio={onFiltraBallottaggio}
         extra={
           <span className="ml-1">
             {(p.ruoliMantra ?? []).map((r) => (
@@ -200,7 +267,7 @@ function RosterMantra() {
   );
 }
 
-export function RosterPanel() {
+export function RosterPanel({ onFiltraBallottaggio }: { onFiltraBallottaggio: (id: string) => void }) {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const mine = players.filter((p) => p.stato === "mia");
@@ -209,7 +276,11 @@ export function RosterPanel() {
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="font-semibold text-lg mb-3">La mia rosa ({mine.length})</h2>
       {mine.length === 0 && <p className="text-slate-400 text-sm">Nessun giocatore preso ancora.</p>}
-      {settings.modalita === "classic" ? <RosterClassic /> : <RosterMantra />}
+      {settings.modalita === "classic" ? (
+        <RosterClassic onFiltraBallottaggio={onFiltraBallottaggio} />
+      ) : (
+        <RosterMantra onFiltraBallottaggio={onFiltraBallottaggio} />
+      )}
     </div>
   );
 }

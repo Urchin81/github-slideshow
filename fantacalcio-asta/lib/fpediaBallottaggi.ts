@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { BallottaggioGruppoFpedia } from "./ballottaggioResolve";
 
 /**
  * Ballottaggi e tag "Fuoriclasse" per squadra, dalla pagina guida-asta di FPEDIA
@@ -13,8 +14,8 @@ export interface BallottaggioSquadra {
   squadra: string;
   /** Nomi (come scritti da FPEDIA, in maiuscolo) con il tag "Fuoriclasse" nella rosa. */
   fuoriclasse: string[];
-  /** Nomi coinvolti in almeno un ballottaggio (entrambi/tutti i contendenti di ogni riga). */
-  inBallottaggio: string[];
+  /** Gruppi di ballottaggio (ogni riga = tutti i contendenti per lo stesso posto, con percentuale). */
+  ballottaggi: BallottaggioGruppoFpedia[];
 }
 
 export function parseFpediaGuidaAsta(html: string): BallottaggioSquadra[] {
@@ -34,16 +35,25 @@ export function parseFpediaGuidaAsta(html: string): BallottaggioSquadra[] {
       if (nome) fuoriclasse.push(nome);
     });
 
-    const inBallottaggio = new Set<string>();
-    $team.find(".guida-ballot-row a").each((_, a) => {
-      // Il testo del link contiene anche la percentuale ("ZAPPACOSTA 55%"): va
-      // rimosso il <strong> prima di leggere il testo, altrimenti il nome resta sporco.
-      const nome = $(a).clone().children("strong").remove().end().text().replace(/\s+/g, " ").trim();
-      if (nome) inBallottaggio.add(nome);
+    const ballottaggi: BallottaggioGruppoFpedia[] = [];
+    $team.find(".guida-ballot-row").each((_, row) => {
+      const giocatori: BallottaggioGruppoFpedia["giocatori"] = [];
+      $(row)
+        .find("a")
+        .each((_, a) => {
+          const $a = $(a);
+          // Il testo del link contiene anche la percentuale ("ZAPPACOSTA 55%"): va
+          // rimosso il <strong> prima di leggere il nome, altrimenti resta sporco.
+          const percentualeTesto = $a.find("strong").first().text();
+          const percentuale = parseInt(percentualeTesto, 10);
+          const nome = $a.clone().children("strong").remove().end().text().replace(/\s+/g, " ").trim();
+          if (nome && Number.isFinite(percentuale)) giocatori.push({ nome, percentuale });
+        });
+      if (giocatori.length >= 2) ballottaggi.push({ giocatori });
     });
 
-    if (fuoriclasse.length > 0 || inBallottaggio.size > 0) {
-      risultato.push({ squadra, fuoriclasse, inBallottaggio: Array.from(inBallottaggio) });
+    if (fuoriclasse.length > 0 || ballottaggi.length > 0) {
+      risultato.push({ squadra, fuoriclasse, ballottaggi });
     }
   });
 

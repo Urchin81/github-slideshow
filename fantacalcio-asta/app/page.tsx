@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
@@ -9,6 +10,10 @@ import { ResetButton } from "@/components/ResetButton";
 
 export default function Home() {
   const players = useAuctionStore((s) => s.players);
+  // Id del giocatore il cui ballottaggio e' filtrato in PlayerTable: sollevato qui
+  // perche' puo' essere impostato sia dall'icona panchina in RosterPanel (un mio
+  // titolare) sia da quella in PlayerTable stessa (un giocatore ancora disponibile).
+  const [filtroBallottaggioId, setFiltroBallottaggioId] = useState<string | null>(null);
 
   if (players.length === 0) {
     return (
@@ -29,11 +34,11 @@ export default function Home() {
       <div className="flex flex-wrap gap-4 items-start">
         <ResetButton />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_340px] gap-4">
         <BudgetPanel />
-        <PlayerTable />
+        <PlayerTable filtroBallottaggioId={filtroBallottaggioId} setFiltroBallottaggioId={setFiltroBallottaggioId} />
         <div className="space-y-4">
-          <RosterPanel />
+          <RosterPanel onFiltraBallottaggio={setFiltroBallottaggioId} />
         </div>
       </div>
     </div>

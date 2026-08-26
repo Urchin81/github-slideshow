@@ -232,6 +232,10 @@ ruoli ancora da coprire nella tua squadra.
   slot sintetici (titolare + sostituto) per ruolo — così un giocatore
   "impegnato" a coprire un ruolo non risulta disponibile anche per un altro
   (`lib/coperturaRuoli.ts`).
+- **Layout a tre colonne**: pannello Budget più stretto (i ruoli nel "Piano di
+  spesa" usano la stessa letterina colorata P/D/C/A vista altrove, non il nome
+  esteso) per lasciare più spazio a "La mia rosa" a destra, che ne ha bisogno
+  per l'icona panchina del ballottaggio senza sovrapporre i testi.
 - **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
   budget residuo diviso per i giocatori che mancano ancora per completare una
   rosa valida — **tenendo conto del minimo di portieri richiesto** (in
@@ -269,7 +273,9 @@ ruoli ancora da coprire nella tua squadra.
   ruolo (P/D/C/A) a sinistra del nome di ogni gruppo. La squadra accanto al
   nome è abbreviata alle sole prime 3 lettere (es. "Inter" → "INT") per
   restare compatta nella colonna di destra; il nome completo compare come
-  tooltip al passaggio del mouse.
+  tooltip al passaggio del mouse. Per fare spazio all'icona panchina (vedi
+  sopra), matita e ✕ per modificare/rimuovere un giocatore restano nascosti
+  dietro un'icona "⋮" (Azioni): un click le mostra, un secondo le richiude.
 - **Aggiornamento dati (in Settings)**: tutti i pulsanti che scaricano dati da
   fonti esterne (notizie, FPEDIA) stanno nella pagina **⚙️ Settings**, non in
   dashboard — sono operazioni di "manutenzione" separate dal seguire l'asta
@@ -309,13 +315,28 @@ ruoli ancora da coprire nella tua squadra.
     guida-asta di fantacalciopedia.com (tutte le squadre di Serie A insieme,
     a differenza degli altri aggiornamenti FPEDIA) e marca/smarca
     `Player.fuoriclasse` (giocatori con il tag "Fuoriclasse" nella rosa di
-    ogni squadra) e `Player.inBallottaggio` (giocatori coinvolti in almeno
-    un ballottaggio titolare/riserva) per l'intera rosa in un solo colpo
-    (`lib/fpediaBallottaggi.ts`, parser testato su un campione HTML reale in
-    `lib/__fixtures__/fpedia-guida-asta-sample.html`). Chi è "Fuoriclasse"
-    mostra una **corona dorata** in alto a sinistra sulla foto (tabella,
-    riquadro "in asta", pop-up Moduli Mantra) — diversa dal cerotto rosso
-    degli infortunati (in basso), così i due badge non si sovrappongono.
+    ogni squadra) e `Player.ballottaggio` (percentuale FPEDIA di questo
+    giocatore + gli altri contendenti dello stesso posto, solo quelli
+    presenti anche nel listino locale — un contendente non quotato non
+    interessa un'asta fantacalcio) per l'intera rosa in un solo colpo. Il
+    parser (`lib/fpediaBallottaggi.ts`, testato su un campione HTML reale in
+    `lib/__fixtures__/fpedia-guida-asta-sample.html`) legge i gruppi grezzi
+    di FPEDIA con le percentuali; la risoluzione sui giocatori del listino
+    (`lib/ballottaggioResolve.ts`, `risolviBallottaggi`) riusa lo stesso
+    matching per cognome già usato per infortunati/fuoriclasse
+    (`lib/indiceGiocatori.ts`). Chi è "Fuoriclasse" mostra una **corona
+    dorata** in alto a sinistra sulla foto (tabella, riquadro "in asta",
+    pop-up Moduli Mantra) — diversa dal cerotto rosso degli infortunati (in
+    basso), così i due badge non si sovrappongono.
+  - **Icona panchina (ballottaggio)**: sia in tabella (sotto il martelletto,
+    solo per i giocatori ancora disponibili) sia in "La mia rosa" (accanto al
+    prezzo) un'icona a panchina mostra quanti contendenti dello stesso
+    ballottaggio sono ancora disponibili — in tabella come "disponibili/
+    totale" (es. "2/3" se uno dei tre è già stato preso), nella rosa come un
+    numero soltanto. Il tooltip elenca tutti i contendenti con la loro
+    percentuale FPEDIA. Cliccandoci sopra filtra la tabella sui soli
+    contendenti ancora disponibili di quel giocatore (un chip in alto
+    permette di uscire dal filtro tornando alla vista normale).
   - **Colori "a colpo d'occhio"**: la scheda giocatore mostra i valori
     numerici FPEDIA con un semaforo a 5 colori (Super azzurro, Buono verde,
     Sufficiente giallo, Mediocre arancione, Negativo rosso — legenda sotto le

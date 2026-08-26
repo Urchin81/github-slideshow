@@ -6,19 +6,21 @@ export interface VoceIndiceGiocatore {
 }
 
 /**
- * Trova nell'indice l'URL del giocatore cercato. Il listino ha solo il
+ * Trova nell'indice la voce del giocatore cercato. Il listino ha solo il
  * cognome (con l'iniziale del nome se serve a distinguere omonimi, es.
- * "Adekunle A."), mentre l'indice ha nome completo: richiede che TUTTE le
- * parole del cognome compaiano nel nome candidato (l'indice contiene tutti
- * i giocatori del campionato, quindi niente match parziali per evitare falsi
- * positivi), e se più giocatori condividono lo stesso cognome usa l'iniziale
- * per scegliere quello giusto.
+ * "Adekunle A."), mentre l'indice ha nome completo (o comunque un nome più
+ * lungo/rumoroso, es. "L. BERNASCONI"): richiede che TUTTE le parole del
+ * cognome compaiano nel nome candidato (l'indice contiene tutti i giocatori
+ * del campionato, quindi niente match parziali per evitare falsi positivi),
+ * e se più giocatori condividono lo stesso cognome usa l'iniziale per
+ * scegliere quello giusto. Generico su T per essere riusabile anche quando
+ * la voce porta altri dati oltre a nome/url (es. la percentuale di un
+ * ballottaggio, vedi lib/ballottaggioResolve.ts).
  */
-export function trovaUrlGiocatoreInIndice(
-  indice: VoceIndiceGiocatore[],
-  nomeCercato: string,
-  baseUrl: string
-): string | null {
+export function trovaVoceGiocatoreInIndice<T extends { nome: string }>(
+  indice: T[],
+  nomeCercato: string
+): T | null {
   const { cognome, iniziale } = scomponiNomeListino(nomeCercato);
   const cognomeParti = normalizeText(cognome).split(/\s+/).filter(Boolean);
   if (cognomeParti.length === 0) return null;
@@ -36,8 +38,17 @@ export function trovaUrlGiocatoreInIndice(
       const restanti = partiNome.filter((p) => !cognomeParti.some((c) => p === c || p.includes(c)));
       return restanti.some((p) => p.startsWith(inizialeNorm));
     });
-    if (conIniziale.length > 0) return new URL(conIniziale[0].url, baseUrl).toString();
+    if (conIniziale.length > 0) return conIniziale[0];
   }
 
-  return new URL(conCognome[0].url, baseUrl).toString();
+  return conCognome[0];
+}
+
+export function trovaUrlGiocatoreInIndice(
+  indice: VoceIndiceGiocatore[],
+  nomeCercato: string,
+  baseUrl: string
+): string | null {
+  const voce = trovaVoceGiocatoreInIndice(indice, nomeCercato);
+  return voce ? new URL(voce.url, baseUrl).toString() : null;
 }

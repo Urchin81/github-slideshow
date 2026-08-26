@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState } from "react";
-import { AlarmClock, ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { AlarmClock, Armchair, ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
 import {
   LivelloFpedia,
+  Player,
   RUOLI,
   RUOLI_MANTRA,
   RUOLO_COLORE,
@@ -120,7 +121,23 @@ function vociFantasolditaLista(p: Parameters<typeof vociFantasolidita>[0]) {
   return vociFantasolidita(p).filter((v) => v.campo === "algFcp" || v.campo === "punteggioFcp");
 }
 
-export function PlayerTable() {
+/** Tooltip del badge ballottaggio: il giocatore stesso e tutti gli avversari locali, con percentuale. */
+function tooltipBallottaggio(p: Player): string {
+  if (!p.ballottaggio) return "";
+  const righe = [
+    `${p.nome} ${p.ballottaggio.percentuale}%`,
+    ...p.ballottaggio.avversari.map((a) => `${a.nome} ${a.percentuale}%`),
+  ];
+  return `Ballottaggio\n${righe.join("\n")}`;
+}
+
+export function PlayerTable({
+  filtroBallottaggioId,
+  setFiltroBallottaggioId,
+}: {
+  filtroBallottaggioId: string | null;
+  setFiltroBallottaggioId: (id: string | null) => void;
+}) {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const assignToMe = useAuctionStore((s) => s.assignToMe);
@@ -181,6 +198,16 @@ export function PlayerTable() {
   }, [inAstaId, players]);
   const astaSuggerimento = inAstaPlayer ? suggerimentoById.get(inAstaPlayer.id) : undefined;
 
+  // Giocatore il cui ballottaggio e' filtrato (impostato da qui o dall'icona panchina
+  // in RosterPanel): ha sempre priorità sul box "in asta", per evitare stati confusi.
+  const giocatoreFiltro = useMemo(
+    () => (filtroBallottaggioId ? players.find((p) => p.id === filtroBallottaggioId) ?? null : null),
+    [filtroBallottaggioId, players]
+  );
+  useEffect(() => {
+    if (filtroBallottaggioId) setInAstaId(null);
+  }, [filtroBallottaggioId]);
+
   function ruoliCompatibili(a: typeof players[number], b: typeof players[number]) {
     return isMantra
       ? (a.ruoliMantra ?? []).some((r) => (b.ruoliMantra ?? []).includes(r))
@@ -188,6 +215,15 @@ export function PlayerTable() {
   }
 
   const righe = useMemo(() => {
+    if (giocatoreFiltro?.ballottaggio) {
+      const idsDisponibili = new Set(
+        giocatoreFiltro.ballottaggio.avversari
+          .filter((a) => players.find((pl) => pl.id === a.playerId)?.stato === "disponibile")
+          .map((a) => a.playerId)
+      );
+      return players.filter((p) => idsDisponibili.has(p.id));
+    }
+
     if (inAstaPlayer) {
       const compatibili = players
         .filter((p) => p.id !== inAstaPlayer.id && p.stato === "disponibile" && ruoliCompatibili(p, inAstaPlayer))
@@ -258,9 +294,10 @@ export function PlayerTable() {
     inAstaPlayer,
     ordinamento,
     urgenza,
+    giocatoreFiltro,
   ]);
 
-  const mostraValutazioni = statoFiltro === "disponibile" || !!inAstaPlayer;
+  const mostraValutazioni = statoFiltro === "disponibile" || !!inAstaPlayer || !!giocatoreFiltro?.ballottaggio;
 
   // Simulazione live del prezzo mentre si tiene aperto il box "in asta": nessun
   // effetto sullo stato reale, solo una proiezione budget/slot prima-dopo.
@@ -589,6 +626,21 @@ export function PlayerTable() {
             </div>
           )}
         </div>
+      ) : giocatoreFiltro?.ballottaggio ? (
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
+          <span className="inline-flex items-center gap-1.5 text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-full pl-3 pr-1.5 py-1.5">
+            <Armchair size={14} />
+            Ballottaggio con <strong>{giocatoreFiltro.nome}</strong>
+            <button
+              onClick={() => setFiltroBallottaggioId(null)}
+              title="Chiudi il filtro ballottaggio"
+              className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-amber-200"
+            >
+              ✕
+            </button>
+          </span>
+          <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori disponibili</span>
+        </div>
       ) : (
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           <input
@@ -792,13 +844,28 @@ export function PlayerTable() {
                   <td className="py-1.5 text-right">
                     {p.stato === "disponibile" ? (
                       inAsta ? null : (
-                        <button
-                          onClick={() => apriAsta(p.id)}
-                          title="Giocatore in asta: mostra i giocatori con ruoli compatibili ancora disponibili"
-                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 text-slate-600"
-                        >
-                          <Gavel size={16} />
-                        </button>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <button
+                            onClick={() => apriAsta(p.id)}
+                            title="Giocatore in asta: mostra i giocatori con ruoli compatibili ancora disponibili"
+                            className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 text-slate-600"
+                          >
+                            <Gavel size={16} />
+                          </button>
+                          {p.ballottaggio && (
+                            <button
+                              onClick={() => setFiltroBallottaggioId(p.id)}
+                              title={tooltipBallottaggio(p)}
+                              className="flex flex-col items-center leading-none hover:bg-slate-100 rounded px-1 py-0.5 -mt-0.5"
+                            >
+                              <span className="text-[9px] font-bold text-amber-600">
+                                {p.ballottaggio.avversari.filter((a) => players.find((pl) => pl.id === a.playerId)?.stato === "disponibile").length}
+                                /{p.ballottaggio.avversari.length}
+                              </span>
+                              <Armchair size={13} className="text-slate-400" />
+                            </button>
+                          )}
+                        </div>
                       )
                     ) : (
                       <span className="inline-flex items-center gap-1.5">

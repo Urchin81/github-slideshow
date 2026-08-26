@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FpediaStats, Player } from "@/lib/types";
 import { trovaUrlGiocatoreInIndice, VoceIndiceGiocatore } from "@/lib/indiceGiocatori";
+import { BallottaggioGruppoFpedia, risolviBallottaggi } from "@/lib/ballottaggioResolve";
 import { useAuctionStore } from "@/lib/store";
 
 // Base fittizia: trovaUrlGiocatoreInIndice ha bisogno di un baseUrl per risolvere
@@ -77,34 +78,36 @@ export function StatsUpdatePanel() {
   }
 
   // Operazione unica (una sola pagina, tutte le squadre di Serie A insieme): recupera
-  // da FPEDIA i giocatori "Fuoriclasse" e quelli in ballottaggio con un compagno di
-  // squadra, e marca/smarca Player.fuoriclasse/inBallottaggio per l'intera rosa.
+  // da FPEDIA i giocatori "Fuoriclasse" e i gruppi di ballottaggio, poi risolve questi
+  // ultimi sul listino locale (risolviBallottaggi) e marca/smarca Player.fuoriclasse/
+  // Player.ballottaggio per l'intera rosa.
   async function aggiornaBallottaggi() {
     setBallottaggiInCorso(true);
     setEsitoBallottaggi(null);
     try {
       const res = await fetch("/api/fpedia-ballottaggi");
-      const data: { fuoriclasse: string[]; inBallottaggio: string[]; errore?: string } = await res.json();
+      const data: { fuoriclasse: string[]; ballottaggi: BallottaggioGruppoFpedia[]; errore?: string } =
+        await res.json();
       const indiceFuoriclasse: VoceIndiceGiocatore[] = data.fuoriclasse.map((nome) => ({ nome, url: "#" }));
-      const indiceBallottaggio: VoceIndiceGiocatore[] = data.inBallottaggio.map((nome) => ({ nome, url: "#" }));
+      const ballottaggiRisolti = risolviBallottaggi(players, data.ballottaggi);
 
       const aggiornamenti: Record<string, Partial<Player>> = {};
       let trovatiFuoriclasse = 0;
       let trovatiBallottaggio = 0;
       for (const player of players) {
         const fuoriclasse = trovaUrlGiocatoreInIndice(indiceFuoriclasse, player.nome, BASE_FITTIZIA) !== null;
-        const inBallottaggio = trovaUrlGiocatoreInIndice(indiceBallottaggio, player.nome, BASE_FITTIZIA) !== null;
+        const ballottaggio = ballottaggiRisolti[player.id];
         if (fuoriclasse) trovatiFuoriclasse++;
-        if (inBallottaggio) trovatiBallottaggio++;
+        if (ballottaggio) trovatiBallottaggio++;
         const partial: Partial<Player> = {};
         if (fuoriclasse !== !!player.fuoriclasse) partial.fuoriclasse = fuoriclasse;
-        if (inBallottaggio !== !!player.inBallottaggio) partial.inBallottaggio = inBallottaggio;
+        if (JSON.stringify(ballottaggio) !== JSON.stringify(player.ballottaggio)) partial.ballottaggio = ballottaggio;
         if (Object.keys(partial).length > 0) aggiornamenti[player.id] = partial;
       }
       if (Object.keys(aggiornamenti).length > 0) applyNewsResults(aggiornamenti);
 
       setEsitoBallottaggi(
-        data.errore && data.fuoriclasse.length === 0 && data.inBallottaggio.length === 0
+        data.errore && data.fuoriclasse.length === 0 && data.ballottaggi.length === 0
           ? `Impossibile recuperare ballottaggi/fuoriclasse: ${data.errore}`
           : `${trovatiFuoriclasse} fuoriclasse e ${trovatiBallottaggio} in ballottaggio trovati e aggiornati.`
       );

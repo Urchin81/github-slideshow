@@ -58,21 +58,21 @@ function PannelloClassic() {
         <span className="font-medium">{Math.round(valoreMedioAcquisto)}</span>
       </div>
       <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
-      <table className="w-full text-sm mb-4">
+      <table className="w-full text-xs mb-4 table-fixed">
         <thead>
           <tr className="text-left text-slate-400">
-            <th className="pb-1">Ruolo</th>
+            <th className="pb-1 w-8">Ruolo</th>
             <th className="pb-1 text-right" title="Slot occupati / slot totali per questo ruolo">
-              <Users size={14} className="inline-block" />
+              <Users size={13} className="inline-block" />
             </th>
             <th className="pb-1 text-right" title="Budget residuo assegnato a questo ruolo">
-              <Wallet size={14} className="inline-block" />
+              <Wallet size={13} className="inline-block" />
             </th>
             <th className="pb-1 text-right" title="Media disponibile per ogni slot ancora da riempire in questo ruolo">
-              <Calculator size={14} className="inline-block" />
+              <Calculator size={13} className="inline-block" />
             </th>
             <th className="pb-1 text-right" title="Tetto prudente: soglia (+30% della media) oltre la quale conviene evitare di sforare per questo ruolo">
-              <ShieldAlert size={14} className="inline-block" />
+              <ShieldAlert size={13} className="inline-block" />
             </th>
           </tr>
         </thead>
@@ -82,7 +82,12 @@ function PannelloClassic() {
             return (
               <tr key={ruolo} className="border-t border-slate-100">
                 <td className="py-1" title={RUOLO_LABEL[ruolo]}>
-                  {RUOLO_LABEL[ruolo]}
+                  <span
+                    className="text-white rounded px-1"
+                    style={{ backgroundColor: RUOLO_COLORE[ruolo] }}
+                  >
+                    {ruolo}
+                  </span>
                 </td>
                 <td className="py-1 text-right">
                   {s.slotOccupati}/{s.slotTotali}
@@ -175,7 +180,7 @@ function PannelloMantra() {
                   {v.ruolo}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <span className="w-12 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <span
                       className="block h-full"
                       style={{
