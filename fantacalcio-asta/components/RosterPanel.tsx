@@ -107,14 +107,14 @@ function RosterClassic() {
         if (list.length === 0) return null;
         return (
           <div key={ruolo}>
-            <h3 className="text-xs uppercase text-slate-400 mb-1 flex items-center justify-between">
-              <span>{RUOLO_LABEL[ruolo]}</span>
+            <h3 className="text-xs uppercase text-slate-400 mb-1 flex items-center gap-1.5">
               <span
                 className="text-white rounded px-1 normal-case"
                 style={{ backgroundColor: RUOLO_COLORE[ruolo] }}
               >
                 {ruolo}
               </span>
+              {RUOLO_LABEL[ruolo]}
             </h3>
             <ul className="text-sm space-y-1">
               {list.map((p) => (

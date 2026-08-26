@@ -44,14 +44,13 @@ ruoli ancora da coprire nella tua squadra.
   che non corrisponde al tuo schema.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
-  disponibile), Quotazione (header con il simbolo €), FCPedia (ALG FCP e
-  Punteggio FantaCalcioPedia come ovali colorati, vedi sotto), Score e
-  Urgenza (solo tra i disponibili, vedi sotto entrambi) e Azioni — sempre in
-  quest'ordine. L'intestazione resta visibile ("sticky") mentre si scorre
-  l'elenco verso il basso, cosí si vede sempre a quale colonna corrisponde
-  ogni valore. Sopra la tabella, tra i disponibili, il menu **"Ordina per"**
-  sceglie se ordinare per **Score** (default) o per **Urgenza** (vedi sotto
-  entrambi).
+  disponibile), Quotazione (header con il simbolo €), FCP×2 (ALG FCP e
+  Punteggio FantaCalcioPedia, vedi sotto), Score e Urgenza (solo tra i
+  disponibili, vedi sotto entrambi) e Azioni — sempre in quest'ordine.
+  L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
+  basso, cosí si vede sempre a quale colonna corrisponde ogni valore. Sopra la
+  tabella, tra i disponibili, il menu **"Ordina per"** sceglie se ordinare per
+  **Score** (default) o per **Urgenza** (vedi sotto entrambi).
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
   nel riquadro "in asta") ha un bordo spesso colorato in base a quanto è
   probabile che giochi — **verde** (titolarità alta: trend "Titolare
@@ -177,10 +176,21 @@ ruoli ancora da coprire nella tua squadra.
     stati presi (da chiunque) rispetto a quanti ne restano ancora
     disponibili — più il ruolo si svuota velocemente, più sale.
 
-  Stesso trattamento di Score: badge colorato con lo stesso semaforo, in
-  tabella (solo tra i disponibili) e nel riquadro "in asta", con tooltip di
-  scomposizione (che riporta anche su quale ruolo è stata calcolata, per i
-  multi-ruolo Mantra) e selezionabile dal menu "Ordina per".
+  I quattro segnali si sommano in un totale grezzo (senza un range fisso: a
+  inizio asta, con nessun segnale ancora scattato, può restare vicino allo
+  zero), ma il numero mostrato nel badge è invece il suo **percentile relativo
+  a tutti gli altri giocatori con Urgenza calcolabile, riportato in scala
+  0-100 (100 = il più urgente del listino)** — sempre confrontabile,
+  indipendentemente da quanto sia compresso o ampio il totale grezzo in un
+  dato momento della tua asta (`percentualeRelativaInCampione` in
+  `lib/percentile.ts`, stessa tecnica di rango già usata per il semaforo a 5
+  colori). L'ordinamento "Ordina per: Urgenza" resta comunque coerente col
+  totale grezzo (la trasformazione in percentile non cambia l'ordine
+  relativo). Stesso trattamento di Score per il resto: badge colorato con lo
+  stesso semaforo, in tabella (solo tra i disponibili) e nel riquadro "in
+  asta", con tooltip di scomposizione (che mostra i 4 contributi grezzi e su
+  quale ruolo è stata calcolata, per i multi-ruolo Mantra) e selezionabile dal
+  menu "Ordina per".
 - **Tracciamento asta**: segna un giocatore come "Preso da me" (con prezzo
   pagato, aggiorna budget e rosa) o "Preso da altri" (rimosso dal mercato). Su
   un giocatore già preso, il bottone giallo con la matita ✏️ modifica il
@@ -195,8 +205,8 @@ ruoli ancora da coprire nella tua squadra.
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
   la riga: foto (con il cerotto 🩹 se infortunato), ruolo/i, squadra,
   quotazione, FVM, titolarità (dedotta dalle notizie), Max consigliato/tetto,
-  gli ovali FCPedia (ALG FCP/Punteggio FCP, vedi sotto), Score e Urgenza
-  (vedi sopra entrambi), e — a
+  ALG FCP/Punteggio FCP (vedi sotto), Score e Urgenza (vedi sopra entrambi),
+  e — a
   differenza della fila di icone sempre-tutte-visibili altrove nell'app —
   **solo le caratteristiche effettivamente presenti**, ognuna con
   l'etichetta testuale accanto all'icona invece del solo tooltip (qui c'è
@@ -250,10 +260,13 @@ ruoli ancora da coprire nella tua squadra.
   semaforo relativo a 5 fasce usato per le altre statistiche FPEDIA
   (confrontato con gli altri giocatori del tuo listino, non i colori fissi
   del sito). Nella tabella e nel riquadro "in asta" restano visibili solo
-  Algoritmo FCP e Punteggio FantaCalcioPedia, come ovali colorati sotto la
-  colonna "FCPedia" (stesso componente delle altre pillole numeriche
-  dell'app). La caratteristica "Rischio infortuni" (icona cerotto rosso) si
-  accende quando la Resistenza infortuni scende a 40 o meno.
+  Algoritmo FCP e Punteggio FantaCalcioPedia, come rettangoli colorati con
+  angoli smussati — stesso stile di Score/Urgenza, per uniformità — con
+  l'header della colonna che mostra due icone (bacchetta magica per ALG FCP,
+  blocco note per Punteggio FCP) più "FCP", con il nome completo nel tooltip
+  al passaggio del mouse invece che come etichetta sotto il numero. La
+  caratteristica "Rischio infortuni" (icona cerotto rosso) si accende quando
+  la Resistenza infortuni scende a 40 o meno.
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
@@ -263,7 +276,8 @@ ruoli ancora da coprire nella tua squadra.
   sono raggruppati dall'alto verso il basso in Portieri, Difensori,
   Centrocampisti e Attaccanti (un giocatore multi-ruolo va nella prima linea
   che uno dei suoi ruoli copre); in Classic segue già l'ordine
-  Portiere/Difensore/Centrocampista/Attaccante.
+  Portiere/Difensore/Centrocampista/Attaccante, con la letterina colorata del
+  ruolo (P/D/C/A) a sinistra del nome di ogni gruppo.
 - **Aggiornamento dati (in Settings)**: tutti i pulsanti che scaricano dati da
   fonti esterne (notizie, FPEDIA) stanno nella pagina **⚙️ Settings**, non in
   dashboard — sono operazioni di "manutenzione" separate dal seguire l'asta

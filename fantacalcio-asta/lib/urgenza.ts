@@ -1,7 +1,7 @@
 import { LivelloFpedia, Player, Ruolo, RuoloMantra, Settings } from "./types";
 import { computeScore } from "./score";
 import { computeCoperturaModuli, computeRoleStats, computeRuoliNecessari } from "./suggestions";
-import { livelloRelativoInCampione } from "./percentile";
+import { livelloRelativoInCampione, percentualeRelativaInCampione } from "./percentile";
 
 // ---------------------------------------------------------------------------
 // "Urgenza": quanto e' urgente assicurarsi QUESTO giocatore ORA, in base a
@@ -188,6 +188,26 @@ export function computeLivelloUrgenza(
     const dettaglio = urgenza(player);
     if (!dettaglio) return null;
     return livelloRelativoInCampione(dettaglio.totale, campione);
+  };
+}
+
+/**
+ * Come computeLivelloUrgenza, ma come numero continuo 0-100 (100 = il
+ * giocatore con l'urgenza piu' alta del campione) invece che a 5 fasce: il
+ * totale grezzo non ha un range fisso (puo' restare vicino a zero se nessuno
+ * dei 4 segnali e' ancora scattato, es. a inizio asta), quindi in tabella si
+ * mostra questo percentile — sempre confrontabile — invece del totale.
+ */
+export function computePercentualeUrgenza(
+  players: Player[],
+  urgenza: (player: Player) => DettaglioUrgenza | null
+): (player: Player) => number | null {
+  const campione = players.map((p) => urgenza(p)?.totale).filter((v): v is number => v !== undefined);
+
+  return (player) => {
+    const dettaglio = urgenza(player);
+    if (!dettaglio) return null;
+    return percentualeRelativaInCampione(dettaglio.totale, campione);
   };
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { Euro, Gavel } from "lucide-react";
+import { Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
 import {
   RUOLI,
   RUOLI_MANTRA,
@@ -23,13 +23,18 @@ import {
   DETTAGLIO_SCORE_LABEL,
   DettaglioScore,
 } from "@/lib/score";
-import { computeLivelloUrgenza, computeUrgenza, DETTAGLIO_URGENZA_LABEL, DettaglioUrgenza } from "@/lib/urgenza";
+import {
+  computeLivelloUrgenza,
+  computePercentualeUrgenza,
+  computeUrgenza,
+  DETTAGLIO_URGENZA_LABEL,
+  DettaglioUrgenza,
+} from "@/lib/urgenza";
 import { classeLivello } from "@/lib/livelloColori";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
-import { Pillola } from "./Pillola";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
 type Ordinamento = "score" | "urgenza";
@@ -43,14 +48,19 @@ function tooltipScore(d: DettaglioScore): string {
   return voci.length > 0 ? `Score ${Math.round(d.totale)}\n${voci.join("\n")}` : "Nessun dato sufficiente per calcolare lo Score";
 }
 
-/** Scomposizione dell'Urgenza come tooltip leggibile, con il ruolo su cui è calcolata (rilevante nei multi-ruolo Mantra). */
-function tooltipUrgenza(d: DettaglioUrgenza): string {
+/**
+ * Scomposizione dell'Urgenza come tooltip leggibile, con il ruolo su cui è calcolata
+ * (rilevante nei multi-ruolo Mantra). Il numero di testa è il percentile 0-100 mostrato
+ * nel badge (non il totale grezzo): la scomposizione sotto resta in unità grezze,
+ * utile per capire la direzione e il peso relativo di ogni segnale.
+ */
+function tooltipUrgenza(d: DettaglioUrgenza, percentuale: number | null): string {
   const voci = (Object.keys(DETTAGLIO_URGENZA_LABEL) as (keyof typeof DETTAGLIO_URGENZA_LABEL)[])
     .map((chiave) => ({ label: DETTAGLIO_URGENZA_LABEL[chiave], valore: d[chiave] }))
     .filter((v) => Math.abs(v.valore) >= 0.05)
     .map((v) => `${v.label}: ${v.valore > 0 ? "+" : ""}${v.valore.toFixed(1)}`);
   return voci.length > 0
-    ? `Urgenza ${Math.round(d.totale)} (${d.ruoloUsato})\n${voci.join("\n")}`
+    ? `Urgenza ${percentuale ?? "—"} (${d.ruoloUsato})\n${voci.join("\n")}`
     : "Nessun dato sufficiente per calcolare l'Urgenza";
 }
 
@@ -105,6 +115,7 @@ export function PlayerTable() {
   const livelloScore = useMemo(() => computeLivelloScore(players, score), [players, score]);
   const urgenza = useMemo(() => computeUrgenza(players, settings), [players, settings]);
   const livelloUrgenza = useMemo(() => computeLivelloUrgenza(players, urgenza), [players, urgenza]);
+  const percentualeUrgenza = useMemo(() => computePercentualeUrgenza(players, urgenza), [players, urgenza]);
 
   // Giocatore attualmente "sotto il martello": resta valido solo finché è ancora
   // disponibile (appena viene assegnato o rimosso si torna automaticamente alla lista intera).
@@ -262,12 +273,15 @@ export function PlayerTable() {
     return (
       <div className="flex gap-2">
         {voci.map((v) => (
-          <Pillola
+          <span
             key={v.campo}
-            label={v.label}
-            valore={String(Math.round(v.valore))}
-            livello={livelloFantasolidita(p, v.campo)}
-          />
+            className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
+              livelloFantasolidita(p, v.campo)
+            )}`}
+            title={v.label}
+          >
+            {Math.round(v.valore)}
+          </span>
         ))}
       </div>
     );
@@ -346,12 +360,20 @@ export function PlayerTable() {
             {vociFantasolditaLista(inAstaPlayer).length > 0 && (
               <div className="flex gap-3">
                 {vociFantasolditaLista(inAstaPlayer).map((v) => (
-                  <Pillola
-                    key={v.campo}
-                    label={v.label}
-                    valore={String(Math.round(v.valore))}
-                    livello={livelloFantasolidita(inAstaPlayer, v.campo)}
-                  />
+                  <div key={v.campo} className="text-center">
+                    <div className="text-[10px] uppercase text-slate-400 tracking-wide flex items-center justify-center gap-1">
+                      {v.campo === "algFcp" ? <Wand2 size={11} /> : <NotebookText size={11} />}
+                      FCP
+                    </div>
+                    <div
+                      className={`inline-block rounded px-1.5 font-bold ${classeLivello(
+                        livelloFantasolidita(inAstaPlayer, v.campo)
+                      )}`}
+                      title={v.label}
+                    >
+                      {Math.round(v.valore)}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -373,9 +395,9 @@ export function PlayerTable() {
                 <div className="text-[10px] uppercase text-slate-400 tracking-wide">Urgenza</div>
                 <div
                   className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloUrgenza(inAstaPlayer))}`}
-                  title={tooltipUrgenza(urgenza(inAstaPlayer)!)}
+                  title={tooltipUrgenza(urgenza(inAstaPlayer)!, percentualeUrgenza(inAstaPlayer))}
                 >
-                  {Math.round(urgenza(inAstaPlayer)!.totale)}
+                  {percentualeUrgenza(inAstaPlayer) ?? "—"}
                 </div>
               </div>
             )}
@@ -573,7 +595,18 @@ export function PlayerTable() {
                   Quot.
                 </span>
               </th>
-              <th className="pb-2">FCPedia</th>
+              <th className="pb-2">
+                <span className="inline-flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1" title="Algoritmo Fantacalciopedia">
+                    <Wand2 size={12} />
+                    FCP
+                  </span>
+                  <span className="inline-flex items-center gap-1" title="Punteggio FantaCalcioPedia">
+                    <NotebookText size={12} />
+                    FCP
+                  </span>
+                </span>
+              </th>
               {mostraValutazioni && <th className="pb-2 text-right">Score</th>}
               {mostraValutazioni && <th className="pb-2 text-right">Urgenza</th>}
               <th className="pb-2 text-right">Azioni</th>
@@ -643,9 +676,9 @@ export function PlayerTable() {
                           className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
                             livelloUrgenza(p)
                           )}`}
-                          title={tooltipUrgenza(urgenza(p)!)}
+                          title={tooltipUrgenza(urgenza(p)!, percentualeUrgenza(p))}
                         >
-                          {Math.round(urgenza(p)!.totale)}
+                          {percentualeUrgenza(p) ?? "—"}
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>
