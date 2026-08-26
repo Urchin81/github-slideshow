@@ -44,17 +44,24 @@ ruoli ancora da coprire nella tua squadra.
   che non corrisponde al tuo schema.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
-  disponibile), Quotazione (header con il simbolo €), FCP×2 (ALG FCP e
-  Punteggio FantaCalcioPedia, vedi sotto), Score e Urgenza (solo tra i
-  disponibili, vedi sotto entrambi) e Azioni — sempre in quest'ordine. I
-  valori di Quotazione, FCP×2, Score e Urgenza sono centrati nella loro
-  colonna; Quotazione è mostrata in un riquadrino grigio chiaro con bordo
-  grigio scuro, mentre FCP/Score/Urgenza restano nei rettangolini colorati
-  in base al livello. L'intestazione resta visibile ("sticky") mentre si
-  scorre l'elenco verso il basso, cosí si vede sempre a quale colonna
-  corrisponde ogni valore. Sopra la tabella, tra i disponibili, il menu
-  **"Ordina per"** sceglie se ordinare per **Score** (default), **Urgenza**
-  (vedi sotto entrambi), **ALG FCP**, **Punteggio FCP** o **Quotazione**.
+  disponibile), Quotazione (header con il solo simbolo €), FCP×2 (icona
+  bacchetta magica per ALG FCP, icona blocco note per Punteggio
+  FantaCalcioPedia — senza testo, solo tooltip), Score e Urgenza (solo tra i
+  disponibili o mentre un giocatore è "in asta", vedi sotto entrambi) e
+  Azioni — sempre in quest'ordine. I valori di Quotazione, FCP×2, Score e
+  Urgenza sono centrati nella loro colonna; Quotazione è mostrata in un
+  riquadrino grigio chiaro con bordo grigio scuro, mentre FCP/Score/Urgenza
+  restano nei rettangolini colorati in base al livello. L'intestazione resta
+  visibile ("sticky") mentre si scorre l'elenco verso il basso, cosí si vede
+  sempre a quale colonna corrisponde ogni valore.
+- **Ordinamento cliccando sugli header**: ogni header ordinabile (★, Ruolo,
+  Nome, Squadra, €, bacchetta FCP, blocco note FCP, Score, Urgenza) ordina
+  l'elenco al click, con una freccetta che indica quale colonna è attiva e in
+  che verso; un secondo click sullo stesso header inverte il verso (es.
+  quotazione parte decrescente — i più cari prima — e al secondo click
+  diventa crescente). Il default all'apertura è **Score** decrescente.
+  L'ordinamento si applica a qualsiasi filtro (Disponibili/Mia
+  squadra/Prese da altri/Tutti), non solo ai disponibili.
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
   nel riquadro "in asta") ha un bordo spesso colorato in base a quanto è
   probabile che giochi — **verde** (titolarità alta: trend "Titolare

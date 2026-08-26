@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
 import {
   LivelloFpedia,
   RUOLI,
@@ -38,7 +38,44 @@ import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
-type Ordinamento = "score" | "urgenza" | "algFcp" | "punteggioFcp" | "quotazione";
+type CampoOrdinamento =
+  | "preferiti"
+  | "ruolo"
+  | "nome"
+  | "squadra"
+  | "quotazione"
+  | "algFcp"
+  | "punteggioFcp"
+  | "score"
+  | "urgenza";
+type DirezioneOrdinamento = "asc" | "desc";
+interface StatoOrdinamento {
+  campo: CampoOrdinamento;
+  direzione: DirezioneOrdinamento;
+}
+
+/** Verso "naturale" del primo click su ciascun header: es. quotazione parte decrescente (i più cari prima). */
+const DIREZIONE_DEFAULT: Record<CampoOrdinamento, DirezioneOrdinamento> = {
+  preferiti: "desc",
+  ruolo: "asc",
+  nome: "asc",
+  squadra: "asc",
+  quotazione: "desc",
+  algFcp: "desc",
+  punteggioFcp: "desc",
+  score: "desc",
+  urgenza: "desc",
+};
+
+/** Indice del ruolo nell'ordine standard (P/D/C/A o l'elenco Mantra), per ordinare la colonna Ruolo. */
+function indiceRuolo(p: { ruolo: Ruolo; ruoliMantra?: RuoloMantra[] }, isMantra: boolean): number {
+  if (isMantra) {
+    const ruoli = p.ruoliMantra ?? [];
+    if (ruoli.length === 0) return RUOLI_MANTRA.length;
+    return Math.min(...ruoli.map((r) => RUOLI_MANTRA.indexOf(r)));
+  }
+  return RUOLI.indexOf(p.ruolo);
+}
 
 /**
  * Bordo a 4 livelli di "quanto è forte questo giocatore" (rosso chiaro/giallo/verde/blu),
@@ -123,10 +160,22 @@ export function PlayerTable() {
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
-  const [ordinamento, setOrdinamento] = useState<Ordinamento>("score");
+  const [ordinamento, setOrdinamento] = useState<StatoOrdinamento>({ campo: "score", direzione: "desc" });
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
+  }
+
+  /** Click su un header: se è già il campo attivo inverte il verso, altrimenti lo seleziona col suo verso di default. */
+  function alternaOrdinamento(campo: CampoOrdinamento) {
+    setOrdinamento((prev) =>
+      prev.campo === campo ? { campo, direzione: prev.direzione === "desc" ? "asc" : "desc" } : { campo, direzione: DIREZIONE_DEFAULT[campo] }
+    );
+  }
+
+  function indicatoreOrdinamento(campo: CampoOrdinamento) {
+    if (ordinamento.campo !== campo) return null;
+    return ordinamento.direzione === "desc" ? <ChevronDown size={12} /> : <ChevronUp size={12} />;
   }
 
   const suggerimenti = useMemo(() => getSuggerimentiAsta(players, settings), [players, settings]);
@@ -184,24 +233,38 @@ export function PlayerTable() {
     }
 
     return [...base].sort((a, b) => {
-      if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
-      if (ordinamento === "urgenza") {
-        const ua = urgenza(a)?.totale ?? -Infinity;
-        const ub = urgenza(b)?.totale ?? -Infinity;
-        return ub - ua;
+      let cmp: number;
+      switch (ordinamento.campo) {
+        case "preferiti":
+          cmp = Number(a.preferito ?? false) - Number(b.preferito ?? false);
+          break;
+        case "ruolo":
+          cmp = indiceRuolo(a, isMantra) - indiceRuolo(b, isMantra);
+          break;
+        case "nome":
+          cmp = a.nome.localeCompare(b.nome);
+          break;
+        case "squadra":
+          cmp = a.squadra.localeCompare(b.squadra);
+          break;
+        case "quotazione":
+          cmp = a.quotazione - b.quotazione;
+          break;
+        case "algFcp":
+          cmp = (a.fpedia?.algFcp ?? -Infinity) - (b.fpedia?.algFcp ?? -Infinity);
+          break;
+        case "punteggioFcp":
+          cmp = (a.fpedia?.punteggioFcp ?? -Infinity) - (b.fpedia?.punteggioFcp ?? -Infinity);
+          break;
+        case "urgenza":
+          cmp = (urgenza(a)?.totale ?? -Infinity) - (urgenza(b)?.totale ?? -Infinity);
+          break;
+        case "score":
+        default:
+          cmp = (score(a)?.totale ?? -Infinity) - (score(b)?.totale ?? -Infinity);
+          break;
       }
-      if (ordinamento === "algFcp") {
-        return (b.fpedia?.algFcp ?? -Infinity) - (a.fpedia?.algFcp ?? -Infinity);
-      }
-      if (ordinamento === "punteggioFcp") {
-        return (b.fpedia?.punteggioFcp ?? -Infinity) - (a.fpedia?.punteggioFcp ?? -Infinity);
-      }
-      if (ordinamento === "quotazione") {
-        return b.quotazione - a.quotazione;
-      }
-      const sa = score(a)?.totale ?? -Infinity;
-      const sb = score(b)?.totale ?? -Infinity;
-      return sb - sa;
+      return ordinamento.direzione === "desc" ? -cmp : cmp;
     });
   }, [
     players,
@@ -587,20 +650,6 @@ export function PlayerTable() {
             <option value="altrui">Prese da altri</option>
             <option value="tutti">Tutti</option>
           </select>
-          {statoFiltro === "disponibile" && (
-            <select
-              value={ordinamento}
-              onChange={(e) => setOrdinamento(e.target.value as Ordinamento)}
-              className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta. ALG FCP/Punteggio FCP: i due valori di fantacalciopedia.com. Quotazione: il valore di listino."
-            >
-              <option value="score">Ordina per: Score</option>
-              <option value="urgenza">Ordina per: Urgenza</option>
-              <option value="algFcp">Ordina per: ALG FCP</option>
-              <option value="punteggioFcp">Ordina per: Punteggio FCP</option>
-              <option value="quotazione">Ordina per: Quotazione</option>
-            </select>
-          )}
           <label className="text-sm flex items-center gap-1.5">
             <input type="checkbox" checked={soloPreferiti} onChange={(e) => setSoloPreferiti(e.target.checked)} />
             Solo preferiti ★
@@ -632,31 +681,83 @@ export function PlayerTable() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-400 [&>th]:sticky [&>th]:top-0 [&>th]:bg-white [&>th]:z-10 [&>th]:border-b [&>th]:border-slate-100">
-              <th className="pb-2">★</th>
-              <th className="pb-2">Ruolo</th>
+              <th
+                className="pb-2 cursor-pointer select-none hover:text-slate-600"
+                onClick={() => alternaOrdinamento("preferiti")}
+                title="Ordina per preferiti"
+              >
+                <span className="inline-flex items-center gap-0.5">★{indicatoreOrdinamento("preferiti")}</span>
+              </th>
+              <th
+                className="pb-2 cursor-pointer select-none hover:text-slate-600"
+                onClick={() => alternaOrdinamento("ruolo")}
+                title="Ordina per ruolo"
+              >
+                <span className="inline-flex items-center gap-0.5">Ruolo{indicatoreOrdinamento("ruolo")}</span>
+              </th>
               <th className="pb-2">Foto</th>
-              <th className="pb-2">Nome</th>
-              <th className="pb-2">Squadra</th>
-              <th className="pb-2 text-center">
-                <span className="inline-flex items-center justify-center gap-1">
+              <th
+                className="pb-2 cursor-pointer select-none hover:text-slate-600"
+                onClick={() => alternaOrdinamento("nome")}
+                title="Ordina per nome"
+              >
+                <span className="inline-flex items-center gap-0.5">Nome{indicatoreOrdinamento("nome")}</span>
+              </th>
+              <th
+                className="pb-2 cursor-pointer select-none hover:text-slate-600"
+                onClick={() => alternaOrdinamento("squadra")}
+                title="Ordina per squadra"
+              >
+                <span className="inline-flex items-center gap-0.5">Squadra{indicatoreOrdinamento("squadra")}</span>
+              </th>
+              <th
+                className="pb-2 text-center cursor-pointer select-none hover:text-slate-600"
+                onClick={() => alternaOrdinamento("quotazione")}
+                title="Ordina per quotazione"
+              >
+                <span className="inline-flex items-center justify-center gap-0.5">
                   <Euro size={12} />
-                  Quot.
+                  {indicatoreOrdinamento("quotazione")}
                 </span>
               </th>
               <th className="pb-2 text-center">
                 <span className="inline-flex items-center justify-center gap-3">
-                  <span className="inline-flex items-center gap-1" title="Algoritmo Fantacalciopedia">
+                  <span
+                    className="inline-flex items-center gap-0.5 cursor-pointer select-none hover:text-slate-600"
+                    onClick={() => alternaOrdinamento("algFcp")}
+                    title="Ordina per Algoritmo Fantacalciopedia"
+                  >
                     <Wand2 size={12} />
-                    FCP
+                    {indicatoreOrdinamento("algFcp")}
                   </span>
-                  <span className="inline-flex items-center gap-1" title="Punteggio FantaCalcioPedia">
+                  <span
+                    className="inline-flex items-center gap-0.5 cursor-pointer select-none hover:text-slate-600"
+                    onClick={() => alternaOrdinamento("punteggioFcp")}
+                    title="Ordina per Punteggio FantaCalcioPedia"
+                  >
                     <NotebookText size={12} />
-                    FCP
+                    {indicatoreOrdinamento("punteggioFcp")}
                   </span>
                 </span>
               </th>
-              {mostraValutazioni && <th className="pb-2 text-center">Score</th>}
-              {mostraValutazioni && <th className="pb-2 text-center">Urgenza</th>}
+              {mostraValutazioni && (
+                <th
+                  className="pb-2 text-center cursor-pointer select-none hover:text-slate-600"
+                  onClick={() => alternaOrdinamento("score")}
+                  title="Ordina per Score"
+                >
+                  <span className="inline-flex items-center justify-center gap-0.5">Score{indicatoreOrdinamento("score")}</span>
+                </th>
+              )}
+              {mostraValutazioni && (
+                <th
+                  className="pb-2 text-center cursor-pointer select-none hover:text-slate-600"
+                  onClick={() => alternaOrdinamento("urgenza")}
+                  title="Ordina per Urgenza"
+                >
+                  <span className="inline-flex items-center justify-center gap-0.5">Urgenza{indicatoreOrdinamento("urgenza")}</span>
+                </th>
+              )}
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
