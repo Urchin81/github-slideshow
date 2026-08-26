@@ -1,8 +1,7 @@
-import { LivelloFpedia, Player, RUOLI, RUOLI_MANTRA, Ruolo, RuoloMantra, Settings } from "./types";
+import { LivelloFpedia, Player, RUOLI, Ruolo, RuoloMantra, Settings } from "./types";
 import { MODULI_MANTRA, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
 import { livelloRelativoInCampione } from "./percentile";
-import { computeLivelloValoreAtteso, computeValoreAtteso, ValoreAtteso } from "./valoreAtteso";
 
 export { livelloRelativoInCampione } from "./percentile";
 
@@ -88,28 +87,10 @@ export interface PlayerSuggestion {
   ruoloUsato?: Ruolo;
   /** Solo Mantra: nomi dei moduli (tra i piu' vicini al completamento) che questo giocatore aiuterebbe a completare. */
   moduliUtili?: string[];
-  /**
-   * Stima dei punti fantacalcio attesi in stagione (gol/assist/media voto/malus
-   * previsti da FPEDIA): dimensione puramente informativa, aggiunta qui solo
-   * per comodita' di lookup — NON influenza punteggio/consigliato/rapporto
-   * sopra, che restano basati solo su quotazione/FVM/budget come prima,
-   * perche' funzionano per ogni giocatore mentre il valore atteso esiste solo
-   * per chi e' gia' stato aggiornato da FPEDIA.
-   */
-  valoreAtteso?: ValoreAtteso | null;
-  livelloValoreAtteso?: LivelloFpedia;
 }
 
 export function getSuggestions(players: Player[], settings: Settings): PlayerSuggestion[] {
-  const base =
-    settings.modalita === "classic" ? getSuggestionsClassic(players, settings) : getSuggestionsMantra(players, settings);
-
-  const livelloValoreAttesoDi = computeLivelloValoreAtteso(players, settings);
-  return base.map((s) => ({
-    ...s,
-    valoreAtteso: computeValoreAtteso(s.player),
-    livelloValoreAtteso: livelloValoreAttesoDi(s.player),
-  }));
+  return settings.modalita === "classic" ? getSuggestionsClassic(players, settings) : getSuggestionsMantra(players, settings);
 }
 
 // ---------------------------------------------------------------------------
@@ -433,98 +414,40 @@ export function simulaAcquisto(
 }
 
 // ---------------------------------------------------------------------------
-// Scarsita' dei titolari per ruolo: con N partecipanti all'asta, quanti
-// giocatori "da titolare" restano ancora disponibili in un ruolo prima che
-// diventi un problema trovarne uno decente.
+// Valore medio di acquisto: budget residuo diviso per i giocatori ancora
+// mancanti per completare una rosa valida (min 1 credito a testa, portieri
+// inclusi). Se la rosa e' gia' completa, mostra l'intero budget residuo
+// invece di dividere per zero.
 // ---------------------------------------------------------------------------
 
-export interface ScarsitaRuolo {
-  /** Ruolo Classic o linea Mantra (Portieri/Difensori/Centrocampisti/Attaccanti). */
-  chiave: string;
-  label: string;
-  /** Quanti giocatori "da titolare" in questo ruolo ci si aspetta servano in tutta la lega. */
-  titolariTotali: number;
-  /** Quanti di quei titolari sono ancora disponibili sul mercato. */
-  titolariDisponibili: number;
-  /** True quando i titolari rimasti non bastano piu' per un partecipante a testa. */
-  allerta: boolean;
-}
-
 /**
- * Classic: i "titolari" di un ruolo sono i migliori per quotazione fino a
- * quanti slot quel ruolo occupa moltiplicati per il numero di partecipanti
- * (ogni squadra della lega usa lo stesso numero di slot per ruolo). Se quelli
- * ancora disponibili scendono a non piu' di un partecipante a testa, e' il
- * segnale che il ruolo sta per esaurirsi.
+ * Classic: la somma degli slotRimanenti sui 4 ruoli e' gia' esattamente il
+ * numero di giocatori mancanti — il minimo di portieri e' automaticamente
+ * rispettato perche' il ruolo P ha il proprio slot dedicato, indipendente
+ * dagli altri 3. Mantra: niente slot per ruolo, quindi il numero di
+ * giocatori mancanti e' il massimo tra "quanti mancano in totale per
+ * arrivare al minimo di rosa" e "quanti portieri mancano per arrivare al
+ * minimo configurato in Settings" (l'unico valore "minimo portieri" che
+ * esiste in questa app, riusato anche qui pur non essendo mostrato in UI in
+ * modalita' Mantra) — se mancano piu' portieri di quanti giocatori
+ * mancherebbero in totale, quei portieri coprono comunque anche il
+ * fabbisogno totale, quindi il massimo tra i due e' sempre corretto.
  */
-export function computeScarsitaClassic(players: Player[], settings: Settings): ScarsitaRuolo[] {
-  const partecipanti = Math.max(1, settings.numeroPartecipanti);
-  return RUOLI.map((ruolo) => {
-    const delRuolo = [...players.filter((p) => p.ruolo === ruolo)].sort((a, b) => b.quotazione - a.quotazione);
-    const titolariTotali = settings.ruoli[ruolo].slot * partecipanti;
-    const titolari = delRuolo.slice(0, titolariTotali);
-    const titolariDisponibili = titolari.filter((p) => p.stato === "disponibile").length;
-    return {
-      chiave: ruolo,
-      label: ruolo,
-      titolariTotali,
-      titolariDisponibili,
-      allerta: titolariTotali > 0 && titolariDisponibili > 0 && titolariDisponibili <= partecipanti,
-    };
-  });
-}
+export function computeValoreMedioAcquisto(players: Player[], settings: Settings): number {
+  const budgetResiduo = computeBudgetResiduoTotale(players, settings);
 
-/**
- * Quanto "conta" in media, per ognuno dei 12 ruoli Mantra, un modulo su 11.
- * Uno slot con piu' ruoli alternativi (es. "W/A") divide il credito tra le
- * alternative invece di contare per intero su ciascuna: un ruolo che e' solo
- * una tra piu' opzioni possibili per uno slot ha una "titolarita' limitata"
- * su quello slot, non una richiesta piena.
- */
-function bisognoMedioPerRuoloMantra(): Record<RuoloMantra, number> {
-  const somme = {} as Record<RuoloMantra, number>;
-  for (const ruolo of RUOLI_MANTRA) somme[ruolo] = 0;
-  for (const modulo of MODULI_MANTRA) {
-    for (const slot of modulo.slot) {
-      const credito = 1 / slot.length;
-      for (const ruolo of slot) somme[ruolo] += credito;
-    }
+  if (settings.modalita === "classic") {
+    const roleStats = computeRoleStats(players, settings);
+    const giocatoriMancanti = RUOLI.reduce((sum, ruolo) => sum + roleStats[ruolo].slotRimanenti, 0);
+    return giocatoriMancanti > 0 ? budgetResiduo / giocatoriMancanti : budgetResiduo;
   }
-  const media = {} as Record<RuoloMantra, number>;
-  for (const ruolo of RUOLI_MANTRA) media[ruolo] = somme[ruolo] / MODULI_MANTRA.length;
-  return media;
-}
 
-/**
- * Mantra: niente slot fissi per ruolo, quindi la scarsita' si stima per
- * ognuno dei 12 ruoli singoli (Por, Dc, Dd, ...) in base a quanto quel ruolo
- * e' richiesto in media dagli 11 moduli tattici (con "titolarita' limitata"
- * per i ruoli che sono solo una tra piu' alternative di uno slot, vedi
- * bisognoMedioPerRuoloMantra), moltiplicato per il numero di partecipanti.
- */
-export function computeScarsitaMantra(players: Player[], settings: Settings): ScarsitaRuolo[] {
-  const partecipanti = Math.max(1, settings.numeroPartecipanti);
-  const bisognoMedio = bisognoMedioPerRuoloMantra();
-
-  return RUOLI_MANTRA.map((ruolo) => {
-    const delRuolo = [...players.filter((p) => (p.ruoliMantra ?? []).includes(ruolo))].sort(
-      (a, b) => b.quotazione - a.quotazione
-    );
-    const titolariTotali = Math.round(bisognoMedio[ruolo] * partecipanti);
-    const titolari = delRuolo.slice(0, titolariTotali);
-    const titolariDisponibili = titolari.filter((p) => p.stato === "disponibile").length;
-    return {
-      chiave: ruolo,
-      label: ruolo,
-      titolariTotali,
-      titolariDisponibili,
-      allerta: titolariTotali > 0 && titolariDisponibili > 0 && titolariDisponibili <= partecipanti,
-    };
-  });
-}
-
-export function computeScarsitaRuoli(players: Player[], settings: Settings): ScarsitaRuolo[] {
-  return settings.modalita === "classic" ? computeScarsitaClassic(players, settings) : computeScarsitaMantra(players, settings);
+  const acquistati = players.filter((p) => p.stato === "mia").length;
+  const mancantiTotale = Math.max(0, settings.mantra.minGiocatori - acquistati);
+  const portieriPosseduti = players.filter((p) => p.stato === "mia" && (p.ruoliMantra ?? []).includes("Por")).length;
+  const mancantiPortieri = Math.max(0, settings.ruoli.P.slot - portieriPosseduti);
+  const giocatoriMancanti = Math.max(mancantiTotale, mancantiPortieri);
+  return giocatoriMancanti > 0 ? budgetResiduo / giocatoriMancanti : budgetResiduo;
 }
 
 // ---------------------------------------------------------------------------

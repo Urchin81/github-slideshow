@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { Gavel, Wand2 } from "lucide-react";
+import { Gavel } from "lucide-react";
 import {
   RUOLI,
   RUOLI_MANTRA,
@@ -14,40 +14,17 @@ import {
   Ruolo,
   StatoGiocatore,
 } from "@/lib/types";
-import { computeMantraStato, getSuggestions, PlayerSuggestion, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
+import { computeMantraStato, getSuggestions, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
+import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
-import { Pillola } from "./Pillola";
+import { BarraFantasolidita } from "./BarraFantasolidita";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
-
-function formatRange(range: [number, number] | undefined): string {
-  if (!range) return "—";
-  return `${range[0]}-${range[1]}`;
-}
-
-// "Ordina per: Bilanciato" (solo Mantra): combina quanto e' buono il valore
-// atteso del giocatore (70%, in assenza di un percentile numerico si usa il
-// livello a 5 fasce gia' calcolato) con quanto aiuta a completare i moduli
-// piu' vicini (30%) — sempre spiegato nel tooltip, mai un numero opaco.
-const LIVELLO_VALORE_SCORE: Record<string, number> = {
-  super: 100,
-  buono: 75,
-  sufficiente: 50,
-  mediocre: 25,
-  negativo: 0,
-};
-
-function punteggioBilanciato(s: PlayerSuggestion | undefined): number {
-  if (!s) return 0;
-  const valoreScore = s.livelloValoreAtteso ? LIVELLO_VALORE_SCORE[s.livelloValoreAtteso] ?? 0 : 0;
-  const moduliScore = (s.moduliUtili?.length ?? 0) > 0 ? 100 : 0;
-  return valoreScore * 0.7 + moduliScore * 0.3;
-}
 
 export function PlayerTable() {
   const players = useAuctionStore((s) => s.players);
@@ -74,7 +51,6 @@ export function PlayerTable() {
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
-  const [ordinamento, setOrdinamento] = useState<"convenienza" | "valoreAtteso" | "bilanciato">("convenienza");
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
@@ -85,6 +61,7 @@ export function PlayerTable() {
     const map = new Map(suggestions.map((s) => [s.player.id, s]));
     return map;
   }, [suggestions]);
+  const livelloFantasolidita = useMemo(() => computeLivelliFantasolidita(players), [players]);
 
   // Giocatore attualmente "sotto il martello": resta valido solo finché è ancora
   // disponibile (appena viene assegnato o rimosso si torna automaticamente alla lista intera).
@@ -133,14 +110,6 @@ export function PlayerTable() {
 
     return [...base].sort((a, b) => {
       if (statoFiltro !== "disponibile") return b.quotazione - a.quotazione;
-      if (ordinamento === "valoreAtteso") {
-        const va = suggestionById.get(a.id)?.valoreAtteso?.totale ?? -Infinity;
-        const vb = suggestionById.get(b.id)?.valoreAtteso?.totale ?? -Infinity;
-        return vb - va;
-      }
-      if (ordinamento === "bilanciato") {
-        return punteggioBilanciato(suggestionById.get(b.id)) - punteggioBilanciato(suggestionById.get(a.id));
-      }
       const sa = suggestionById.get(a.id)?.punteggio ?? 0;
       const sb = suggestionById.get(b.id)?.punteggio ?? 0;
       return sb - sa;
@@ -156,7 +125,6 @@ export function PlayerTable() {
     suggestionById,
     isMantra,
     inAstaPlayer,
-    ordinamento,
   ]);
 
   const mostraPunteggio = statoFiltro === "disponibile" || !!inAstaPlayer;
@@ -242,6 +210,24 @@ export function PlayerTable() {
     );
   }
 
+  function celleFantasolidita(p: (typeof players)[number]) {
+    const voci = vociFantasolidita(p);
+    if (voci.length === 0) return <span className="text-slate-300">—</span>;
+    return (
+      <div className="w-36 space-y-0.5">
+        {voci.map((v) => (
+          <BarraFantasolidita
+            key={v.campo}
+            label={v.label}
+            valore={v.valore}
+            livello={livelloFantasolidita(p, v.campo)}
+            compatta
+          />
+        ))}
+      </div>
+    );
+  }
+
   const prezzoAstaNum = Number(prezzoAstaInput) || 0;
   const rischioAsta = astaSuggestion ? valutaRischioSforamento(prezzoAstaNum, astaSuggestion.prezzoMassimo) : null;
 
@@ -315,12 +301,6 @@ export function PlayerTable() {
                     <div className="text-slate-500 font-bold">{Math.round(astaSuggestion.punteggio)}</div>
                   )}
                 </div>
-                <Pillola
-                  label="Valore atteso"
-                  valore={astaSuggestion.valoreAtteso ? String(Math.round(astaSuggestion.valoreAtteso.totale)) : "—"}
-                  livello={astaSuggestion.livelloValoreAtteso ?? null}
-                  icona={<Wand2 size={11} />}
-                />
                 <span
                   className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
                   title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
@@ -330,11 +310,26 @@ export function PlayerTable() {
                 </span>
               </>
             )}
+
+            {vociFantasolidita(inAstaPlayer).length > 0 && (
+              <div className="w-40 space-y-0.5">
+                {vociFantasolidita(inAstaPlayer).map((v) => (
+                  <BarraFantasolidita
+                    key={v.campo}
+                    label={v.label}
+                    valore={v.valore}
+                    livello={livelloFantasolidita(inAstaPlayer, v.campo)}
+                    compatta
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <CaratteristicheGiocatore
             player={inAstaPlayer}
             className="flex-wrap bg-white border border-amber-100 rounded px-2 py-1.5"
+            soloPresenti
           />
 
           <div className="flex flex-wrap items-center gap-2">
@@ -471,18 +466,6 @@ export function PlayerTable() {
             <option value="tutti">Tutti</option>
           </select>
           {statoFiltro === "disponibile" && (
-            <select
-              value={ordinamento}
-              onChange={(e) => setOrdinamento(e.target.value as typeof ordinamento)}
-              title="Ordina per"
-              className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-            >
-              <option value="convenienza">Ordina: Convenienza</option>
-              <option value="valoreAtteso">Ordina: Valore atteso</option>
-              {isMantra && <option value="bilanciato">Ordina: Bilanciato</option>}
-            </select>
-          )}
-          {statoFiltro === "disponibile" && (
             <label className="text-sm flex items-center gap-1.5">
               <input
                 type="checkbox"
@@ -528,9 +511,7 @@ export function PlayerTable() {
               <th className="pb-2">Foto</th>
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
-              <th className="pb-2 text-right">Presenze previste</th>
-              <th className="pb-2 text-right">Gol previsti</th>
-              <th className="pb-2 text-right">Assist previsti</th>
+              <th className="pb-2">Fantasolidità/rischi</th>
               <th className="pb-2 text-right">Quot.</th>
               {mostraPunteggio && <th className="pb-2 text-right">Punteggio</th>}
               <th className="pb-2 text-right">Azioni</th>
@@ -576,9 +557,7 @@ export function PlayerTable() {
                       {p.squadra}
                     </span>
                   </td>
-                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.presenzePreviste)}</td>
-                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.golPrevisti)}</td>
-                  <td className="py-1.5 text-right text-slate-500">{formatRange(p.fpedia?.assistPrevisti)}</td>
+                  <td className="py-1.5">{celleFantasolidita(p)}</td>
                   <td className="py-1.5 text-right">{p.quotazione}</td>
                   {mostraPunteggio && (
                     <td className="py-1.5 text-right">
@@ -674,8 +653,6 @@ export function PlayerTable() {
                       onSelezionaCaratteristica={toggleCaratteristicaFiltro}
                     />
                   </td>
-                  <td />
-                  <td />
                   <td />
                   <td />
                   {mostraPunteggio && <td />}

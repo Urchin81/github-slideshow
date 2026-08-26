@@ -8,50 +8,34 @@ import {
   computeMantraStato,
   computePianoSpesaMantra,
   computeRoleStats,
-  computeScarsitaClassic,
-  computeScarsitaMantra,
-  ScarsitaRuolo,
+  computeValoreMedioAcquisto,
   SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
 import { MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
 import { ModuloVisualizzazione } from "@/components/ModuloVisualizzazione";
 import { useAuctionStore } from "@/lib/store";
 
-function AllertaScarsita({ scarsita, numeroPartecipanti }: { scarsita: ScarsitaRuolo[]; numeroPartecipanti: number }) {
-  const scarsi = scarsita.filter((s) => s.allerta);
-  if (scarsi.length === 0) return null;
-  return (
-    <div className="mb-4">
-      <h3 className="text-xs uppercase text-amber-600 mb-1">⚠️ Ruoli in esaurimento</h3>
-      <div className="flex flex-wrap gap-1">
-        {scarsi.map((s) => (
-          <span
-            key={s.chiave}
-            className="text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded px-2 py-1"
-            title={`Restano ${s.titolariDisponibili} titolari su ${s.titolariTotali} stimati per ${numeroPartecipanti} partecipanti`}
-          >
-            {s.label} · {s.titolariDisponibili} rimasti
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function PannelloClassic() {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const budgetResiduo = computeBudgetResiduoTotale(players, settings);
   const roleStats = computeRoleStats(players, settings);
-  const scarsita = computeScarsitaClassic(players, settings);
+  const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
 
   return (
     <>
-      <div className="flex justify-between items-baseline mb-4">
+      <div className="flex justify-between items-baseline mb-1">
         <span className="text-slate-500">Residuo</span>
         <span className="text-2xl font-bold">
           {budgetResiduo} <span className="text-sm font-normal text-slate-400">/ {settings.budgetTotale}</span>
         </span>
+      </div>
+      <div
+        className="flex justify-between items-baseline mb-4 text-sm"
+        title="Budget residuo diviso per i giocatori ancora mancanti per completare la rosa (portieri inclusi secondo lo slot Portiere configurato). Se la rosa è già completa, mostra l'intero budget residuo."
+      >
+        <span className="text-slate-500">Valore medio disponibile</span>
+        <span className="font-medium">{Math.round(valoreMedioAcquisto)}</span>
       </div>
       <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
       <table className="w-full text-sm mb-4">
@@ -87,7 +71,6 @@ function PannelloClassic() {
           })}
         </tbody>
       </table>
-      <AllertaScarsita scarsita={scarsita} numeroPartecipanti={settings.numeroPartecipanti} />
     </>
   );
 }
@@ -97,8 +80,8 @@ function PannelloMantra() {
   const settings = useAuctionStore((s) => s.settings);
   const stato = computeMantraStato(players, settings);
   const coperture = computeCoperturaModuli(players);
-  const scarsita = computeScarsitaMantra(players, settings);
   const pianoSpesa = computePianoSpesaMantra(players, settings);
+  const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
   const mieiMantra = players.filter((p) => p.stato === "mia");
   const moduliByNome = new Map(MODULI_MANTRA.map((m) => [m.nome, m]));
   const [moduloAperto, setModuloAperto] = useState<Modulo | null>(null);
@@ -111,6 +94,13 @@ function PannelloMantra() {
           {stato.budgetResiduo} <span className="text-sm font-normal text-slate-400">/ {settings.budgetTotale}</span>
         </span>
       </div>
+      <div
+        className="flex justify-between items-baseline mb-1 text-sm"
+        title="Budget residuo diviso per i giocatori ancora mancanti per completare la rosa (portieri inclusi secondo lo slot Portiere configurato). Se la rosa è già completa, mostra l'intero budget residuo."
+      >
+        <span className="text-slate-500">Valore medio disponibile</span>
+        <span className="font-medium">{Math.round(valoreMedioAcquisto)}</span>
+      </div>
       <div className="flex justify-between items-baseline mb-4 text-sm">
         <span className="text-slate-500">Giocatori presi</span>
         <span className="font-medium">
@@ -122,8 +112,6 @@ function PannelloMantra() {
           Hai raggiunto il numero massimo di giocatori acquistabili.
         </p>
       )}
-
-      <AllertaScarsita scarsita={scarsita} numeroPartecipanti={settings.numeroPartecipanti} />
 
       {pianoSpesa.length > 0 && (
         <>
@@ -168,7 +156,7 @@ function PannelloMantra() {
               <span className="flex items-center gap-2">
                 <span className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <span
-                    className="block h-full bg-green-500"
+                    className={`block h-full ${m.coperti === m.totale ? "bg-green-500" : "bg-amber-400"}`}
                     style={{ width: `${(m.coperti / m.totale) * 100}%` }}
                   />
                 </span>

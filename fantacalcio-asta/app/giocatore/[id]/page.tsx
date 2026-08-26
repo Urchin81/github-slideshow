@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Wand2 } from "lucide-react";
 import { RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL, RuoloMantra, FpediaStats, FpediaPillola } from "@/lib/types";
 import { computeLivelliRelativiFpedia } from "@/lib/suggestions";
-import { computeLivelloValoreAtteso, computeValoreAtteso } from "@/lib/valoreAtteso";
+import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "@/components/FavoriteStar";
 import { CaratteristicheGiocatore } from "@/components/CaratteristicheGiocatore";
 import { Pillola } from "@/components/Pillola";
+import { BarraFantasolidita } from "@/components/BarraFantasolidita";
 import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 import { isSafeHttpUrl } from "@/lib/url";
 
@@ -45,7 +45,7 @@ export default function GiocatorePage() {
   const settings = useAuctionStore((s) => s.settings);
   const applyNewsResults = useAuctionStore((s) => s.applyNewsResults);
   const livelloRelativo = useMemo(() => computeLivelliRelativiFpedia(players), [players]);
-  const livelloValoreAttesoDi = useMemo(() => computeLivelloValoreAtteso(players, settings), [players, settings]);
+  const livelloFantasolidita = useMemo(() => computeLivelliFantasolidita(players), [players]);
 
   const [aggiornando, setAggiornando] = useState(false);
   const [erroreAggiornamento, setErroreAggiornamento] = useState<string | null>(null);
@@ -83,8 +83,6 @@ export default function GiocatorePage() {
       </div>
     );
   }
-
-  const valoreAtteso = computeValoreAtteso(player);
 
   const pillole = player.fpedia?.pillole ?? [];
   const stagionePrecedente = trovaStagionePiuRecente(pillole);
@@ -146,7 +144,7 @@ export default function GiocatorePage() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-4 gap-3 mb-1 max-w-sm items-end">
+            <div className="grid grid-cols-3 gap-3 mb-3 max-w-sm items-end">
               <div>
                 <div className="text-xs text-slate-400">Quotazione</div>
                 <div className="font-semibold">{player.quotazione}</div>
@@ -159,23 +157,7 @@ export default function GiocatorePage() {
                 <div className="text-xs text-slate-400">Trend</div>
                 <div className="font-semibold">{player.trendVoti ?? "Nessun dato"}</div>
               </div>
-              <Pillola
-                label="Valore atteso"
-                valore={valoreAtteso ? String(Math.round(valoreAtteso.totale)) : "—"}
-                livello={valoreAtteso ? livelloValoreAttesoDi(player) : null}
-                icona={
-                  <span title="Previsione di fantacalciopedia.com (Algoritmo + Punteggio FCP), non calcolata da questa app">
-                    <Wand2 size={11} />
-                  </span>
-                }
-              />
             </div>
-            {valoreAtteso && (
-              <p className="text-[10px] text-slate-400 mb-3" title="Media di Algoritmo FCP e Punteggio FCP, i punteggi previsionali proprietari di fantacalciopedia.com (0-100).">
-                Previsione FPEDIA (Punteggio FCP + Algoritmo)
-              </p>
-            )}
-            {!valoreAtteso && <div className="mb-3" />}
 
             <div className="flex items-center gap-2">
               {isSafeHttpUrl(player.fpedia?.squadraLogoUrl) && (
@@ -259,19 +241,23 @@ export default function GiocatorePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4 text-sm">
-              <div>
-                <div className="text-xs text-slate-400">Punteggio FCP</div>
-                <div className="font-semibold">{player.fpedia.punteggioFcp ?? "—"}/100</div>
+            {vociFantasolidita(player).length > 0 && (
+              <div className="border border-slate-100 rounded p-3 mb-4">
+                <h3 className="text-xs uppercase text-slate-400 mb-2">Fantasolidità e rischi</h3>
+                <div className="space-y-2">
+                  {vociFantasolidita(player).map((v) => (
+                    <BarraFantasolidita
+                      key={v.campo}
+                      label={v.label}
+                      valore={v.valore}
+                      livello={livelloFantasolidita(player, v.campo)}
+                    />
+                  ))}
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-slate-400">Solidità investimento</div>
-                <div className="font-semibold">{player.fpedia.soliditaInvestimento ?? "—"}/5</div>
-              </div>
-              <div>
-                <div className="text-xs text-slate-400">Resistenza infortuni</div>
-                <div className="font-semibold">{player.fpedia.resistenzaInfortuni ?? "—"}/5</div>
-              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
               <div>
                 <div className="text-xs text-slate-400">Ammonizioni</div>
                 <div className="font-semibold">{player.fpedia.ammonizioni ?? "—"}</div>

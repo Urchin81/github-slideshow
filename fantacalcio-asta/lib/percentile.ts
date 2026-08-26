@@ -1,9 +1,9 @@
 import { LivelloFpedia } from "./types";
 
 // Semaforo a 5 colori condiviso da qualunque metrica comparativa (pillole
-// FPEDIA in lib/suggestions.ts, valore atteso fantacalcistico in
-// lib/valoreAtteso.ts): estratto qui, invece che in uno dei due, per evitare
-// un import circolare tra i due moduli.
+// FPEDIA in lib/suggestions.ts, fantasolidità/rischi in lib/fantasolidita.ts):
+// estratto qui, invece che in uno dei moduli che lo usano, per evitare un
+// import circolare tra loro.
 const SOGLIE_PERCENTILE: [number, LivelloFpedia][] = [
   [0.8, "super"],
   [0.6, "buono"],

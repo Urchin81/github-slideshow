@@ -62,7 +62,7 @@ export const CARATTERISTICHE: Caratteristica[] = [
     Icona: HeartPulse,
     label: "Rischio infortuni",
     positiva: false,
-    presente: (p) => (p.fpedia?.resistenzaInfortuni ?? 5) <= 2,
+    presente: (p) => (p.fpedia?.resistenzaInfortuni ?? 100) <= 40,
   },
 ];
 
@@ -71,6 +71,8 @@ interface Props {
   className?: string;
   caratteristicaAttiva?: string | null;
   onSelezionaCaratteristica?: (chiave: string) => void;
+  /** Solo le caratteristiche presenti, con etichetta testuale visibile invece del solo tooltip (per il box "in asta", che ha spazio). */
+  soloPresenti?: boolean;
 }
 
 export function CaratteristicheGiocatore({
@@ -78,20 +80,33 @@ export function CaratteristicheGiocatore({
   className = "",
   caratteristicaAttiva = null,
   onSelezionaCaratteristica,
+  soloPresenti = false,
 }: Props) {
+  const voci = soloPresenti ? CARATTERISTICHE.filter((c) => c.presente(player)) : CARATTERISTICHE;
+
+  if (soloPresenti && voci.length === 0) {
+    return <div className={`text-xs text-slate-400 ${className}`}>Nessuna caratteristica rilevata</div>;
+  }
+
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {CARATTERISTICHE.map((c) => {
+      {voci.map((c) => {
         const attiva = c.presente(player);
         const selezionata = caratteristicaAttiva === c.chiave;
         const colore = attiva ? (c.positiva ? "text-green-600" : "text-red-600") : "text-slate-400";
-        const icona = (
-          <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />
+        const icona = <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />;
+        const contenuto = soloPresenti ? (
+          <span className="inline-flex items-center gap-1">
+            {icona}
+            <span className={`text-xs ${colore}`}>{c.label}</span>
+          </span>
+        ) : (
+          icona
         );
         if (!onSelezionaCaratteristica) {
           return (
             <span key={c.chiave} title={c.label} className="inline-flex">
-              {icona}
+              {contenuto}
             </span>
           );
         }
@@ -105,7 +120,7 @@ export function CaratteristicheGiocatore({
               selezionata ? "bg-white ring-2 ring-slate-900" : "hover:bg-white/70"
             }`}
           >
-            {icona}
+            {contenuto}
           </button>
         );
       })}

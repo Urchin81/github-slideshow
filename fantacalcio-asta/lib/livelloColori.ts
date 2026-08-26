@@ -1,9 +1,9 @@
 import { LivelloFpedia } from "./types";
 
 // Semaforo a 5 colori condiviso da ogni pillola/badge percentile dell'app
-// (statistiche FPEDIA nella scheda giocatore, valore atteso in tabella): un
-// livello non calcolabile (troppo pochi altri giocatori da confrontare)
-// resta grigio neutro, non lo forziamo in una categoria a caso.
+// (statistiche FPEDIA e fantasolidità/rischi nella scheda giocatore e in
+// tabella): un livello non calcolabile (troppo pochi altri giocatori da
+// confrontare) resta grigio neutro, non lo forziamo in una categoria a caso.
 export const COLORE_LIVELLO: Record<Exclude<LivelloFpedia, null>, string> = {
   super: "bg-sky-500 text-white",
   buono: "bg-green-600 text-white",

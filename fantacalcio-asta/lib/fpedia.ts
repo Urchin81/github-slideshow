@@ -122,8 +122,8 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     if (!Number.isFinite(percent)) return;
     if (/^ALG FCP/i.test(label)) algFcp = percent;
     else if (/Punteggio FantaCalcioPedia/i.test(label)) punteggioFcp = percent;
-    else if (/Solidit.*fantainvestimento/i.test(label)) soliditaInvestimento = Math.round(percent / 20);
-    else if (/Resistenza infortuni/i.test(label)) resistenzaInfortuni = Math.round(percent / 20);
+    else if (/Solidit.*fantainvestimento/i.test(label)) soliditaInvestimento = percent;
+    else if (/Resistenza infortuni/i.test(label)) resistenzaInfortuni = percent;
   });
 
   const tags: FpediaTag[] = [];

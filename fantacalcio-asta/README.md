@@ -30,20 +30,7 @@ ruoli ancora da coprire nella tua squadra.
   sono slot fissi per ruolo** (sempre acquistabile qualsiasi ruolo): si imposta
   solo un numero minimo e massimo di giocatori totali da acquistare — oltre il
   massimo, "Preso da me" si disabilita. Si imposta anche il **numero di
-  partecipanti all'asta** (default 8): serve solo per l'allerta scarsità
-  titolari qui sotto.
-- **Allerta scarsità titolari**: nel pannello Budget, un avviso "⚠️ Ruoli in
-  esaurimento" elenca i ruoli (Classic: Portiere/Difensore/Centrocampista/
-  Attaccante; Mantra: i 12 ruoli singoli Por/Dc/Dd/Ds/B/E/M/C/W/T/A/Pc) i cui
-  migliori giocatori per quotazione stanno per finire sul mercato. La stima
-  di "quanti titolari servono in totale" si basa su slot-per-ruolo × numero
-  di partecipanti in Classic; in Mantra su quanto quel ruolo è richiesto in
-  media dagli 11 moduli tattici × numero di partecipanti, dando credito
-  frazionato quando un ruolo è solo una delle alternative di uno slot (es. in
-  "W/A" il credito si divide a metà tra W e A) invece che pieno, cosí un
-  ruolo con titolarità solo parziale in un modulo non gonfia la stima.
-  Scatta quando i titolari disponibili scendono a non più di uno a
-  partecipante.
+  partecipanti all'asta** (default 8).
 - **Moduli tattici (Mantra)**: la dashboard calcola, con un algoritmo di
   matching (non un modello AI/LLM: deterministico e istantaneo, vedi sotto),
   quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa attuale riesce
@@ -57,7 +44,7 @@ ruoli ancora da coprire nella tua squadra.
   che non corrisponde al tuo schema.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
-  disponibile), Presenze/Gol/Assist previsti (da FPEDIA), Quotazione,
+  disponibile), Fantasolidità/rischi (da FPEDIA, vedi sotto), Quotazione,
   Punteggio (solo tra i disponibili) e Azioni — sempre in quest'ordine.
   L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
   basso, cosí si vede sempre a quale colonna corrisponde ogni valore.
@@ -73,8 +60,9 @@ ruoli ancora da coprire nella tua squadra.
   schierati, non conta come una combinazione diversa. Lo stesso pop-up si
   apre sia dalla pagina **Moduli Mantra** sia cliccando su una qualsiasi voce
   dell'elenco "Moduli (dal più vicino al completamento)" nel pannello
-  Budget della dashboard (ora mostra tutti gli 11 moduli, non solo i primi
-  5). Nel pop-up il campo ha il portiere in basso e l'attacco in alto
+  Budget della dashboard (mostra tutti gli 11 moduli, non solo i primi 5; la
+  barra di completamento è verde solo a modulo completo, gialla finché manca
+  ancora qualche slot). Nel pop-up il campo ha il portiere in basso e l'attacco in alto
   (direzione di gioco verso l'alto) con i giocatori posizionati (foto, ruoli,
   nome, squadra) e la panchina a destra con chi non ha trovato posto; chi ha
   un sostituto compatibile in panchina mostra un cerchietto "+" sopra la
@@ -104,10 +92,15 @@ ruoli ancora da coprire nella tua squadra.
   entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
   la riga: foto (con il cerotto 🩹 se infortunato), ruolo/i, squadra,
-  quotazione, FVM, titolarità (dedotta dalle notizie), Punteggio, Valore
-  atteso (🪄), Max consigliato/tetto, tutte le icone caratteristiche, e il
-  controllo prezzo con tasti **−**/**+** (passo 1) accanto a un campo
-  numerico che parte da **0** — modificabile anche digitando direttamente.
+  quotazione, FVM, titolarità (dedotta dalle notizie), Punteggio, Max
+  consigliato/tetto, le barre Fantasolidità/rischi (vedi sotto), e — a
+  differenza della fila di icone sempre-tutte-visibili altrove nell'app —
+  **solo le caratteristiche effettivamente presenti**, ognuna con
+  l'etichetta testuale accanto all'icona invece del solo tooltip (qui c'è
+  spazio, e serve capire a colpo d'occhio cosa conta per quel giocatore senza
+  dover passare il mouse su ogni icona). Poi il controllo prezzo con tasti
+  **−**/**+** (passo 1) accanto a un campo numerico che parte da **0** —
+  modificabile anche digitando direttamente.
   Da lì si conferma con **"Preso da me"** (richiede un prezzo maggiore di
   zero, disabilitato altrimenti e se hai raggiunto il numero massimo di
   giocatori) o **"Preso da altri"** (prezzo facoltativo: lasciandolo a 0 non
@@ -136,27 +129,25 @@ ruoli ancora da coprire nella tua squadra.
   (Classic) o una ripartizione approssimativa del budget residuo tra i ruoli
   Mantra più richiesti dai moduli vicini al completamento (Mantra) — una
   guida, non una prenotazione rigida.
-- **Valore atteso fantacalcistico**: quando un giocatore ha statistiche
-  FPEDIA, la tabella mostra (colonna "Valore atteso", accanto al Punteggio) e
-  la scheda giocatore mostrano la **previsione di fantacalciopedia.com**
-  stessa — la media tra Algoritmo FCP e Punteggio FCP (0-100 entrambi;
-  se manca uno dei due si usa solo l'altro) — segnalata con un'icona a
-  bacchetta magica 🪄 per ricordare che è una previsione esterna, non un
-  calcolo di questa app, colorata con lo stesso semaforo a 5 fasce (relativo,
-  per ruolo/linea) usato per le altre statistiche FPEDIA. È **una dimensione
-  separata dal Punteggio/consigliato**, che restano basati solo su
-  quotazione/FVM/budget: funzionano sempre, mentre il valore atteso esiste
-  solo per chi è già stato aggiornato da FPEDIA (mostra "—" per gli altri).
-  Il menu "Ordina per" in tabella permette di ordinare per Convenienza
-  (default, invariato), Valore atteso, o — solo in Mantra — Bilanciato (70%
-  valore atteso relativo + 30% se aiuta a completare un modulo vicino,
-  sempre spiegato nel tooltip). Nella colonna destra, il pannello "Valore
-  atteso rosa" mostra il punteggio medio (0-100) dei giocatori già presi (con
-  indicazione di quanti hanno dati FPEDIA) e una proiezione a rosa completa
-  che pesa questa media con una stima per gli slot ancora vuoti, basata sulla
-  mediana del valore atteso tra i disponibili dello stesso ruolo/linea — una
-  media, non una somma di punti, perché il valore atteso è ora un punteggio
-  0-100 e non punti fantacalcio cumulabili.
+- **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
+  budget residuo diviso per i giocatori che mancano ancora per completare una
+  rosa valida — **tenendo conto del minimo di portieri richiesto** (in
+  Classic è già garantito dallo slot Portiere dedicato; in Mantra si prende
+  il massimo tra "quanti giocatori mancano in totale per il minimo di rosa"
+  e "quanti portieri mancano per lo slot Portiere configurato in Settings",
+  perché se mancano più portieri di quanti giocatori mancherebbero in
+  totale, quei portieri coprono comunque anche il fabbisogno totale). Se la
+  rosa è già completa (portieri inclusi), mostra l'intero budget residuo
+  invece di dividere per zero.
+- **Fantasolidità e rischi**: quando un giocatore ha statistiche FPEDIA, la
+  tabella (colonna "Fantasolidità/rischi") e la scheda giocatore mostrano 4
+  barre percentuali — Algoritmo FCP, Punteggio FantaCalcioPedia, Solidità
+  Fantainvestimento, Resistenza infortuni (tutte 0-100, cosí come le
+  pubblica fantacalciopedia.com) — colorate con lo stesso semaforo relativo
+  a 5 fasce usato per le altre statistiche FPEDIA (confrontato con gli altri
+  giocatori del tuo listino, non i colori fissi del sito). La caratteristica
+  "Rischio infortuni" (icona cerotto rosso) si accende quando la Resistenza
+  infortuni scende a 40 o meno.
 - **Preferiti**: la stellina (☆/★) accanto a ogni giocatore — nella tabella,
   nella rosa e nella scheda giocatore — lo segna come preferito. È un dato
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
@@ -248,16 +239,17 @@ ruoli ancora da coprire nella tua squadra.
     funzioni davvero prima di un giro lungo su centinaia di giocatori. Anche
     sui giri completi, i giocatori non trovati restano elencati (fino a 30)
     con il motivo, invece di sparire in un conteggio aggregato.
-- **Scheda giocatore**: la card in alto raggruppa foto, nome, ruoli, quotazione/
-  FVM/trend/valore atteso, maglia+squadra e la fila di icone caratteristiche
+- **Scheda giocatore**: la card in alto raggruppa foto, nome, ruoli,
+  quotazione/FVM/trend, maglia+squadra e la fila di icone caratteristiche
   (tutto in un unico riquadro). Sotto, le statistiche FPEDIA: "in prima linea"
   (fuori da qualunque riquadro stagionale) restano solo i dati non legati a
-  un'annata specifica — Algoritmo Fantacalciopedia, presenze/gol/assist
-  previsti — mentre i dati della sola stagione più recente (Media Fanta Voto,
-  Presenze, Fanta Media, FM su tot gare) finiscono in un riquadro a parte
-  intitolato con quell'annata (es. "2025/2026"); le annate precedenti a
-  quella non vengono più mostrate, per non affollare la pagina. Chiude la
-  scheda l'elenco delle ultime notizie con data e fonte.
+  un'annata specifica — presenze/gol/assist previsti — mentre i dati della
+  sola stagione più recente (Media Fanta Voto, Presenze, Fanta Media, FM su
+  tot gare) finiscono in un riquadro a parte intitolato con quell'annata
+  (es. "2025/2026"); le annate precedenti a quella non vengono più mostrate,
+  per non affollare la pagina. Segue il riquadro "Fantasolidità e rischi"
+  (vedi sopra) e infine Ammonizioni/Espulsioni. Chiude la scheda l'elenco
+  delle ultime notizie con data e fonte.
 - **Persistenza locale**: lo stato (listino, configurazione, assegnazioni,
   notizie, statistiche) resta salvato nel browser (localStorage), utile per
   riprendere l'asta se ricarichi la pagina.

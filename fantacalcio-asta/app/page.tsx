@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
-import { ValoreRosaPanel } from "@/components/ValoreRosaPanel";
 import { PlayerTable } from "@/components/PlayerTable";
 import { ResetButton } from "@/components/ResetButton";
 
@@ -35,7 +34,6 @@ export default function Home() {
         <PlayerTable />
         <div className="space-y-4">
           <RosterPanel />
-          <ValoreRosaPanel />
         </div>
       </div>
     </div>
