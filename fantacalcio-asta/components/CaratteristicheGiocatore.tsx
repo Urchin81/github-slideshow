@@ -44,7 +44,6 @@ function haTag(p: Player, label: string): boolean {
 // Esportato cosi' la tabella puo' riusare le stesse definizioni per filtrare la lista
 // quando si clicca su un'icona.
 export const CARATTERISTICHE: Caratteristica[] = [
-  { chiave: "infortunato", Icona: Bandage, label: "Infortunato", positiva: false, presente: (p) => !!p.infortunato },
   { chiave: "rigorista", Icona: Target, label: "Rigorista", positiva: true, presente: (p) => !!p.rigorista || haTag(p, "Rigorista") },
   { chiave: "punizioni", Icona: Footprints, label: "Tiratore punizioni", positiva: true, presente: (p) => !!p.tiratorePunizioni },
   { chiave: "angoli", Icona: Flag, label: "Tiratore angoli", positiva: true, presente: (p) => !!p.tiratoreAngoli },
@@ -64,6 +63,7 @@ export const CARATTERISTICHE: Caratteristica[] = [
     positiva: false,
     presente: (p) => (p.fpedia?.resistenzaInfortuni ?? 100) <= 40,
   },
+  { chiave: "infortunato", Icona: Bandage, label: "Infortunato", positiva: false, presente: (p) => !!p.infortunato },
 ];
 
 interface Props {

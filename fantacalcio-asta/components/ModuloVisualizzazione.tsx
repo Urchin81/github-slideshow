@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
 import { costruisciMatchmaker } from "@/lib/bipartiteMatching";
-import { Player, RUOLO_MANTRA_COLORE } from "@/lib/types";
+import { Player, RUOLO_MANTRA_COLORE, RuoloMantra } from "@/lib/types";
 import { isSafeHttpUrl } from "@/lib/url";
 import { BadgeInfortunio } from "@/components/BadgeInfortunio";
 
@@ -12,7 +12,12 @@ function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
 }
 
-function FotoGiocatore({ player, size }: { player: Player; size: number }) {
+// Angoli in senso orario a partire da in alto a destra, per sovrapporre le
+// pillole dei ruoli al bordo della foto invece di elencarle sotto (fino a 4
+// ruoli: ruoliMantra ne ha quasi sempre 1-2, raramente 3).
+const ANGOLI_RUOLO = ["-top-1 -right-1", "-bottom-1 -right-1", "-bottom-1 -left-1", "-top-1 -left-1"];
+
+function FotoGiocatore({ player, ruoli, size }: { player: Player; ruoli: RuoloMantra[]; size: number }) {
   const stile = { width: size, height: size };
   return (
     <span className="relative inline-block">
@@ -27,6 +32,15 @@ function FotoGiocatore({ player, size }: { player: Player; size: number }) {
       ) : (
         <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />
       )}
+      {ruoli.slice(0, 4).map((r, i) => (
+        <span
+          key={r}
+          className={`absolute ${ANGOLI_RUOLO[i]} text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white/70 leading-none`}
+          style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
+        >
+          {r}
+        </span>
+      ))}
       {player.infortunato && <BadgeInfortunio size={Math.max(10, Math.round(size * 0.3))} />}
     </span>
   );
@@ -76,7 +90,7 @@ function CartaSlot({
   return (
     <div
       data-slot-index={index}
-      className={`relative flex flex-col items-center gap-1 w-20 rounded-lg transition ${
+      className={`relative flex flex-col items-center gap-1 w-24 rounded-lg transition ${
         compatibile === true ? "ring-2 ring-green-400" : compatibile === false ? "opacity-40" : ""
       }`}
       onDragOver={onDragOver}
@@ -91,38 +105,42 @@ function CartaSlot({
         title={player ? player.nome : `Vuoto (${slot.join("/")})`}
       >
         {player ? (
-          <FotoGiocatore player={player} size={48} />
+          <FotoGiocatore player={player} ruoli={player.ruoliMantra ?? []} size={56} />
         ) : (
-          <div
-            className="w-12 h-12 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center text-white/60 text-[10px]"
-          >
+          <div className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center text-white/60 text-[10px]">
             vuoto
+            {slot.map((r, i) => (
+              <span
+                key={r}
+                className={`absolute ${ANGOLI_RUOLO[i]} text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white/70 leading-none`}
+                style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
+              >
+                {r}
+              </span>
+            ))}
           </div>
         )}
         {haSostituti && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center border-2 border-white">
+          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center border-2 border-white">
             +
           </span>
         )}
       </button>
 
-      <div className="flex gap-0.5 flex-wrap justify-center">
-        {(player?.ruoliMantra ?? slot).map((r, i) => (
-          <span
-            key={i}
-            className="text-white text-[9px] font-bold rounded px-1"
-            style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
-          >
-            {r}
-          </span>
-        ))}
-      </div>
+      {/* Posizione del modulo per questo slot: sempre il ruolo richiesto, non il ruolo del giocatore che lo occupa (quello è sulla foto) — così resta chiaro quale posizione della formazione questa carta rappresenta anche quando cambia chi la occupa. */}
+      <span
+        className="text-white text-[9px] font-bold rounded px-1.5"
+        style={coloreSfondoSlot(slot)}
+        title={`Posizione: ${slot.join("/")}`}
+      >
+        {slot.join("/")}
+      </span>
 
       {player ? (
         <>
           <Link
             href={`/giocatore/${encodeURIComponent(player.id)}`}
-            className="text-white text-[11px] font-medium text-center leading-tight hover:underline"
+            className="text-white text-sm font-semibold text-center leading-tight hover:underline"
           >
             {player.nome}
           </Link>
@@ -179,7 +197,8 @@ function CartaPanchina({
       onDragEnd={onDragEnd}
       className="flex items-center gap-2 bg-slate-800 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing"
     >
-      <FotoGiocatore player={player} size={28} />
+      {/* Foto senza pillole di ruolo sovrapposte: a questa dimensione (28px) sarebbero illeggibili, meglio il testo accanto come prima. */}
+      <FotoGiocatore player={player} ruoli={[]} size={28} />
       <div className="leading-tight">
         <div className="text-white text-xs font-medium">{player.nome}</div>
         <div className="text-white/50 text-[10px]">
