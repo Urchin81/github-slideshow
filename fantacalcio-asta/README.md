@@ -46,12 +46,15 @@ ruoli ancora da coprire nella tua squadra.
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
   disponibile), Quotazione (header con il simbolo €), FCP×2 (ALG FCP e
   Punteggio FantaCalcioPedia, vedi sotto), Score e Urgenza (solo tra i
-  disponibili, vedi sotto entrambi) e Azioni — sempre in quest'ordine.
-  L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
-  basso, cosí si vede sempre a quale colonna corrisponde ogni valore. Sopra la
-  tabella, tra i disponibili, il menu **"Ordina per"** sceglie se ordinare per
-  **Score** (default), **Urgenza** (vedi sotto entrambi), **ALG FCP** o
-  **Punteggio FCP**.
+  disponibili, vedi sotto entrambi) e Azioni — sempre in quest'ordine. I
+  valori di Quotazione, FCP×2, Score e Urgenza sono centrati nella loro
+  colonna; Quotazione è mostrata in un riquadrino grigio chiaro con bordo
+  grigio scuro, mentre FCP/Score/Urgenza restano nei rettangolini colorati
+  in base al livello. L'intestazione resta visibile ("sticky") mentre si
+  scorre l'elenco verso il basso, cosí si vede sempre a quale colonna
+  corrisponde ogni valore. Sopra la tabella, tra i disponibili, il menu
+  **"Ordina per"** sceglie se ordinare per **Score** (default), **Urgenza**
+  (vedi sotto entrambi), **ALG FCP**, **Punteggio FCP** o **Quotazione**.
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
   nel riquadro "in asta") ha un bordo spesso colorato in base a quanto è
   probabile che giochi — **verde** (titolarità alta: trend "Titolare

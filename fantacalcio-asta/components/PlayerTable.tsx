@@ -38,7 +38,7 @@ import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
-type Ordinamento = "score" | "urgenza" | "algFcp" | "punteggioFcp";
+type Ordinamento = "score" | "urgenza" | "algFcp" | "punteggioFcp" | "quotazione";
 
 /**
  * Bordo a 4 livelli di "quanto è forte questo giocatore" (rosso chiaro/giallo/verde/blu),
@@ -196,6 +196,9 @@ export function PlayerTable() {
       if (ordinamento === "punteggioFcp") {
         return (b.fpedia?.punteggioFcp ?? -Infinity) - (a.fpedia?.punteggioFcp ?? -Infinity);
       }
+      if (ordinamento === "quotazione") {
+        return b.quotazione - a.quotazione;
+      }
       const sa = score(a)?.totale ?? -Infinity;
       const sb = score(b)?.totale ?? -Infinity;
       return sb - sa;
@@ -301,7 +304,7 @@ export function PlayerTable() {
     const voci = vociFantasolditaLista(p);
     if (voci.length === 0) return <span className="text-slate-300">—</span>;
     return (
-      <div className="flex gap-2">
+      <div className="flex justify-center gap-2">
         {voci.map((v) => (
           <span
             key={v.campo}
@@ -589,12 +592,13 @@ export function PlayerTable() {
               value={ordinamento}
               onChange={(e) => setOrdinamento(e.target.value as Ordinamento)}
               className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta. ALG FCP/Punteggio FCP: i due valori di fantacalciopedia.com."
+              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta. ALG FCP/Punteggio FCP: i due valori di fantacalciopedia.com. Quotazione: il valore di listino."
             >
               <option value="score">Ordina per: Score</option>
               <option value="urgenza">Ordina per: Urgenza</option>
               <option value="algFcp">Ordina per: ALG FCP</option>
               <option value="punteggioFcp">Ordina per: Punteggio FCP</option>
+              <option value="quotazione">Ordina per: Quotazione</option>
             </select>
           )}
           <label className="text-sm flex items-center gap-1.5">
@@ -633,14 +637,14 @@ export function PlayerTable() {
               <th className="pb-2">Foto</th>
               <th className="pb-2">Nome</th>
               <th className="pb-2">Squadra</th>
-              <th className="pb-2 text-right">
-                <span className="inline-flex items-center justify-end gap-1">
+              <th className="pb-2 text-center">
+                <span className="inline-flex items-center justify-center gap-1">
                   <Euro size={12} />
                   Quot.
                 </span>
               </th>
-              <th className="pb-2">
-                <span className="inline-flex items-center gap-3">
+              <th className="pb-2 text-center">
+                <span className="inline-flex items-center justify-center gap-3">
                   <span className="inline-flex items-center gap-1" title="Algoritmo Fantacalciopedia">
                     <Wand2 size={12} />
                     FCP
@@ -651,8 +655,8 @@ export function PlayerTable() {
                   </span>
                 </span>
               </th>
-              {mostraValutazioni && <th className="pb-2 text-right">Score</th>}
-              {mostraValutazioni && <th className="pb-2 text-right">Urgenza</th>}
+              {mostraValutazioni && <th className="pb-2 text-center">Score</th>}
+              {mostraValutazioni && <th className="pb-2 text-center">Urgenza</th>}
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
@@ -695,10 +699,14 @@ export function PlayerTable() {
                       {p.squadra}
                     </span>
                   </td>
-                  <td className="py-1.5 text-right">{p.quotazione}</td>
-                  <td className="py-1.5">{celleFCPedia(p)}</td>
+                  <td className="py-1.5 text-center">
+                    <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-slate-100 border border-slate-400 text-slate-700">
+                      {p.quotazione}
+                    </span>
+                  </td>
+                  <td className="py-1.5 text-center">{celleFCPedia(p)}</td>
                   {mostraValutazioni && (
-                    <td className="py-1.5 text-right">
+                    <td className="py-1.5 text-center">
                       {score(p) ? (
                         <span
                           className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
@@ -714,7 +722,7 @@ export function PlayerTable() {
                     </td>
                   )}
                   {mostraValutazioni && (
-                    <td className="py-1.5 text-right">
+                    <td className="py-1.5 text-center">
                       {urgenza(p) ? (
                         <span
                           className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${classeLivello(
