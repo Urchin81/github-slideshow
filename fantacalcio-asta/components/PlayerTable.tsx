@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
 import {
+  LivelloFpedia,
   RUOLI,
   RUOLI_MANTRA,
   RUOLO_COLORE,
@@ -37,7 +38,30 @@ import { FavoriteStar } from "./FavoriteStar";
 import { CARATTERISTICHE, CaratteristicheGiocatore } from "./CaratteristicheGiocatore";
 import { BadgeInfortunio } from "./BadgeInfortunio";
 
-type Ordinamento = "score" | "urgenza";
+type Ordinamento = "score" | "urgenza" | "algFcp" | "punteggioFcp";
+
+/**
+ * Bordo a 4 livelli di "quanto è forte questo giocatore" (rosso chiaro/giallo/verde/blu),
+ * per il box "in asta" — diverso dal bordo titolarità (verde/giallo/rosso/grigio) usato in
+ * tabella, che riguarda invece la probabilità di scendere in campo, non la qualità.
+ * Riusa il semaforo a 5 fasce già calcolato per il badge Score (livelloScore), fondendo
+ * mediocre/negativo in un'unica fascia "scarso".
+ */
+function classeBordoQualita(livello: LivelloFpedia): string {
+  switch (livello) {
+    case "super":
+      return "border-4 border-blue-500";
+    case "buono":
+      return "border-4 border-green-600";
+    case "sufficiente":
+      return "border-4 border-yellow-400";
+    case "mediocre":
+    case "negativo":
+      return "border-4 border-red-300";
+    default:
+      return "border-4 border-slate-300";
+  }
+}
 
 /** Scomposizione dello Score come tooltip leggibile: solo le componenti che pesano davvero, con segno esplicito. */
 function tooltipScore(d: DettaglioScore): string {
@@ -165,6 +189,12 @@ export function PlayerTable() {
         const ua = urgenza(a)?.totale ?? -Infinity;
         const ub = urgenza(b)?.totale ?? -Infinity;
         return ub - ua;
+      }
+      if (ordinamento === "algFcp") {
+        return (b.fpedia?.algFcp ?? -Infinity) - (a.fpedia?.algFcp ?? -Infinity);
+      }
+      if (ordinamento === "punteggioFcp") {
+        return (b.fpedia?.punteggioFcp ?? -Infinity) - (a.fpedia?.punteggioFcp ?? -Infinity);
       }
       const sa = score(a)?.totale ?? -Infinity;
       const sb = score(b)?.totale ?? -Infinity;
@@ -311,16 +341,25 @@ export function PlayerTable() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4 bg-white border border-amber-100 rounded p-2.5">
-            <span className="relative inline-block shrink-0">
+            <span
+              className="relative inline-block shrink-0"
+              title="Bordo colorato in base allo Score: quanto è forte questo giocatore (rosso chiaro = scarso, giallo = medio, verde = buono, blu = fuoriclasse)."
+            >
               {isSafeHttpUrl(inAstaPlayer.fpedia?.immagineUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={inAstaPlayer.fpedia?.immagineUrl}
                   alt=""
-                  className={`w-14 h-14 rounded-full object-contain bg-slate-50 ${classeBordoTitolarita(inAstaPlayer)}`}
+                  className={`w-14 h-14 rounded-full object-contain bg-slate-50 ${classeBordoQualita(
+                    livelloScore(inAstaPlayer)
+                  )}`}
                 />
               ) : (
-                <span className={`inline-block w-14 h-14 rounded-full bg-slate-50 ${classeBordoTitolarita(inAstaPlayer)}`} />
+                <span
+                  className={`inline-block w-14 h-14 rounded-full bg-slate-50 ${classeBordoQualita(
+                    livelloScore(inAstaPlayer)
+                  )}`}
+                />
               )}
               {inAstaPlayer.infortunato && <BadgeInfortunio size={16} />}
             </span>
@@ -342,20 +381,8 @@ export function PlayerTable() {
                     · FVM <strong>{inAstaPlayer.fvm}</strong>
                   </>
                 )}
-                {" "}
-                · Titolarità: <strong>{inAstaPlayer.trendVoti ?? "Nessun dato"}</strong>
               </div>
             </div>
-
-            {astaSuggerimento && (
-              <span
-                className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
-                title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
-              >
-                Max consigliato <strong>{Math.round(astaSuggerimento.prezzoMassimo.massimoConsigliato)}</strong>
-                <span className="text-slate-400"> · tetto {Math.round(astaSuggerimento.prezzoMassimo.tettoSicurezza)}</span>
-              </span>
-            )}
 
             {vociFantasolditaLista(inAstaPlayer).length > 0 && (
               <div className="flex gap-3">
@@ -409,50 +436,65 @@ export function PlayerTable() {
             soloPresenti
           />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => incrementaPrezzoAsta(-1)}
-              className="w-8 h-8 rounded bg-slate-200 hover:bg-slate-300 font-bold text-lg leading-none"
-              aria-label="Diminuisci prezzo"
-            >
-              −
-            </button>
-            <input
-              type="number"
-              min={0}
-              value={prezzoAstaInput}
-              onChange={(e) => setPrezzoAstaInput(e.target.value)}
-              className="w-20 text-center border border-slate-200 rounded px-1 py-1.5 font-semibold"
-            />
-            <button
-              onClick={() => incrementaPrezzoAsta(1)}
-              className="w-8 h-8 rounded bg-slate-200 hover:bg-slate-300 font-bold text-lg leading-none"
-              aria-label="Aumenta prezzo"
-            >
-              +
-            </button>
+          <div className="bg-white border-2 border-amber-300 rounded-lg p-3 shadow-sm space-y-3">
+            <div className="text-xs uppercase text-amber-700 font-semibold tracking-wide">Valore Asta</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => incrementaPrezzoAsta(-1)}
+                className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none"
+                aria-label="Diminuisci prezzo"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min={0}
+                value={prezzoAstaInput}
+                onChange={(e) => setPrezzoAstaInput(e.target.value)}
+                className="w-24 text-center border-2 border-slate-300 rounded-lg px-1 py-2 text-lg font-bold"
+              />
+              <button
+                onClick={() => incrementaPrezzoAsta(1)}
+                className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none"
+                aria-label="Aumenta prezzo"
+              >
+                +
+              </button>
 
-            <button
-              onClick={handleConfermaMe}
-              disabled={rosaPiena || prezzoAstaNum <= 0}
-              title={
-                rosaPiena
-                  ? "Numero massimo di giocatori raggiunto"
-                  : prezzoAstaNum <= 0
-                  ? "Inserisci un prezzo maggiore di zero"
-                  : undefined
-              }
-              className="text-sm bg-slate-900 text-white rounded px-3 py-1.5 disabled:opacity-40"
-            >
-              Preso da me
-            </button>
-            <button
-              onClick={handleConfermaAltri}
-              className="text-sm bg-slate-200 rounded px-3 py-1.5 hover:bg-slate-300"
-              title="Il prezzo è facoltativo: se lo indichi resta visibile in tabella, utile per seguire l'andamento delle puntate."
-            >
-              Preso da altri
-            </button>
+              {astaSuggerimento && (
+                <span
+                  className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                  title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
+                >
+                  Max consigliato <strong>{Math.round(astaSuggerimento.prezzoMassimo.massimoConsigliato)}</strong>
+                  <span className="text-slate-400"> · tetto {Math.round(astaSuggerimento.prezzoMassimo.tettoSicurezza)}</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleConfermaMe}
+                disabled={rosaPiena || prezzoAstaNum <= 0}
+                title={
+                  rosaPiena
+                    ? "Numero massimo di giocatori raggiunto"
+                    : prezzoAstaNum <= 0
+                    ? "Inserisci un prezzo maggiore di zero"
+                    : undefined
+                }
+                className="text-base font-semibold bg-green-600 text-white rounded-lg px-5 py-2.5 hover:bg-green-700 disabled:opacity-40 disabled:bg-slate-300"
+              >
+                Preso da me
+              </button>
+              <button
+                onClick={handleConfermaAltri}
+                className="text-sm font-medium bg-slate-200 rounded-lg px-4 py-2.5 hover:bg-slate-300"
+                title="Il prezzo è facoltativo: se lo indichi resta visibile in tabella, utile per seguire l'andamento delle puntate."
+              >
+                Preso da altri
+              </button>
+            </div>
           </div>
 
           {rischioAsta && rischioAsta.livello !== "ok" && (
@@ -547,10 +589,12 @@ export function PlayerTable() {
               value={ordinamento}
               onChange={(e) => setOrdinamento(e.target.value as Ordinamento)}
               className="border border-slate-200 rounded px-2 py-1.5 text-sm"
-              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta."
+              title="Score: quanto è forte/affidabile il giocatore (gol, assist, voti, titolarità). Urgenza: quanto conviene assicurarselo ora, in base a come sta evolvendo l'asta. ALG FCP/Punteggio FCP: i due valori di fantacalciopedia.com."
             >
               <option value="score">Ordina per: Score</option>
               <option value="urgenza">Ordina per: Urgenza</option>
+              <option value="algFcp">Ordina per: ALG FCP</option>
+              <option value="punteggioFcp">Ordina per: Punteggio FCP</option>
             </select>
           )}
           <label className="text-sm flex items-center gap-1.5">

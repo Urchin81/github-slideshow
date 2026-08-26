@@ -50,7 +50,8 @@ ruoli ancora da coprire nella tua squadra.
   L'intestazione resta visibile ("sticky") mentre si scorre l'elenco verso il
   basso, cosí si vede sempre a quale colonna corrisponde ogni valore. Sopra la
   tabella, tra i disponibili, il menu **"Ordina per"** sceglie se ordinare per
-  **Score** (default) o per **Urgenza** (vedi sotto entrambi).
+  **Score** (default), **Urgenza** (vedi sotto entrambi), **ALG FCP** o
+  **Punteggio FCP**.
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e
   nel riquadro "in asta") ha un bordo spesso colorato in base a quanto è
   probabile che giochi — **verde** (titolarità alta: trend "Titolare
@@ -203,31 +204,34 @@ ruoli ancora da coprire nella tua squadra.
   disponibile mostra solo l'icona del martello d'asta. Cliccandoci sopra si
   entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
-  la riga: foto (con il cerotto 🩹 se infortunato), ruolo/i, squadra,
-  quotazione, FVM, titolarità (dedotta dalle notizie), Max consigliato/tetto,
-  ALG FCP/Punteggio FCP (vedi sotto), Score e Urgenza (vedi sopra entrambi),
-  e — a
-  differenza della fila di icone sempre-tutte-visibili altrove nell'app —
-  **solo le caratteristiche effettivamente presenti**, ognuna con
-  l'etichetta testuale accanto all'icona invece del solo tooltip (qui c'è
-  spazio, e serve capire a colpo d'occhio cosa conta per quel giocatore senza
-  dover passare il mouse su ogni icona). Poi il controllo prezzo con tasti
-  **−**/**+** (passo 1) accanto a un campo numerico che parte da **0** —
-  modificabile anche digitando direttamente.
-  Da lì si conferma con **"Preso da me"** (richiede un prezzo maggiore di
-  zero, disabilitato altrimenti e se hai raggiunto il numero massimo di
-  giocatori) o **"Preso da altri"** (prezzo facoltativo: lasciandolo a 0 non
-  viene registrato, un valore diverso da zero registra quanto ha pagato
-  l'avversario — utile per seguire l'andamento delle puntate — e resta poi
-  visibile in tabella sulla riga del giocatore). Sotto la tabella compaiono,
-  ordinati per Score, solo gli altri giocatori ancora disponibili con
-  ruolo compatibile (stesso ruolo in Classic; almeno un ruolo Mantra in
-  comune in Mantra) — click sul loro martello per spostare il focus e
-  confrontare al volo le alternative durante il rilancio, senza dover uscire
-  dal riquadro. Un pulsante "Torna alla lista completa" nel riquadro chiude
-  la modalità, che si chiude anche da sola non appena il giocatore fissato
-  viene assegnato (a te o ad altri).
-- **Prezzo massimo e rischio sforamento**: nel riquadro "in asta", "Max
+  la riga: foto — con il cerotto 🩹 se infortunato e un **bordo colorato in
+  base allo Score** (rosso chiaro = scarso, giallo = medio, verde = buono,
+  blu = fuoriclasse; diverso dal bordo titolarità della tabella, qui conta
+  quanto è forte il giocatore, non quanto è probabile che scenda in campo) —
+  ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP, Score e Urgenza
+  (vedi sopra entrambi), e — a differenza della fila di icone
+  sempre-tutte-visibili altrove nell'app — **solo le caratteristiche
+  effettivamente presenti**, ognuna con l'etichetta testuale accanto
+  all'icona invece del solo tooltip (qui c'è spazio, e serve capire a colpo
+  d'occhio cosa conta per quel giocatore senza dover passare il mouse su ogni
+  icona). Sotto, un riquadro **"Valore Asta"** con bordo evidenziato raccoglie
+  tutto ciò che serve per il rilancio: il controllo prezzo con tasti
+  **−**/**+** e un campo numerico grande che parte da **0** (modificabile
+  anche digitando direttamente), la stessa riga con "Max consigliato/tetto"
+  (vedi sotto), e i due pulsanti — **"Preso da me"** (verde, ben visibile;
+  richiede un prezzo maggiore di zero, disabilitato altrimenti e se hai
+  raggiunto il numero massimo di giocatori) e **"Preso da altri"** (prezzo
+  facoltativo: lasciandolo a 0 non viene registrato, un valore diverso da
+  zero registra quanto ha pagato l'avversario — utile per seguire
+  l'andamento delle puntate — e resta poi visibile in tabella sulla riga del
+  giocatore). Sotto la tabella compaiono, ordinati per Score, solo gli altri
+  giocatori ancora disponibili con ruolo compatibile (stesso ruolo in
+  Classic; almeno un ruolo Mantra in comune in Mantra) — click sul loro
+  martello per spostare il focus e confrontare al volo le alternative
+  durante il rilancio, senza dover uscire dal riquadro. Un pulsante "Torna
+  alla lista completa" nel riquadro chiude la modalità, che si chiude anche
+  da sola non appena il giocatore fissato viene assegnato (a te o ad altri).
+- **Prezzo massimo e rischio sforamento**: nel box "Valore Asta", "Max
   consigliato" (soglia prudente: +30% del budget medio ancora disponibile per
   quel ruolo/posto, con un bonus se l'FVM supera la quotazione — un allarme
   sul prezzo, indipendente da quanto il giocatore sia forte, vedi Score
