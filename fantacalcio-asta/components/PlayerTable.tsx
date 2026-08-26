@@ -26,6 +26,14 @@ import { BadgeInfortunio } from "./BadgeInfortunio";
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 type RoleKey = Ruolo | RuoloMantra;
 
+// Nella lista giocatori (tabella e box "in asta") si mostrano solo ALG FCP e
+// Punteggio FCP: Solidità Fantainvestimento e Resistenza infortuni restano
+// visibili nella scheda giocatore, ma qui affollavano la vista senza
+// aggiungere abbastanza per lo sguardo veloce durante l'asta.
+function vociFantasolditaLista(p: Parameters<typeof vociFantasolidita>[0]) {
+  return vociFantasolidita(p).filter((v) => v.campo === "algFcp" || v.campo === "punteggioFcp");
+}
+
 export function PlayerTable() {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
@@ -211,7 +219,7 @@ export function PlayerTable() {
   }
 
   function celleFantasolidita(p: (typeof players)[number]) {
-    const voci = vociFantasolidita(p);
+    const voci = vociFantasolditaLista(p);
     if (voci.length === 0) return <span className="text-slate-300">—</span>;
     return (
       <div className="w-36 space-y-0.5">
@@ -311,9 +319,9 @@ export function PlayerTable() {
               </>
             )}
 
-            {vociFantasolidita(inAstaPlayer).length > 0 && (
+            {vociFantasolditaLista(inAstaPlayer).length > 0 && (
               <div className="w-40 space-y-0.5">
-                {vociFantasolidita(inAstaPlayer).map((v) => (
+                {vociFantasolditaLista(inAstaPlayer).map((v) => (
                   <BarraFantasolidita
                     key={v.campo}
                     label={v.label}

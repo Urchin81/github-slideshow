@@ -12,10 +12,30 @@ function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
 }
 
-// Angoli in senso orario a partire da in alto a destra, per sovrapporre le
-// pillole dei ruoli al bordo della foto invece di elencarle sotto (fino a 4
-// ruoli: ruoliMantra ne ha quasi sempre 1-2, raramente 3).
-const ANGOLI_RUOLO = ["-top-1 -right-1", "-bottom-1 -right-1", "-bottom-1 -left-1", "-top-1 -left-1"];
+// Pillole dei ruoli raggruppate in alto a destra della foto, in una piccola
+// cascata che si sovrappone leggermente (non sparpagliata sui 4 angoli):
+// restano vicine tra loro ma ognuna resta leggibile grazie al bordo bianco.
+const PASSO_CASCATA_RUOLO = 10;
+
+function styleRuolo(i: number): React.CSSProperties {
+  return { top: -6 + i * PASSO_CASCATA_RUOLO, right: -6 + i * PASSO_CASCATA_RUOLO };
+}
+
+function PilloleRuolo({ ruoli }: { ruoli: RuoloMantra[] }) {
+  return (
+    <>
+      {ruoli.slice(0, 4).map((r, i) => (
+        <span
+          key={r}
+          className="absolute text-white text-[9px] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center border border-white/80 leading-none shadow"
+          style={{ ...styleRuolo(i), backgroundColor: RUOLO_MANTRA_COLORE[r], zIndex: 10 - i }}
+        >
+          {r}
+        </span>
+      ))}
+    </>
+  );
+}
 
 function FotoGiocatore({ player, ruoli, size }: { player: Player; ruoli: RuoloMantra[]; size: number }) {
   const stile = { width: size, height: size };
@@ -32,15 +52,7 @@ function FotoGiocatore({ player, ruoli, size }: { player: Player; ruoli: RuoloMa
       ) : (
         <div style={stile} className="rounded-full bg-slate-700 border border-white/40" />
       )}
-      {ruoli.slice(0, 4).map((r, i) => (
-        <span
-          key={r}
-          className={`absolute ${ANGOLI_RUOLO[i]} text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white/70 leading-none`}
-          style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
-        >
-          {r}
-        </span>
-      ))}
+      <PilloleRuolo ruoli={ruoli} />
       {player.infortunato && <BadgeInfortunio size={Math.max(10, Math.round(size * 0.3))} />}
     </span>
   );
@@ -109,15 +121,7 @@ function CartaSlot({
         ) : (
           <div className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center text-white/60 text-[10px]">
             vuoto
-            {slot.map((r, i) => (
-              <span
-                key={r}
-                className={`absolute ${ANGOLI_RUOLO[i]} text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white/70 leading-none`}
-                style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}
-              >
-                {r}
-              </span>
-            ))}
+            <PilloleRuolo ruoli={slot} />
           </div>
         )}
         {haSostituti && (
@@ -344,13 +348,24 @@ export function ModuloVisualizzazione({
         </p>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="bg-green-600 rounded relative border-2 border-white/30 py-5 px-2 space-y-5 flex-1">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-24 h-24 rounded-full border-2 border-white/20" />
+          <div className="bg-green-600 rounded relative border-2 border-white/30 py-5 px-2 space-y-5 flex-1 overflow-hidden">
+            {/* Disegno del campo (vista dall'alto): solo la porta in basso, dove sta il portiere — un diagramma di modulo mostra un solo lato del campo, non due porte contrapposte. */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full border-2 border-white/20" />
+              </div>
+              {/* Area di rigore */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[64%] h-[20%] border-2 border-white/20 border-b-0" />
+              {/* Area piccola */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[34%] h-[9%] border-2 border-white/20 border-b-0" />
+              {/* Dischetto del rigore */}
+              <div className="absolute bottom-[14%] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white/30" />
+              {/* Porta vista dall'alto */}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[16%] h-2 border-2 border-white/40 border-b-0" />
             </div>
             {/* modulo.righe è portiere->attacco; qui si inverte per avere il portiere in basso e l'attacco in alto (direzione di gioco verso l'alto). */}
             {[...modulo.righe].reverse().map((riga, i) => (
-              <div key={i} className="flex justify-center gap-3 flex-wrap relative">
+              <div key={i} className="flex justify-center gap-3 flex-wrap relative z-10">
                 {riga.map((idx) => (
                   <CartaSlot
                     key={idx}
