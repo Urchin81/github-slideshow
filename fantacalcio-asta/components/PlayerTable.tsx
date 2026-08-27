@@ -78,7 +78,7 @@ function indiceRuolo(p: { ruolo: Ruolo; ruoliMantra?: RuoloMantra[] }, isMantra:
  * Riusa il semaforo a 5 fasce già calcolato per il badge ALG FCP (livelloFantasolidita),
  * fondendo mediocre/negativo in un'unica fascia "scarso".
  */
-function classeBordoQualita(livello: LivelloFpedia): string {
+export function classeBordoQualita(livello: LivelloFpedia): string {
   switch (livello) {
     case "super":
       return "border-4 border-blue-500";
@@ -100,7 +100,7 @@ function classeBordoQualita(livello: LivelloFpedia): string {
  * nel badge (non il totale grezzo): la scomposizione sotto resta in unità grezze,
  * utile per capire la direzione e il peso relativo di ogni segnale.
  */
-function tooltipUrgenza(d: DettaglioUrgenza, percentuale: number | null): string {
+export function tooltipUrgenza(d: DettaglioUrgenza, percentuale: number | null): string {
   const voci = (Object.keys(DETTAGLIO_URGENZA_LABEL) as (keyof typeof DETTAGLIO_URGENZA_LABEL)[])
     .map((chiave) => ({ label: DETTAGLIO_URGENZA_LABEL[chiave], valore: d[chiave] }))
     .filter((v) => Math.abs(v.valore) >= 0.05)
@@ -113,11 +113,32 @@ function tooltipUrgenza(d: DettaglioUrgenza, percentuale: number | null): string
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
 export type RoleKey = Ruolo | RuoloMantra;
 
+/** Badge di ruolo: la letterina Classic colorata, o le pillole di tutti i ruoli Mantra idonei. */
+export function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined, isMantra: boolean) {
+  if (!isMantra) {
+    return (
+      <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[playerRuolo] }}>
+        {playerRuolo}
+      </span>
+    );
+  }
+  if (!ruoliMantra || ruoliMantra.length === 0) return <span className="text-slate-300">—</span>;
+  return (
+    <span className="flex gap-1 flex-wrap">
+      {ruoliMantra.map((r) => (
+        <span key={r} className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
+          {r}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 // Nella lista giocatori (tabella e box "in asta") si mostrano solo ALG FCP e
 // Punteggio FCP: Solidità Fantainvestimento e Resistenza infortuni restano
 // visibili nella scheda giocatore, ma qui affollavano la vista senza
 // aggiungere abbastanza per lo sguardo veloce durante l'asta.
-function vociFantasolditaLista(p: Parameters<typeof vociFantasolidita>[0]) {
+export function vociFantasolditaLista(p: Parameters<typeof vociFantasolidita>[0]) {
   return vociFantasolidita(p).filter((v) => v.campo === "algFcp" || v.campo === "punteggioFcp");
 }
 
@@ -379,29 +400,6 @@ export function PlayerTable({
     return isMantra ? RUOLO_MANTRA_LABEL[r as RuoloMantra] : RUOLO_LABEL[r as Ruolo];
   }
 
-  function celleRuolo(playerRuolo: Ruolo, ruoliMantra: RuoloMantra[] | undefined) {
-    if (!isMantra) {
-      return (
-        <span
-          className="text-white rounded px-1 text-xs"
-          style={{ backgroundColor: RUOLO_COLORE[playerRuolo] }}
-        >
-          {playerRuolo}
-        </span>
-      );
-    }
-    if (!ruoliMantra || ruoliMantra.length === 0) return <span className="text-slate-300">—</span>;
-    return (
-      <span className="flex gap-1 flex-wrap">
-        {ruoliMantra.map((r) => (
-          <span key={r} className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
-            {r}
-          </span>
-        ))}
-      </span>
-    );
-  }
-
   function celleFCPedia(p: (typeof players)[number]) {
     const voci = vociFantasolditaLista(p);
     if (voci.length === 0) return <span className="text-slate-300">—</span>;
@@ -472,7 +470,7 @@ export function PlayerTable({
 
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1.5">
-                {celleRuolo(inAstaPlayer.ruolo, inAstaPlayer.ruoliMantra)}
+                {celleRuolo(inAstaPlayer.ruolo, inAstaPlayer.ruoliMantra, isMantra)}
                 <span className="font-medium">{inAstaPlayer.squadra}</span>
                 {isSafeHttpUrl(inAstaPlayer.fpedia?.squadraLogoUrl) && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -734,7 +732,7 @@ export function PlayerTable({
 
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1.5">
-                {celleRuolo(giocatoreFiltro.ruolo, giocatoreFiltro.ruoliMantra)}
+                {celleRuolo(giocatoreFiltro.ruolo, giocatoreFiltro.ruoliMantra, isMantra)}
                 <span className="font-medium">{giocatoreFiltro.squadra}</span>
                 {isSafeHttpUrl(giocatoreFiltro.fpedia?.squadraLogoUrl) && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -989,7 +987,7 @@ export function PlayerTable({
                   <td className="py-1.5">
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>
-                  <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra)}</td>
+                  <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra, isMantra)}</td>
                   <td className="py-1.5">
                     <span className="relative inline-block">
                       {isSafeHttpUrl(p.fpedia?.immagineUrl) ? (

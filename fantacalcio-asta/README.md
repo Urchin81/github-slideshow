@@ -413,6 +413,22 @@ ruoli ancora da coprire nella tua squadra.
   - **Aggiornamento singolo**: nella scheda giocatore, il pulsante "Aggiorna
     da FPEDIA" rifà la ricerca e lo scraping solo per quel giocatore, senza
     dover lanciare un giro su tutto il listino da Settings.
+  - **Scheda giocatore = stesso box dell'asta**: il riquadro amber in cima
+    alla scheda (`app/giocatore/[id]/page.tsx`) è identico alla parte
+    informativa del box "Giocatore in asta" di `PlayerTable.tsx` — foto col
+    bordo colorato per qualità, ruolo, squadra, Quot./FVM, badge FCP e
+    Urgenza, Caratteristiche e la riga Ballottaggio (con link agli
+    avversari) — tranne il selettore Valore Asta e la Simulazione, che qui
+    non hanno senso perché non si sta facendo un'offerta (le funzioni
+    condivise sono esportate da `PlayerTable.tsx`: `celleRuolo`,
+    `classeBordoQualita`, `tooltipUrgenza`, `vociFantasolditaLista`, per
+    evitare che i due box vadano fuori sincrono). Il Trend dedotto dalle
+    notizie, non presente in quel box, compare invece subito sotto, in cima
+    al riquadro statistiche FPEDIA. Le notizie sono a parte, in un riquadro
+    laterale in stile "giornale" (font serif, testata con doppia riga,
+    titoli in grassetto), con sotto — solo per i giocatori ancora
+    disponibili — un riquadro "Consigli per l'acquisto" con Max
+    consigliato/tetto e la scomposizione dell'Urgenza.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto nome e squadra di
     ogni giocatore nella tabella compare sempre, su sfondo grigio chiaro, la
     stessa fila di icone lineari (rigorista, tiratore di punizioni/angoli,
