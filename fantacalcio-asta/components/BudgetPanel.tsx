@@ -142,14 +142,15 @@ function PannelloMantra() {
   const coperturaRuoli = useMemo(() => computeCoperturaRuoliMantra(players), [players]);
 
   // Le 3 formazioni titolari più forti (schierabili con la rosa attuale) per valore
-  // complessivo (ALG FCP × quotazione dei titolari): evidenziate con un bordo verde,
-  // per distinguere "più vicino al completamento" (ordine della lista) da "più forte".
+  // complessivo (ALG FCP × quotazione dei titolari): evidenziate con un bordo
+  // oro/argento/bronzo in base al piazzamento, per distinguere "più vicino al
+  // completamento" (ordine della lista) da "più forte" (questo podio).
   const top3Moduli = useMemo(() => {
     const classifica = computeClassificaValoreModuli(players)
       .filter((m): m is { nome: string; valore: number } => m.valore !== null)
       .sort((a, b) => b.valore - a.valore)
       .slice(0, 3);
-    return new Set(classifica.map((m) => m.nome));
+    return new Map(classifica.map((m, i) => [m.nome, i + 1]));
   }, [players]);
 
   return (
@@ -212,18 +213,24 @@ function PannelloMantra() {
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>
       <ul className="text-sm space-y-1">
         {coperture.map((m) => {
-          const inTop3 = top3Moduli.has(m.nome);
+          const rango = top3Moduli.get(m.nome);
+          const bordoRango =
+            rango === 1
+              ? "border-2 border-yellow-400 pl-1.5"
+              : rango === 2
+              ? "border-2 border-slate-400 pl-1.5"
+              : rango === 3
+              ? "border-2 border-amber-700 pl-1.5"
+              : "";
+          const medaglia = rango === 1 ? "oro" : rango === 2 ? "argento" : rango === 3 ? "bronzo" : null;
           return (
-          <li
-            key={m.nome}
-            className={`relative group rounded ${inTop3 ? "border-2 border-green-500" : ""}`}
-          >
+          <li key={m.nome} className={`relative group rounded ${bordoRango}`}>
             <button
               onClick={() => setModuloAperto(moduliByNome.get(m.nome) ?? null)}
               className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-1 -mx-1 py-0.5"
               title={
-                inTop3
-                  ? `Vedi ${m.nome} in campo — tra le 3 formazioni titolari più forti schierabili con la tua rosa`
+                medaglia
+                  ? `Vedi ${m.nome} in campo — ${rango}ª formazione titolare più forte schierabile con la tua rosa (${medaglia})`
                   : `Vedi ${m.nome} in campo`
               }
             >

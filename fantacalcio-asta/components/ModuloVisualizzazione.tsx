@@ -273,6 +273,16 @@ export function ModuloVisualizzazione({
   const titolariIds = new Set(assegnazione.filter((id): id is string => !!id));
   const panchina = mieiMantra.filter((p) => !titolariIds.has(p.id));
 
+  // Punteggio della formazione realmente in campo in questo momento (somma ALG FCP dei
+  // titolari attuali): a differenza del "Punteggio" in header — quello della combinazione
+  // suggerita scelta con ‹/›, che non si aggiorna con le sostituzioni manuali — questo
+  // segue in tempo reale ogni trascina/rilascia o scelta dalla panchina.
+  const punteggioLive = useMemo(
+    () =>
+      assegnazione.reduce((somma, id) => somma + (id ? playerById.get(id)?.fpedia?.algFcp ?? 0 : 0), 0),
+    [assegnazione, playerById]
+  );
+
   function sostitutiPer(slotIndex: number): Player[] {
     return panchina.filter((p) => ruoliCompatibiliConSlot(p, modulo.slot[slotIndex]));
   }
@@ -419,6 +429,11 @@ export function ModuloVisualizzazione({
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="bg-green-600 rounded relative border-2 border-white/30 py-5 px-2 space-y-5 flex-1 overflow-hidden">
+            {/* Punteggio della formazione realmente in campo ora, aggiornato ad ogni sostituzione. */}
+            <div className="absolute top-2 left-2 z-20 bg-white/95 rounded-lg px-2.5 py-1.5 shadow text-slate-900 leading-none">
+              <div className="text-[9px] uppercase text-slate-500 tracking-wide">Punteggio</div>
+              <div className="font-bold text-lg">{Math.round(punteggioLive)}</div>
+            </div>
             {/* Disegno del campo (vista dall'alto): solo la porta in basso, dove sta il portiere — un diagramma di modulo mostra un solo lato del campo, non due porte contrapposte. */}
             <div className="absolute inset-0 pointer-events-none z-0">
               <div className="absolute inset-0 flex items-center justify-center">

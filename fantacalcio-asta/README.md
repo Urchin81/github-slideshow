@@ -121,16 +121,22 @@ ruoli ancora da coprire nella tua squadra.
   dallo slot, altri tentativi vengono ignorati. È solo una simulazione
   locale nella finestra: non tocca lo stato dell'asta, e "Ripristina
   automatica" torna in qualsiasi momento alla formazione (tra quelle
-  proposte) attualmente selezionata, scartando le modifiche manuali.
+  proposte) attualmente selezionata, scartando le modifiche manuali. Un
+  riquadro in alto a sinistra sul campo mostra il **Punteggio** (somma ALG
+  FCP dei titolari) di chi è realmente schierato in questo momento,
+  aggiornato ad ogni sostituzione — a differenza del "Punteggio" mostrato
+  nell'header accanto a "Formazione X/Y", che resta quello della
+  combinazione proposta scelta con ‹/› e non segue le modifiche manuali.
 - **Le 3 formazioni titolari più forti**: nell'elenco "Moduli" del pannello
   Budget, i moduli completamente schierabili con la rosa attuale vengono
   classificati per "valore" — la somma di (ALG FCP × quotazione) dei titolari
   nella miglior formazione possibile per quel modulo (`computeClassificaValoreModuli`
   in `lib/suggestions.ts`, che riusa `generaCombinazioniPerPunteggio`) — e le
-  prime 3 di questa classifica ricevono un **bordo verde**: un indicatore
-  diverso da "più vicino al completamento" (l'ordine con cui la lista è già
-  ordinata), utile a distinguere la formazione più forte da quella più facile
-  da completare, che non sono necessariamente la stessa.
+  prime 3 di questa classifica ricevono un **bordo oro/argento/bronzo** in
+  base al piazzamento: un indicatore diverso da "più vicino al completamento"
+  (l'ordine con cui la lista è già ordinata), utile a distinguere la
+  formazione più forte da quella più facile da completare, che non sono
+  necessariamente la stessa.
 - **Urgenza**: un punteggio dinamico, indipendente dall'ALG FCP (quello,
   descritto più sotto insieme alle altre statistiche FPEDIA, misura quanto
   vale il giocatore in assoluto; questo quanto conviene assicurarselo
