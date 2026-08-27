@@ -107,11 +107,14 @@ export default function GiocatorePage() {
       const data: { items: RawNewsItem[]; errori: NewsFeedError[] } = await res.json();
       const updates = matchNews([player], data.items);
       applyNewsResults(updates);
-      setEsitoNotizie(
-        updates[player.id]
-          ? `Trovate ${updates[player.id].notizie?.length ?? 0} notizie.`
-          : "Nessuna notizia trovata in questo aggiornamento."
-      );
+      const trovate = updates[player.id]
+        ? `Trovate ${updates[player.id].notizie?.length ?? 0} notizie.`
+        : "Nessuna notizia trovata in questo aggiornamento.";
+      const feedFalliti =
+        data.errori.length > 0
+          ? ` Feed non raggiungibili: ${data.errori.map((e) => e.feed).join(", ")}.`
+          : "";
+      setEsitoNotizie(trovate + feedFalliti);
     } catch (err) {
       setErroreNotizie(err instanceof Error ? err.message : "Errore di rete.");
     } finally {

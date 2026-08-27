@@ -553,9 +553,15 @@ principale per seguire l'asta.
   notizie e Serie A) è stato verificato manualmente il 27/08/2026 (apertura
   diretta di ogni URL -> XML valido, nessun redirect a pagina HTML o login),
   dato che l'accesso in uscita dall'ambiente in cui è stata sviluppata l'app
-  non permette di verificarli in autonomia. Se in futuro un feed smette di
-  rispondere, l'app lo segnala nell'esito dell'aggiornamento senza bloccare
-  gli altri: modifica pure l'elenco con URL che funzionano per te.
+  non permette di verificarli in autonomia. Le richieste ai feed includono
+  uno User-Agent esplicito (lo stesso, onesto, già usato per
+  fantacalciopedia.com — non un finto browser): senza, alcuni siti
+  rifiutavano la richiesta anche con un URL di feed valido e pubblicamente
+  raggiungibile da un browser normale. Se un feed smette comunque di
+  rispondere, l'app lo segnala nell'esito dell'aggiornamento (passa il
+  mouse sul nome del feed nel pannello Settings per il motivo esatto)
+  senza bloccare gli altri: modifica pure l'elenco con URL che funzionano
+  per te.
 - I flag rigorista/tiratore punizioni/angoli e il trend sono dedotti con
   semplici euristiche testuali sulle notizie trovate: possono contenere falsi
   negativi (nessuna menzione recente) o imprecisioni, e vanno usati come

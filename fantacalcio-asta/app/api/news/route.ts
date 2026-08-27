@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { DEFAULT_NEWS_FEEDS, NewsFeed } from "@/lib/newsSources";
+import { USER_AGENT } from "@/lib/fpediaFetch";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,14 @@ export interface NewsFeedError {
  */
 export async function POST(_request: NextRequest) {
   const feeds: NewsFeed[] = DEFAULT_NEWS_FEEDS;
-  const parser = new Parser({ timeout: 10000 });
+  // Senza uno User-Agent esplicito alcuni siti (osservato con Gazzetta e
+  // TuttoMercatoWeb) rifiutano la richiesta anche se il feed è pubblico e
+  // funziona nel browser: qui si usa lo stesso user agent onesto già usato
+  // per fantacalciopedia.com, non un finto browser.
+  const parser = new Parser({
+    timeout: 10000,
+    headers: { "User-Agent": USER_AGENT, Accept: "application/rss+xml, application/xml, text/xml, */*" },
+  });
   const items: RawNewsItem[] = [];
   const errori: NewsFeedError[] = [];
 

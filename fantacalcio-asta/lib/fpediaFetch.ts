@@ -1,4 +1,7 @@
-const USER_AGENT =
+// Esportato perché riusato anche da app/api/news/route.ts per i feed RSS: stesso
+// user agent onesto (si presenta come app, non finge un browser) per tutte le
+// richieste in uscita dell'app, invece di uno per servizio.
+export const USER_AGENT =
   "Mozilla/5.0 (compatible; AssistenteAstaFantacalcio/1.0; uso personale, non massivo)";
 // Configurabile solo per i test locali (server HTML finto); in produzione resta il sito reale.
 export const FPEDIA_BASE_URL = process.env.FPEDIA_BASE_URL ?? "https://www.fantacalciopedia.com";

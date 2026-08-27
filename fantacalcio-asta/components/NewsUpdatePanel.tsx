@@ -68,7 +68,14 @@ export function NewsUpdatePanel() {
           {risultato.errori.length > 0 && (
             <span className="text-amber-600">
               {" "}
-              Feed non raggiungibili: {risultato.errori.map((e) => e.feed).join(", ")}.
+              Feed non raggiungibili:{" "}
+              {risultato.errori.map((e, i) => (
+                <span key={e.feed} title={e.messaggio}>
+                  {i > 0 && ", "}
+                  {e.feed}
+                </span>
+              ))}
+              . (passa il mouse su un nome per il motivo)
             </span>
           )}
         </span>
