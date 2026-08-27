@@ -436,6 +436,11 @@ ruoli ancora da coprire nella tua squadra.
     alto a destra nel riquadro notizie rifà l'aggiornamento (stesso
     `POST /api/news` + `matchNews` di `NewsUpdatePanel.tsx`) solo per questo
     giocatore, senza dover lanciare un giro su tutto il listino da Settings.
+  - **Icona notizie in tabella**: subito dopo il nome, solo per i giocatori
+    che hanno almeno una notizia, compare una piccola icona giornale; il
+    tooltip al passaggio del mouse (`title` nativo del browser) mostra
+    titolo, fonte e data delle notizie salvate, senza dover aprire la scheda
+    del giocatore.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto nome e squadra di
     ogni giocatore nella tabella compare sempre, su sfondo grigio chiaro, la
     stessa fila di icone lineari (rigorista, tiratore di punizioni/angoli,

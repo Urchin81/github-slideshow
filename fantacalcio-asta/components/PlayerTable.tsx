@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { AlarmClock, Armchair, ChevronDown, ChevronUp, Euro, Gavel, NotebookText, Wand2 } from "lucide-react";
+import { AlarmClock, Armchair, ChevronDown, ChevronUp, Euro, Gavel, Newspaper, NotebookText, Wand2 } from "lucide-react";
 import {
   LivelloFpedia,
   Player,
@@ -150,6 +150,17 @@ function tooltipBallottaggio(p: Player): string {
     ...p.ballottaggio.avversari.map((a) => `${a.nome} ${a.percentuale}%`),
   ];
   return `Ballottaggio\n${righe.join("\n")}`;
+}
+
+/** Anteprima delle ultime notizie del giocatore, per il tooltip dell'icona giornale in tabella. */
+function tooltipNotizie(p: Player): string {
+  const notizie = p.notizie ?? [];
+  if (notizie.length === 0) return "";
+  const righe = notizie.map((n) => {
+    const data = n.data ? new Date(n.data).toLocaleDateString("it-IT") : null;
+    return `${n.titolo} — ${n.fonte}${data ? ` · ${data}` : ""}`;
+  });
+  return `Ultime notizie\n${righe.join("\n")}`;
 }
 
 /** Quanti avversari locali dello stesso ballottaggio sono ancora disponibili sul mercato. */
@@ -1005,9 +1016,16 @@ export function PlayerTable({
                     </span>
                   </td>
                   <td className="py-1.5 font-medium">
-                    <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
-                      {p.nome}
-                    </Link>
+                    <span className="inline-flex items-center gap-1">
+                      <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
+                        {p.nome}
+                      </Link>
+                      {p.notizie && p.notizie.length > 0 && (
+                        <span title={tooltipNotizie(p)} className="shrink-0">
+                          <Newspaper size={12} className="text-slate-400" />
+                        </span>
+                      )}
+                    </span>
                   </td>
                   <td className="py-1.5 text-slate-500">
                     <span className="inline-flex items-center gap-1.5">
