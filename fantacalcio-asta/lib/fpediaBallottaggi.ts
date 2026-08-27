@@ -49,7 +49,7 @@ export function parseFpediaGuidaAsta(html: string): BallottaggioSquadra[] {
           const nome = $a.clone().children("strong").remove().end().text().replace(/\s+/g, " ").trim();
           if (nome && Number.isFinite(percentuale)) giocatori.push({ nome, percentuale });
         });
-      if (giocatori.length >= 2) ballottaggi.push({ giocatori });
+      if (giocatori.length >= 2) ballottaggi.push({ squadra, giocatori });
     });
 
     if (fuoriclasse.length > 0 || ballottaggi.length > 0) {

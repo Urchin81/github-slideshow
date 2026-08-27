@@ -324,11 +324,18 @@ ruoli ancora da coprire nella tua squadra.
     interessa un'asta fantacalcio) per l'intera rosa in un solo colpo. Il
     parser (`lib/fpediaBallottaggi.ts`, testato su un campione HTML reale in
     `lib/__fixtures__/fpedia-guida-asta-sample.html`) legge i gruppi grezzi
-    di FPEDIA con le percentuali; la risoluzione sui giocatori del listino
-    (`lib/ballottaggioResolve.ts`, `risolviBallottaggi`) riusa lo stesso
-    matching per cognome già usato per infortunati/fuoriclasse
-    (`lib/indiceGiocatori.ts`). Chi è "Fuoriclasse" mostra una **corona
-    dorata** in alto a sinistra sulla foto (tabella, riquadro "in asta",
+    di FPEDIA con le percentuali, uno per squadra; la risoluzione sui
+    giocatori del listino (`lib/ballottaggioResolve.ts`, `risolviBallottaggi`)
+    riusa lo stesso matching per cognome già usato per infortunati/fuoriclasse
+    (`lib/indiceGiocatori.ts`), ma un cognome che combacia da solo non basta:
+    richiede anche la **stessa squadra** del gruppo (altrimenti un cognome
+    corto come "Martin" risulterebbe una sottostringa di uno più lungo e non
+    imparentato come "Martinez" di un'altra squadra) e tiene solo il
+    gruppetto più numeroso con lo **stesso ruolo Classic** tra chi supera
+    quel filtro (un portiere e un attaccante con lo stesso cognome — es. due
+    "Martinez" diversi in squadre diverse — non possono essere davvero in
+    ballottaggio per lo stesso posto). Chi è "Fuoriclasse" mostra una
+    **corona dorata** in alto a sinistra sulla foto (tabella, riquadro "in asta",
     pop-up Moduli Mantra) — diversa dal cerotto rosso degli infortunati (in
     basso), così i due badge non si sovrappongono.
   - **Icona panchina (ballottaggio)**: in tabella è sotto il martelletto
