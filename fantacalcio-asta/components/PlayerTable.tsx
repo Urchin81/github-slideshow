@@ -360,6 +360,18 @@ export function PlayerTable({
     if (confirm(messaggio)) resetPlayer(id);
   }
 
+  function rimuoviGiocatoreFiltro() {
+    if (!giocatoreFiltro) return;
+    const messaggio =
+      giocatoreFiltro.prezzoPagato !== undefined
+        ? `Rimuovere ${giocatoreFiltro.nome} dalla tua rosa? Il prezzo pagato (${giocatoreFiltro.prezzoPagato}) andrà perso.`
+        : `Rimettere ${giocatoreFiltro.nome} tra i disponibili?`;
+    if (confirm(messaggio)) {
+      resetPlayer(giocatoreFiltro.id);
+      setFiltroBallottaggioId(null);
+    }
+  }
+
   function ruoloLabel(r: RoleKey) {
     return isMantra ? RUOLO_MANTRA_LABEL[r as RuoloMantra] : RUOLO_LABEL[r as Ruolo];
   }
@@ -677,19 +689,155 @@ export function PlayerTable({
           )}
         </div>
       ) : giocatoreFiltro?.ballottaggio ? (
-        <div className="flex flex-wrap gap-3 mb-4 items-center">
-          <span className="inline-flex items-center gap-1.5 text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-full pl-3 pr-1.5 py-1.5">
-            <Armchair size={14} />
-            Ballottaggio con <strong>{giocatoreFiltro.nome}</strong>
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <Armchair size={16} className="text-amber-700 shrink-0" />
+            <span className="font-semibold">Ballottaggio:</span>
+            <Link href={`/giocatore/${encodeURIComponent(giocatoreFiltro.id)}`} className="font-semibold hover:underline">
+              {giocatoreFiltro.nome}
+            </Link>
             <button
               onClick={() => setFiltroBallottaggioId(null)}
-              title="Chiudi il filtro ballottaggio"
-              className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-amber-200"
+              className="ml-auto text-xs bg-slate-200 rounded px-2 py-1 hover:bg-slate-300"
             >
-              ✕
+              Torna alla lista completa
             </button>
-          </span>
-          <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori disponibili</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 bg-white border border-amber-100 rounded p-2.5">
+            <span
+              className="relative inline-block shrink-0"
+              title="Bordo colorato in base all'algoritmo FCP: quanto vale questo giocatore (rosso chiaro = scarso, giallo = medio, verde = buono, blu = fuoriclasse)."
+            >
+              {isSafeHttpUrl(giocatoreFiltro.fpedia?.immagineUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={giocatoreFiltro.fpedia?.immagineUrl}
+                  alt=""
+                  className={`w-14 h-14 rounded-full object-contain bg-slate-50 ${classeBordoQualita(
+                    livelloFantasolidita(giocatoreFiltro, "algFcp")
+                  )}`}
+                />
+              ) : (
+                <span
+                  className={`inline-block w-14 h-14 rounded-full bg-slate-50 ${classeBordoQualita(
+                    livelloFantasolidita(giocatoreFiltro, "algFcp")
+                  )}`}
+                />
+              )}
+              {giocatoreFiltro.infortunato && <BadgeInfortunio size={16} />}
+              {giocatoreFiltro.fuoriclasse && <BadgeFuoriclasse size={16} />}
+            </span>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                {celleRuolo(giocatoreFiltro.ruolo, giocatoreFiltro.ruoliMantra)}
+                <span className="font-medium">{giocatoreFiltro.squadra}</span>
+                {isSafeHttpUrl(giocatoreFiltro.fpedia?.squadraLogoUrl) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={giocatoreFiltro.fpedia?.squadraLogoUrl} alt="" className="w-4 h-4 object-contain" />
+                )}
+              </div>
+              <div className="text-xs text-slate-500">
+                Quot. <strong>{giocatoreFiltro.quotazione}</strong>
+                {giocatoreFiltro.fvm !== undefined && (
+                  <>
+                    {" "}
+                    · FVM <strong>{giocatoreFiltro.fvm}</strong>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {vociFantasolditaLista(giocatoreFiltro).length > 0 && (
+              <div className="flex gap-3">
+                {vociFantasolditaLista(giocatoreFiltro).map((v) => (
+                  <div key={v.campo} className="text-center">
+                    <div className="text-[10px] uppercase text-slate-400 tracking-wide flex items-center justify-center gap-1">
+                      {v.campo === "algFcp" ? <Wand2 size={11} /> : <NotebookText size={11} />}
+                      FCP
+                    </div>
+                    <div
+                      className={`inline-block rounded px-1.5 font-bold ${classeLivello(
+                        livelloFantasolidita(giocatoreFiltro, v.campo)
+                      )}`}
+                      title={v.label}
+                    >
+                      {Math.round(v.valore)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {urgenza(giocatoreFiltro) && (
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Urgenza</div>
+                <div
+                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(livelloUrgenza(giocatoreFiltro))}`}
+                  title={tooltipUrgenza(urgenza(giocatoreFiltro)!, percentualeUrgenza(giocatoreFiltro))}
+                >
+                  {percentualeUrgenza(giocatoreFiltro) ?? "—"}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <CaratteristicheGiocatore
+            player={giocatoreFiltro}
+            className="flex-wrap bg-white border border-amber-100 rounded px-2 py-1.5"
+            soloPresenti
+          />
+
+          <div className="bg-white border border-amber-100 rounded px-2 py-1.5">
+            <div className="text-[10px] uppercase text-slate-400 tracking-wide mb-1 flex items-center gap-1">
+              <Armchair size={11} /> Ballottaggio
+            </div>
+            <div className="flex flex-wrap gap-1.5 text-xs">
+              <span
+                className="inline-flex items-center gap-1 rounded px-2.5 py-1 text-sm bg-amber-100 text-amber-800 font-bold border-2 border-amber-400"
+                title="Il giocatore nella tua rosa"
+              >
+                {giocatoreFiltro.nome} {giocatoreFiltro.ballottaggio.percentuale}%
+              </span>
+              {giocatoreFiltro.ballottaggio.avversari.map((a) => {
+                const avversario = players.find((pl) => pl.id === a.playerId);
+                const stato = avversario?.stato;
+                return (
+                  <span
+                    key={a.playerId}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border font-medium ${
+                      stato === "mia"
+                        ? "bg-green-100 text-green-800 border-green-300"
+                        : stato === "altrui"
+                        ? "bg-slate-200 text-slate-500 border-slate-300 line-through"
+                        : "bg-white text-slate-600 border-slate-200"
+                    }`}
+                    title={
+                      stato === "mia"
+                        ? "Già nella tua rosa"
+                        : stato === "altrui"
+                        ? "Già preso da altri"
+                        : "Ancora disponibile"
+                    }
+                  >
+                    {a.nome} {a.percentuale}%
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white border-2 border-amber-300 rounded-lg p-3 shadow-sm">
+            <button
+              onClick={rimuoviGiocatoreFiltro}
+              className="w-full text-sm font-semibold bg-red-600 text-white rounded-lg px-3 py-2 hover:bg-red-700"
+            >
+              Rimuovi dalla rosa
+            </button>
+          </div>
+
+          <p className="text-sm text-slate-400">{righe.length} giocatori disponibili nel ballottaggio</p>
         </div>
       ) : (
         <div className="flex flex-wrap gap-3 mb-4 items-center">

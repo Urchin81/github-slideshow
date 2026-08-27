@@ -363,9 +363,13 @@ ruoli ancora da coprire nella tua squadra.
     (nessun ballottaggio, o tutti i contendenti già presi), **cerchietto
     giallo col numero** di sostituti ancora disponibili altrimenti.
     Cliccandoci sopra (in entrambi i punti) filtra la tabella sui soli
-    contendenti
-    ancora disponibili di quel giocatore (un chip in alto permette di
-    uscire dal filtro tornando alla vista normale).
+    contendenti ancora disponibili di quel giocatore, mostrando in alto lo
+    stesso riquadro amber del giocatore "in asta" (foto, ruolo, squadra,
+    quotazione, FCP, Urgenza, caratteristiche e riga Ballottaggio) ma per il
+    giocatore della **tua rosa**, con un pulsante **"Rimuovi dalla rosa"** al
+    posto della selezione del prezzo — non ha senso fare un'offerta su un
+    giocatore che hai già. Il pulsante "Torna alla lista completa" nello
+    stesso riquadro chiude il filtro e torna alla vista normale.
   - **Ballottaggio nel riquadro "Giocatore in asta"**: se il giocatore
     selezionato ha un ballottaggio, il riquadro amber mostra una riga
     "Ballottaggio" con una pillola per ognuno dei contendenti e la relativa
