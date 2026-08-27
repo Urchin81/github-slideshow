@@ -188,17 +188,20 @@ ruoli ancora da coprire nella tua squadra.
   effettivamente presenti**, ognuna con l'etichetta testuale accanto
   all'icona invece del solo tooltip (qui c'è spazio, e serve capire a colpo
   d'occhio cosa conta per quel giocatore senza dover passare il mouse su ogni
-  icona). Sotto, un riquadro **"Valore Asta"** con bordo evidenziato raccoglie
-  tutto ciò che serve per il rilancio: il controllo prezzo con tasti
-  **−**/**+** e un campo numerico grande che parte da **0** (modificabile
-  anche digitando direttamente), la stessa riga con "Max consigliato/tetto"
-  (vedi sotto), e i due pulsanti — **"Preso da me"** (verde, ben visibile;
-  richiede un prezzo maggiore di zero, disabilitato altrimenti e se hai
-  raggiunto il numero massimo di giocatori) e **"Preso da altri"** (prezzo
-  facoltativo: lasciandolo a 0 non viene registrato, un valore diverso da
-  zero registra quanto ha pagato l'avversario — utile per seguire
-  l'andamento delle puntate — e resta poi visibile in tabella sulla riga del
-  giocatore). Sotto la tabella compaiono, ordinati per ALG FCP, solo gli altri
+  icona). Sotto, un riquadro stretto **"Valore Asta"** con bordo evidenziato
+  raccoglie tutto ciò che serve per il rilancio, impilato in verticale (così
+  resta compatto): il controllo prezzo con tasti **−**/**+** e un campo
+  numerico che parte da **0** (modificabile anche digitando direttamente),
+  sotto "Max consigliato/tetto" (vedi sotto), poi i due pulsanti — **"Preso
+  da me"** (verde, ben visibile; richiede un prezzo maggiore di zero,
+  disabilitato altrimenti e se hai raggiunto il numero massimo di giocatori)
+  e **"Preso da altri"** (prezzo facoltativo: lasciandolo a 0 non viene
+  registrato, un valore diverso da zero registra quanto ha pagato
+  l'avversario — utile per seguire l'andamento delle puntate — e resta poi
+  visibile in tabella sulla riga del giocatore) — entrambi larghi quanto il
+  riquadro. Al suo fianco, quando c'è un prezzo impostato, il box
+  "Simulazione a [prezzo]" mostra l'effetto dell'acquisto senza allargare
+  la colonna. Sotto la tabella compaiono, ordinati per ALG FCP, solo gli altri
   giocatori ancora disponibili con ruolo compatibile (stesso ruolo in
   Classic; almeno un ruolo Mantra in comune in Mantra) — click sul loro
   martello per spostare il focus e confrontare al volo le alternative
@@ -232,10 +235,10 @@ ruoli ancora da coprire nella tua squadra.
   slot sintetici (titolare + sostituto) per ruolo — così un giocatore
   "impegnato" a coprire un ruolo non risulta disponibile anche per un altro
   (`lib/coperturaRuoli.ts`).
-- **Layout a tre colonne**: pannello Budget più stretto (i ruoli nel "Piano di
+- **Layout a tre colonne**: pannello Budget (250px, i ruoli nel "Piano di
   spesa" usano la stessa letterina colorata P/D/C/A vista altrove, non il nome
-  esteso) per lasciare più spazio a "La mia rosa" a destra, che ne ha bisogno
-  per l'icona panchina del ballottaggio senza sovrapporre i testi.
+  esteso) e "La mia rosa" (310px) — un compromesso tra le due, abbastanza
+  larghe entrambe da non tagliare né sovrapporre i rispettivi testi.
 - **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
   budget residuo diviso per i giocatori che mancano ancora per completare una
   rosa valida — **tenendo conto del minimo di portieri richiesto** (in
@@ -343,12 +346,14 @@ ruoli ancora da coprire nella tua squadra.
     uscire dal filtro tornando alla vista normale).
   - **Ballottaggio nel riquadro "Giocatore in asta"**: se il giocatore
     selezionato ha un ballottaggio, il riquadro amber mostra una riga
-    "Ballottaggio" con una pillola per ognuno dei contendenti (lui incluso,
-    in ambra) e la relativa percentuale FPEDIA — **verde** per chi è già
-    nella tua rosa, **grigio con testo barrato** per chi è già stato preso
-    da altri, bianco/neutro per chi è ancora disponibile — così si vede a
-    colpo d'occhio se conviene aggiudicarselo subito o se il "rivale" è già
-    fuori gioco.
+    "Ballottaggio" con una pillola per ognuno dei contendenti e la relativa
+    percentuale FPEDIA — il giocatore in asta è sempre il primo, un po' più
+    grande e con un bordo rettangolare (invece che arrotondato come gli
+    altri) per distinguerlo a colpo d'occhio; gli altri contendenti sono
+    **verdi** per chi è già nella tua rosa, **grigi con testo barrato** per
+    chi è già stato preso da altri, bianco/neutro per chi è ancora
+    disponibile — così si vede subito se conviene aggiudicarselo o se il
+    "rivale" è già fuori gioco.
   - **Importa tutto**: un unico pulsante "⚡ Importa tutto" (sopra gli altri,
     nello stesso pannello) esegue in sequenza infortunati, ballottaggi/
     fuoriclasse (entrambi pochi richieste, veloci) e infine le statistiche

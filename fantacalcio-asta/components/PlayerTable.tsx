@@ -522,7 +522,7 @@ export function PlayerTable({
               </div>
               <div className="flex flex-wrap gap-1.5 text-xs">
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-amber-100 text-amber-800 font-semibold border border-amber-300"
+                  className="inline-flex items-center gap-1 rounded px-2.5 py-1 text-sm bg-amber-100 text-amber-800 font-bold border-2 border-amber-400"
                   title="Il giocatore in asta"
                 >
                   {inAstaPlayer.nome} {inAstaPlayer.ballottaggio.percentuale}%
@@ -556,65 +556,112 @@ export function PlayerTable({
             </div>
           )}
 
-          <div className="bg-white border-2 border-amber-300 rounded-lg p-3 shadow-sm space-y-3">
-            <div className="text-xs uppercase text-amber-700 font-semibold tracking-wide">Valore Asta</div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => incrementaPrezzoAsta(-1)}
-                className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none"
-                aria-label="Diminuisci prezzo"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                min={0}
-                value={prezzoAstaInput}
-                onChange={(e) => setPrezzoAstaInput(e.target.value)}
-                className="w-24 text-center border-2 border-slate-300 rounded-lg px-1 py-2 text-lg font-bold"
-              />
-              <button
-                onClick={() => incrementaPrezzoAsta(1)}
-                className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none"
-                aria-label="Aumenta prezzo"
-              >
-                +
-              </button>
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="bg-white border-2 border-amber-300 rounded-lg p-3 shadow-sm space-y-2 w-56 shrink-0">
+              <div className="text-xs uppercase text-amber-700 font-semibold tracking-wide">Valore Asta</div>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={() => incrementaPrezzoAsta(-1)}
+                  className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none shrink-0"
+                  aria-label="Diminuisci prezzo"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  value={prezzoAstaInput}
+                  onChange={(e) => setPrezzoAstaInput(e.target.value)}
+                  className="w-20 text-center border-2 border-slate-300 rounded-lg px-1 py-2 text-lg font-bold"
+                />
+                <button
+                  onClick={() => incrementaPrezzoAsta(1)}
+                  className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 font-bold text-xl leading-none shrink-0"
+                  aria-label="Aumenta prezzo"
+                >
+                  +
+                </button>
+              </div>
 
               {astaSuggerimento && (
-                <span
-                  className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                <div
+                  className="text-[11px] leading-snug bg-slate-50 border border-slate-200 rounded px-2 py-1"
                   title="Max consigliato: soglia oltre la quale il giocatore smette di essere conveniente per il budget residuo. Tetto: oltre questo prezzo non basterebbe almeno 1 a testa per gli slot/posti ancora da riempire."
                 >
                   Max consigliato <strong>{Math.round(astaSuggerimento.prezzoMassimo.massimoConsigliato)}</strong>
                   <span className="text-slate-400"> · tetto {Math.round(astaSuggerimento.prezzoMassimo.tettoSicurezza)}</span>
-                </span>
+                </div>
               )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConfermaMe}
+                  disabled={rosaPiena || prezzoAstaNum <= 0}
+                  title={
+                    rosaPiena
+                      ? "Numero massimo di giocatori raggiunto"
+                      : prezzoAstaNum <= 0
+                      ? "Inserisci un prezzo maggiore di zero"
+                      : undefined
+                  }
+                  className="flex-1 text-sm font-semibold bg-green-600 text-white rounded-lg px-2 py-2 hover:bg-green-700 disabled:opacity-40 disabled:bg-slate-300"
+                >
+                  Preso da me
+                </button>
+                <button
+                  onClick={handleConfermaAltri}
+                  className="flex-1 text-xs font-medium bg-slate-200 rounded-lg px-2 py-2 hover:bg-slate-300"
+                  title="Il prezzo è facoltativo: se lo indichi resta visibile in tabella, utile per seguire l'andamento delle puntate."
+                >
+                  Preso da altri
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={handleConfermaMe}
-                disabled={rosaPiena || prezzoAstaNum <= 0}
-                title={
-                  rosaPiena
-                    ? "Numero massimo di giocatori raggiunto"
-                    : prezzoAstaNum <= 0
-                    ? "Inserisci un prezzo maggiore di zero"
-                    : undefined
-                }
-                className="text-base font-semibold bg-green-600 text-white rounded-lg px-5 py-2.5 hover:bg-green-700 disabled:opacity-40 disabled:bg-slate-300"
-              >
-                Preso da me
-              </button>
-              <button
-                onClick={handleConfermaAltri}
-                className="text-sm font-medium bg-slate-200 rounded-lg px-4 py-2.5 hover:bg-slate-300"
-                title="Il prezzo è facoltativo: se lo indichi resta visibile in tabella, utile per seguire l'andamento delle puntate."
-              >
-                Preso da altri
-              </button>
-            </div>
+            {simulazione && (
+              <div className="bg-white border border-amber-100 rounded p-2 text-xs space-y-1 flex-1 min-w-[180px]">
+                <p className="text-slate-400 uppercase">Simulazione a {simulazione.prezzo}</p>
+                <div className="flex justify-between">
+                  <span>Budget residuo</span>
+                  <span>
+                    {simulazione.budgetResiduoAttuale} → <strong>{simulazione.budgetResiduoSimulato}</strong>
+                  </span>
+                </div>
+                {simulazione.roleStatsSimulato && simulazione.roleStatsAttuale && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Slot {RUOLO_LABEL[inAstaPlayer.ruolo]} rimanenti</span>
+                      <span>
+                        {simulazione.roleStatsAttuale.slotRimanenti} →{" "}
+                        <strong>{simulazione.roleStatsSimulato.slotRimanenti}</strong>
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Media/slot dopo</span>
+                      <span>{Math.round(simulazione.roleStatsSimulato.prezzoMedioDisponibile)}</span>
+                    </div>
+                  </>
+                )}
+                {simulazione.mantraStatoSimulato && simulazione.mantraStatoAttuale && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Posti rimanenti</span>
+                      <span>
+                        {simulazione.mantraStatoAttuale.postiRimanenti} →{" "}
+                        <strong>{simulazione.mantraStatoSimulato.postiRimanenti}</strong>
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Media/posto dopo</span>
+                      <span>{Math.round(simulazione.mantraStatoSimulato.prezzoMedioDisponibile)}</span>
+                    </div>
+                    {astaSuggerimento?.moduliUtili && astaSuggerimento.moduliUtili.length > 0 && (
+                      <p className="text-slate-500">Aiuta a completare: {astaSuggerimento.moduliUtili.join(", ")}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {rischioAsta && rischioAsta.livello !== "ok" && (
@@ -627,51 +674,6 @@ export function PlayerTable({
             >
               {rischioAsta.livello === "sforamento" ? "⛔" : "⚠️"} {rischioAsta.messaggio}
             </p>
-          )}
-
-          {simulazione && (
-            <div className="bg-white border border-amber-100 rounded p-2 text-xs space-y-1">
-              <p className="text-slate-400 uppercase">Simulazione a {simulazione.prezzo}</p>
-              <div className="flex justify-between">
-                <span>Budget residuo</span>
-                <span>
-                  {simulazione.budgetResiduoAttuale} → <strong>{simulazione.budgetResiduoSimulato}</strong>
-                </span>
-              </div>
-              {simulazione.roleStatsSimulato && simulazione.roleStatsAttuale && (
-                <>
-                  <div className="flex justify-between">
-                    <span>Slot {RUOLO_LABEL[inAstaPlayer.ruolo]} rimanenti</span>
-                    <span>
-                      {simulazione.roleStatsAttuale.slotRimanenti} →{" "}
-                      <strong>{simulazione.roleStatsSimulato.slotRimanenti}</strong>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Media/slot dopo</span>
-                    <span>{Math.round(simulazione.roleStatsSimulato.prezzoMedioDisponibile)}</span>
-                  </div>
-                </>
-              )}
-              {simulazione.mantraStatoSimulato && simulazione.mantraStatoAttuale && (
-                <>
-                  <div className="flex justify-between">
-                    <span>Posti rimanenti</span>
-                    <span>
-                      {simulazione.mantraStatoAttuale.postiRimanenti} →{" "}
-                      <strong>{simulazione.mantraStatoSimulato.postiRimanenti}</strong>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Media/posto dopo</span>
-                    <span>{Math.round(simulazione.mantraStatoSimulato.prezzoMedioDisponibile)}</span>
-                  </div>
-                  {astaSuggerimento?.moduliUtili && astaSuggerimento.moduliUtili.length > 0 && (
-                    <p className="text-slate-500">Aiuta a completare: {astaSuggerimento.moduliUtili.join(", ")}</p>
-                  )}
-                </>
-              )}
-            </div>
           )}
         </div>
       ) : giocatoreFiltro?.ballottaggio ? (

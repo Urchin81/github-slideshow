@@ -34,7 +34,7 @@ export default function Home() {
       <div className="flex flex-wrap gap-4 items-start">
         <ResetButton />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_340px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_310px] gap-4">
         <BudgetPanel />
         <PlayerTable filtroBallottaggioId={filtroBallottaggioId} setFiltroBallottaggioId={setFiltroBallottaggioId} />
         <div className="space-y-4">
