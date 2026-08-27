@@ -38,7 +38,7 @@ export const MODULI_MANTRA: Modulo[] = [
     nome: "3-4-3",
     slot: [
       ["Por"],
-      ["Dc"], ["Dc"], ["Dc", "B"],
+      ["Dc", "B"], ["Dc"], ["Dc", "B"],
       ["E"], ["M", "C"], ["C"], ["E"],
       ["W", "A"], ["W", "A"],
       ["A", "Pc"],
@@ -49,7 +49,7 @@ export const MODULI_MANTRA: Modulo[] = [
     nome: "3-4-1-2",
     slot: [
       ["Por"],
-      ["Dc"], ["Dc"], ["Dc", "B"],
+      ["Dc", "B"], ["Dc"], ["Dc", "B"],
       ["E"], ["M", "C"], ["C"], ["E"],
       ["T"],
       ["A", "Pc"], ["A", "Pc"],
@@ -60,7 +60,7 @@ export const MODULI_MANTRA: Modulo[] = [
     nome: "3-4-2-1",
     slot: [
       ["Por"],
-      ["Dc"], ["Dc"], ["Dc", "B"],
+      ["Dc", "B"], ["Dc"], ["Dc", "B"],
       ["E"], ["M", "C"], ["C"], ["E"],
       ["T", "A"], ["T", "A"],
       ["A", "Pc"],
@@ -71,7 +71,7 @@ export const MODULI_MANTRA: Modulo[] = [
     nome: "3-5-2",
     slot: [
       ["Por"],
-      ["Dc"], ["Dc"], ["Dc", "B"],
+      ["Dc", "B"], ["Dc"], ["Dc", "B"],
       ["E", "W"], ["M"], ["M"], ["C"], ["E", "W"],
       ["A", "Pc"], ["A", "Pc"],
     ],
@@ -81,7 +81,7 @@ export const MODULI_MANTRA: Modulo[] = [
     nome: "3-5-1-1",
     slot: [
       ["Por"],
-      ["Dc"], ["Dc"], ["Dc", "B"],
+      ["Dc", "B"], ["Dc"], ["Dc", "B"],
       ["E", "W"], ["M"], ["M"], ["C"], ["E", "W"],
       ["T", "A"],
       ["A", "Pc"],
@@ -136,7 +136,7 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dd"], ["Dc"], ["Dc"], ["Ds"],
-      ["E"], ["M", "C"], ["C"], ["E", "W"],
+      ["E", "W"], ["M", "C"], ["C"], ["E", "W"],
       ["T", "A"],
       ["A", "Pc"],
     ],
