@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Wand2, NotebookText, Armchair } from "lucide-react";
+import { RefreshCw, Wand2, NotebookText, Armchair } from "lucide-react";
 import { FpediaStats, FpediaPillola } from "@/lib/types";
 import { computeLivelliRelativiFpedia, getSuggerimentiAsta } from "@/lib/suggestions";
+import { matchNews } from "@/lib/matchNews";
+import type { NewsFeedError, RawNewsItem } from "@/app/api/news/route";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
 import {
@@ -67,6 +69,9 @@ export default function GiocatorePage() {
 
   const [aggiornando, setAggiornando] = useState(false);
   const [erroreAggiornamento, setErroreAggiornamento] = useState<string | null>(null);
+  const [aggiornandoNotizie, setAggiornandoNotizie] = useState(false);
+  const [erroreNotizie, setErroreNotizie] = useState<string | null>(null);
+  const [esitoNotizie, setEsitoNotizie] = useState<string | null>(null);
 
   async function aggiornaFpedia() {
     if (!player) return;
@@ -88,6 +93,29 @@ export default function GiocatorePage() {
       setErroreAggiornamento(err instanceof Error ? err.message : "Errore di rete.");
     } finally {
       setAggiornando(false);
+    }
+  }
+
+  async function aggiornaNotizie() {
+    if (!player) return;
+    setAggiornandoNotizie(true);
+    setErroreNotizie(null);
+    setEsitoNotizie(null);
+    try {
+      const res = await fetch("/api/news", { method: "POST" });
+      if (!res.ok) throw new Error(`Richiesta fallita (${res.status})`);
+      const data: { items: RawNewsItem[]; errori: NewsFeedError[] } = await res.json();
+      const updates = matchNews([player], data.items);
+      applyNewsResults(updates);
+      setEsitoNotizie(
+        updates[player.id]
+          ? `Trovate ${updates[player.id].notizie?.length ?? 0} notizie.`
+          : "Nessuna notizia trovata in questo aggiornamento."
+      );
+    } catch (err) {
+      setErroreNotizie(err instanceof Error ? err.message : "Errore di rete.");
+    } finally {
+      setAggiornandoNotizie(false);
     }
   }
 
@@ -401,7 +429,15 @@ export default function GiocatorePage() {
           {/* Riquadro "giornale": stesso contenuto della vecchia sezione notizie, con
               impaginazione da testata di quotidiano invece della card standard del resto
               della pagina — è l'unica sezione spostata lateralmente su richiesta. */}
-          <div className="bg-[#f7f2e6] border border-[#ddd0b0] rounded-lg shadow p-4 font-serif">
+          <div className="relative bg-[#f7f2e6] border border-[#ddd0b0] rounded-lg shadow p-4 font-serif">
+            <button
+              onClick={aggiornaNotizie}
+              disabled={aggiornandoNotizie}
+              title="Aggiorna le notizie di questo giocatore"
+              className="absolute top-3 right-3 text-slate-500 hover:text-slate-800 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={aggiornandoNotizie ? "animate-spin" : ""} />
+            </button>
             <div className="text-center border-b-4 border-double border-slate-800 pb-2 mb-3">
               <h2 className="text-lg font-black uppercase tracking-wide">Ultime Notizie</h2>
               {player.notizieAggiornateIl && (
@@ -410,9 +446,14 @@ export default function GiocatorePage() {
                 </p>
               )}
             </div>
+            {(esitoNotizie || erroreNotizie) && (
+              <p className={`text-xs font-sans mb-3 ${erroreNotizie ? "text-red-500" : "text-slate-500"}`}>
+                {erroreNotizie ?? esitoNotizie}
+              </p>
+            )}
             {(!player.notizie || player.notizie.length === 0) && (
               <p className="text-slate-400 text-sm italic text-center">
-                Nessuna notizia trovata. Usa il pulsante di aggiornamento notizie nella dashboard.
+                Nessuna notizia trovata. Usa l&apos;icona di aggiornamento qui sopra.
               </p>
             )}
             <ul>

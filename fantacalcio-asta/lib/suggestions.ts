@@ -250,11 +250,11 @@ export function computeDettaglioModulo(players: Player[], modulo: Modulo): RigaD
 export interface ClassificaModulo {
   nome: string;
   /**
-   * Somma di (ALG FCP × quotazione) dei titolari nella miglior formazione possibile per
-   * questo modulo con la rosa attuale — un "valore" che pesa sia la qualità (ALG FCP) sia
-   * il costo/prestigio del giocatore (quotazione), non solo la qualità pura. `null` se il
-   * modulo non è completamente coprbile con la rosa posseduta (non ha senso confrontarne
-   * il valore: non è nemmeno schierabile).
+   * Somma delle quotazioni dei titolari nella miglior formazione possibile per questo
+   * modulo con la rosa attuale — stesso criterio di default usato nella simulazione
+   * formazione (`ModuloVisualizzazione.tsx`). `null` se il modulo non è completamente
+   * coprbile con la rosa posseduta (non ha senso confrontarne il valore: non è nemmeno
+   * schierabile).
    */
   valore: number | null;
 }
@@ -268,10 +268,7 @@ export interface ClassificaModulo {
 export function computeClassificaValoreModuli(players: Player[]): ClassificaModulo[] {
   const posseduti = giocatoriMantraPosseduti(players);
   const byId = new Map(players.map((p) => [p.id, p]));
-  const valoreGiocatore = (id: string) => {
-    const p = byId.get(id);
-    return (p?.fpedia?.algFcp ?? 0) * (p?.quotazione ?? 0);
-  };
+  const valoreGiocatore = (id: string) => byId.get(id)?.quotazione ?? 0;
 
   return MODULI_MANTRA.map((modulo) => {
     const matcher = costruisciMatchmaker(modulo.slot, posseduti);

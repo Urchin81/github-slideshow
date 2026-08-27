@@ -101,12 +101,15 @@ ruoli ancora da coprire nella tua squadra.
   cliccando su una voce dei moduli nel pannello Budget (la barra di
   completamento è verde solo a modulo completo, gialla finché manca ancora
   qualche slot). Mostra **le migliori formazioni possibili** con la rosa
-  attuale, ordinate per ALG FCP totale dei titolari (somma dell'ALG FCP di
-  ciascuno) decrescente — i pulsanti
+  attuale, ordinate per il valore totale dei titolari secondo il **criterio
+  scelto nel menu a tendina** in alto (Quotazione — il default, Algoritmo
+  FCP o Punteggio FCP) decrescente — i pulsanti
   **‹ ›** accanto al nome del modulo scorrono tra queste alternative, dalla
   più forte alla più debole (un risultato "migliori trovate", non una
   garanzia di aver esplorato ogni combinazione possibile con rose molto
-  simmetriche). Il campo è disegnato per intero (area, dischetto e porta di
+  simmetriche). Cambiare criterio ricalcola le combinazioni da zero e torna
+  alla prima, dato che l'ordine (e spesso la formazione in testa) cambia col
+  criterio. Il campo è disegnato per intero (area, dischetto e porta di
   entrambe le squadre, linea di centrocampo), col portiere in basso e
   l'attacco in alto (direzione di gioco verso l'alto); i giocatori multi-ruolo
   mostrano le pillole dei rispettivi ruoli disposte lungo il bordo della
@@ -122,21 +125,22 @@ ruoli ancora da coprire nella tua squadra.
   locale nella finestra: non tocca lo stato dell'asta, e "Ripristina
   automatica" torna in qualsiasi momento alla formazione (tra quelle
   proposte) attualmente selezionata, scartando le modifiche manuali. Un
-  riquadro in alto a sinistra sul campo mostra il **Punteggio** (somma ALG
-  FCP dei titolari) di chi è realmente schierato in questo momento,
-  aggiornato ad ogni sostituzione — a differenza del "Punteggio" mostrato
-  nell'header accanto a "Formazione X/Y", che resta quello della
+  riquadro in alto a sinistra sul campo mostra il **Punteggio** (somma del
+  criterio scelto tra i titolari) di chi è realmente schierato in questo
+  momento, aggiornato ad ogni sostituzione — a differenza del "Punteggio"
+  mostrato nell'header accanto a "Formazione X/Y", che resta quello della
   combinazione proposta scelta con ‹/› e non segue le modifiche manuali.
 - **Le 3 formazioni titolari più forti**: nell'elenco "Moduli" del pannello
   Budget, i moduli completamente schierabili con la rosa attuale vengono
-  classificati per "valore" — la somma di (ALG FCP × quotazione) dei titolari
-  nella miglior formazione possibile per quel modulo (`computeClassificaValoreModuli`
-  in `lib/suggestions.ts`, che riusa `generaCombinazioniPerPunteggio`) — e le
-  prime 3 di questa classifica ricevono un **bordo oro/argento/bronzo** in
-  base al piazzamento: un indicatore diverso da "più vicino al completamento"
-  (l'ordine con cui la lista è già ordinata), utile a distinguere la
-  formazione più forte da quella più facile da completare, che non sono
-  necessariamente la stessa.
+  classificati per "valore" — la somma delle **quotazioni** dei titolari
+  nella miglior formazione possibile per quel modulo (stesso criterio di
+  default della simulazione formazione;
+  `computeClassificaValoreModuli` in `lib/suggestions.ts`, che riusa
+  `generaCombinazioniPerPunteggio`) — e le prime 3 di questa classifica
+  ricevono un **bordo oro/argento/bronzo** in base al piazzamento: un
+  indicatore diverso da "più vicino al completamento" (l'ordine con cui la
+  lista è già ordinata), utile a distinguere la formazione più forte da
+  quella più facile da completare, che non sono necessariamente la stessa.
 - **Urgenza**: un punteggio dinamico, indipendente dall'ALG FCP (quello,
   descritto più sotto insieme alle altre statistiche FPEDIA, misura quanto
   vale il giocatore in assoluto; questo quanto conviene assicurarselo
@@ -428,7 +432,10 @@ ruoli ancora da coprire nella tua squadra.
     laterale in stile "giornale" (font serif, testata con doppia riga,
     titoli in grassetto), con sotto — solo per i giocatori ancora
     disponibili — un riquadro "Consigli per l'acquisto" con Max
-    consigliato/tetto e la scomposizione dell'Urgenza.
+    consigliato/tetto e la scomposizione dell'Urgenza. L'icona di refresh in
+    alto a destra nel riquadro notizie rifà l'aggiornamento (stesso
+    `POST /api/news` + `matchNews` di `NewsUpdatePanel.tsx`) solo per questo
+    giocatore, senza dover lanciare un giro su tutto il listino da Settings.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto nome e squadra di
     ogni giocatore nella tabella compare sempre, su sfondo grigio chiaro, la
     stessa fila di icone lineari (rigorista, tiratore di punizioni/angoli,

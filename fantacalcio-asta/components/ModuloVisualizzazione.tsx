@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { coloreSfondoSlot, Modulo, SlotModulo } from "@/lib/moduliMantra";
 import { costruisciMatchmaker, generaCombinazioniPerPunteggio } from "@/lib/bipartiteMatching";
 import { Player, RUOLO_MANTRA_COLORE, RuoloMantra } from "@/lib/types";
@@ -12,6 +12,22 @@ import { BadgeFuoriclasse } from "@/components/BadgeFuoriclasse";
 
 function ruoliCompatibiliConSlot(player: Player, slot: SlotModulo): boolean {
   return (player.ruoliMantra ?? []).some((r) => slot.includes(r));
+}
+
+/** Criterio con cui si cerca la formazione "migliore": quale valore massimizzare titolare per titolare. */
+type MetricaFormazione = "quotazione" | "algFcp" | "punteggioFcp";
+
+const METRICA_LABEL: Record<MetricaFormazione, string> = {
+  quotazione: "Quotazione",
+  algFcp: "Algoritmo FCP",
+  punteggioFcp: "Punteggio FCP",
+};
+
+function valoreGiocatore(player: Player | undefined, metrica: MetricaFormazione): number {
+  if (!player) return 0;
+  if (metrica === "quotazione") return player.quotazione ?? 0;
+  if (metrica === "algFcp") return player.fpedia?.algFcp ?? 0;
+  return player.fpedia?.punteggioFcp ?? 0;
 }
 
 // Pillole dei ruoli disposte lungo il bordo della foto, in senso orario a
@@ -243,24 +259,23 @@ export function ModuloVisualizzazione({
   onClose: () => void;
 }) {
   const playerById = useMemo(() => new Map(mieiMantra.map((p) => [p.id, p])), [mieiMantra]);
+  const [metrica, setMetrica] = useState<MetricaFormazione>("quotazione");
 
-  // Le migliori formazioni possibili (somma ALG FCP dei titolari, decrescente): un
-  // risultato "miglior sforzo" entro i tetti di generaCombinazioniPerPunteggio, non una garanzia
-  // di ottimalità globale con rose molto simmetriche (stesso spirito del tetto di
-  // contaCombinazioniComplete). Se non se ne trova nessuna (es. modulo non completamente
+  // Le migliori formazioni possibili (somma del valore scelto in "metrica" tra i titolari,
+  // decrescente): un risultato "miglior sforzo" entro i tetti di generaCombinazioniPerPunteggio,
+  // non una garanzia di ottimalità globale con rose molto simmetriche (stesso spirito del tetto
+  // di contaCombinazioniComplete). Se non se ne trova nessuna (es. modulo non completamente
   // coprbile), si ricade sull'assegnazione greedy singola di sempre, per non regredire.
   const combinazioni = useMemo(() => {
     const giocatori = mieiMantra.map((p) => ({ id: p.id, ruoli: p.ruoliMantra ?? [] }));
-    const risultato = generaCombinazioniPerPunteggio(
-      modulo.slot,
-      giocatori,
-      (id) => playerById.get(id)?.fpedia?.algFcp ?? 0
+    const risultato = generaCombinazioniPerPunteggio(modulo.slot, giocatori, (id) =>
+      valoreGiocatore(playerById.get(id), metrica)
     );
     if (risultato.length > 0) return risultato;
     return [
       { assegnazione: costruisciMatchmaker(modulo.slot, giocatori).assegnazioniComplete(), punteggioTotale: 0 },
     ];
-  }, [modulo, mieiMantra, playerById]);
+  }, [modulo, mieiMantra, playerById, metrica]);
 
   const [indiceCombinazione, setIndiceCombinazione] = useState(0);
   const combinazioneAttuale = combinazioni[Math.min(indiceCombinazione, combinazioni.length - 1)];
@@ -270,17 +285,30 @@ export function ModuloVisualizzazione({
   const [slotEvidenziato, setSlotEvidenziato] = useState<number | null>(null);
   const [trascinamento, setTrascinamento] = useState<Trascinamento | null>(null);
 
+  // Cambiare metrica ricalcola le combinazioni da zero (ordine diverso, spesso formazione
+  // diversa in testa): si riparte dalla prima invece di lasciare in campo una formazione
+  // scelta col criterio precedente, che altrimenti resterebbe visibile ma "non spiegata"
+  // dal nuovo Punteggio mostrato.
+  useEffect(() => {
+    setIndiceCombinazione(0);
+    setAssegnazione(combinazioni[0]?.assegnazione ?? []);
+    setSlotAperto(null);
+    setSlotEvidenziato(null);
+    setTrascinamento(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [combinazioni]);
+
   const titolariIds = new Set(assegnazione.filter((id): id is string => !!id));
   const panchina = mieiMantra.filter((p) => !titolariIds.has(p.id));
 
-  // Punteggio della formazione realmente in campo in questo momento (somma ALG FCP dei
-  // titolari attuali): a differenza del "Punteggio" in header — quello della combinazione
-  // suggerita scelta con ‹/›, che non si aggiorna con le sostituzioni manuali — questo
-  // segue in tempo reale ogni trascina/rilascia o scelta dalla panchina.
+  // Punteggio della formazione realmente in campo in questo momento (somma del valore
+  // scelto in "metrica" tra i titolari attuali): a differenza del "Punteggio" in header —
+  // quello della combinazione suggerita scelta con ‹/›, che non si aggiorna con le
+  // sostituzioni manuali — questo segue in tempo reale ogni trascina/rilascia o scelta
+  // dalla panchina.
   const punteggioLive = useMemo(
-    () =>
-      assegnazione.reduce((somma, id) => somma + (id ? playerById.get(id)?.fpedia?.algFcp ?? 0 : 0), 0),
-    [assegnazione, playerById]
+    () => assegnazione.reduce((somma, id) => somma + (id ? valoreGiocatore(playerById.get(id), metrica) : 0), 0),
+    [assegnazione, playerById, metrica]
   );
 
   function sostitutiPer(slotIndex: number): Player[] {
@@ -390,6 +418,18 @@ export function ModuloVisualizzazione({
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 className="text-white font-bold text-lg">{modulo.nome}</h2>
           <div className="flex items-center gap-2">
+            <select
+              value={metrica}
+              onChange={(e) => setMetrica(e.target.value as MetricaFormazione)}
+              className="text-xs bg-slate-700 text-white rounded px-1.5 py-1 border border-slate-600"
+              title="Criterio con cui cercare la formazione migliore"
+            >
+              {(Object.keys(METRICA_LABEL) as MetricaFormazione[]).map((m) => (
+                <option key={m} value={m}>
+                  {METRICA_LABEL[m]}
+                </option>
+              ))}
+            </select>
             <button
               onClick={() => vaiAllaCombinazione(indiceCombinazione - 1)}
               disabled={indiceCombinazione <= 0}
@@ -420,8 +460,8 @@ export function ModuloVisualizzazione({
         </div>
 
         <p className="text-white/60 text-xs mb-3">
-          Le migliori {combinazioni.length} formazioni trovate, ordinate per ALG FCP totale dei
-          titolari (‹/› per scorrerle). Clicca sul cerchietto blu di un giocatore per evidenziare i panchinari
+          Le migliori {combinazioni.length} formazioni trovate, ordinate per {METRICA_LABEL[metrica].toLowerCase()}{" "}
+          totale dei titolari (‹/› per scorrerle, il menu a tendina cambia il criterio). Clicca sul cerchietto blu di un giocatore per evidenziare i panchinari
           compatibili e sceglierne uno al posto suo, clicca sulla foto di un titolare per rimuoverlo dal campo,
           oppure trascina un giocatore dal campo alla panchina e viceversa: si entra in campo solo negli slot con
           un ruolo compatibile.
