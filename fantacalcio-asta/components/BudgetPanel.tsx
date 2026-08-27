@@ -17,6 +17,7 @@ import {
 import { computeCoperturaRuoliClassic, computeCoperturaRuoliMantra, LivelloCopertura } from "@/lib/coperturaRuoli";
 import { coloreSfondoSlot, MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
 import { ModuloVisualizzazione } from "@/components/ModuloVisualizzazione";
+import { RoleKey } from "@/components/PlayerTable";
 import { useAuctionStore } from "@/lib/store";
 
 const TOOLTIP_COPERTURA: Record<LivelloCopertura, string> = {
@@ -35,7 +36,13 @@ function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
   );
 }
 
-function PannelloClassic() {
+function PannelloClassic({
+  ruoloFiltro,
+  onFiltraRuolo,
+}: {
+  ruoloFiltro: RoleKey | "tutti";
+  onFiltraRuolo: (ruolo: RoleKey) => void;
+}) {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const budgetResiduo = computeBudgetResiduoTotale(players, settings);
@@ -109,15 +116,19 @@ function PannelloClassic() {
       <h3 className="text-xs uppercase text-slate-400 mb-1">Copertura ruoli</h3>
       <ul className="text-sm flex flex-wrap gap-1.5">
         {RUOLI.map((r) => (
-          <li
-            key={r}
-            title={TOOLTIP_COPERTURA[coperturaRuoli[r]]}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-slate-200"
-          >
-            <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[r] }}>
-              {r}
-            </span>
-            <IconaCopertura livello={coperturaRuoli[r]} />
+          <li key={r}>
+            <button
+              onClick={() => onFiltraRuolo(r)}
+              title={`${TOOLTIP_COPERTURA[coperturaRuoli[r]]} — clicca per filtrare la tabella su questo ruolo`}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border hover:bg-slate-50 ${
+                ruoloFiltro === r ? "border-slate-900" : "border-slate-200"
+              }`}
+            >
+              <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[r] }}>
+                {r}
+              </span>
+              <IconaCopertura livello={coperturaRuoli[r]} />
+            </button>
           </li>
         ))}
       </ul>
@@ -125,7 +136,13 @@ function PannelloClassic() {
   );
 }
 
-function PannelloMantra() {
+function PannelloMantra({
+  ruoloFiltro,
+  onFiltraRuolo,
+}: {
+  ruoloFiltro: RoleKey | "tutti";
+  onFiltraRuolo: (ruolo: RoleKey) => void;
+}) {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
   const stato = computeMantraStato(players, settings);
@@ -271,15 +288,19 @@ function PannelloMantra() {
       <h3 className="text-xs uppercase text-slate-400 mb-1 mt-4">Copertura ruoli</h3>
       <ul className="text-sm flex flex-wrap gap-1.5">
         {RUOLI_MANTRA.map((r) => (
-          <li
-            key={r}
-            title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]}`}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 border border-slate-200"
-          >
-            <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
-              {r}
-            </span>
-            <IconaCopertura livello={coperturaRuoli[r]} />
+          <li key={r}>
+            <button
+              onClick={() => onFiltraRuolo(r)}
+              title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]} — clicca per filtrare la tabella su questo ruolo`}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border hover:bg-slate-50 ${
+                ruoloFiltro === r ? "border-slate-900" : "border-slate-200"
+              }`}
+            >
+              <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
+                {r}
+              </span>
+              <IconaCopertura livello={coperturaRuoli[r]} />
+            </button>
           </li>
         ))}
       </ul>
@@ -295,13 +316,23 @@ function PannelloMantra() {
   );
 }
 
-export function BudgetPanel() {
+export function BudgetPanel({
+  ruoloFiltro,
+  onFiltraRuolo,
+}: {
+  ruoloFiltro: RoleKey | "tutti";
+  onFiltraRuolo: (ruolo: RoleKey) => void;
+}) {
   const settings = useAuctionStore((s) => s.settings);
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="font-semibold text-lg mb-3">Budget</h2>
-      {settings.modalita === "classic" ? <PannelloClassic /> : <PannelloMantra />}
+      {settings.modalita === "classic" ? (
+        <PannelloClassic ruoloFiltro={ruoloFiltro} onFiltraRuolo={onFiltraRuolo} />
+      ) : (
+        <PannelloMantra ruoloFiltro={ruoloFiltro} onFiltraRuolo={onFiltraRuolo} />
+      )}
     </div>
   );
 }

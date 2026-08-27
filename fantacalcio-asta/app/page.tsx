@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuctionStore } from "@/lib/store";
 import { BudgetPanel } from "@/components/BudgetPanel";
 import { RosterPanel } from "@/components/RosterPanel";
-import { PlayerTable } from "@/components/PlayerTable";
+import { PlayerTable, RoleKey } from "@/components/PlayerTable";
 import { ResetButton } from "@/components/ResetButton";
 
 export default function Home() {
@@ -14,6 +14,19 @@ export default function Home() {
   // perche' puo' essere impostato sia dall'icona panchina in RosterPanel (un mio
   // titolare) sia da quella in PlayerTable stessa (un giocatore ancora disponibile).
   const [filtroBallottaggioId, setFiltroBallottaggioId] = useState<string | null>(null);
+  // Ruolo su cui è filtrata la tabella: sollevato qui perché può essere impostato
+  // anche cliccando un badge in "Copertura ruoli" nel pannello Budget, non solo
+  // dal <select> Ruolo dentro PlayerTable stessa.
+  const [ruoloFiltro, setRuoloFiltro] = useState<RoleKey | "tutti">("tutti");
+
+  // Clic su un badge di "Copertura ruoli" nel pannello Budget: filtra la tabella su
+  // quel ruolo, chiudendo un eventuale filtro ballottaggio già aperto (altrimenti
+  // quest'ultimo avrebbe priorità e il filtro ruolo resterebbe invisibile finché non
+  // lo si chiude a mano).
+  function filtraPerRuolo(ruolo: RoleKey) {
+    setFiltroBallottaggioId(null);
+    setRuoloFiltro(ruolo);
+  }
 
   if (players.length === 0) {
     return (
@@ -35,8 +48,13 @@ export default function Home() {
         <ResetButton />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_310px] gap-4">
-        <BudgetPanel />
-        <PlayerTable filtroBallottaggioId={filtroBallottaggioId} setFiltroBallottaggioId={setFiltroBallottaggioId} />
+        <BudgetPanel ruoloFiltro={ruoloFiltro} onFiltraRuolo={filtraPerRuolo} />
+        <PlayerTable
+          filtroBallottaggioId={filtroBallottaggioId}
+          setFiltroBallottaggioId={setFiltroBallottaggioId}
+          ruoloFiltro={ruoloFiltro}
+          setRuoloFiltro={setRuoloFiltro}
+        />
         <div className="space-y-4">
           <RosterPanel onFiltraBallottaggio={setFiltroBallottaggioId} />
         </div>

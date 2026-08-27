@@ -111,7 +111,7 @@ function tooltipUrgenza(d: DettaglioUrgenza, percentuale: number | null): string
 }
 
 type FiltroStato = "disponibile" | StatoGiocatore | "tutti";
-type RoleKey = Ruolo | RuoloMantra;
+export type RoleKey = Ruolo | RuoloMantra;
 
 // Nella lista giocatori (tabella e box "in asta") si mostrano solo ALG FCP e
 // Punteggio FCP: Solidità Fantainvestimento e Resistenza infortuni restano
@@ -141,9 +141,13 @@ function contaSostitutiDisponibili(p: Player, players: Player[]): number {
 export function PlayerTable({
   filtroBallottaggioId,
   setFiltroBallottaggioId,
+  ruoloFiltro,
+  setRuoloFiltro,
 }: {
   filtroBallottaggioId: string | null;
   setFiltroBallottaggioId: (id: string | null) => void;
+  ruoloFiltro: RoleKey | "tutti";
+  setRuoloFiltro: (ruolo: RoleKey | "tutti") => void;
 }) {
   const players = useAuctionStore((s) => s.players);
   const settings = useAuctionStore((s) => s.settings);
@@ -159,7 +163,6 @@ export function PlayerTable({
   ]);
   const rosaPiena = statoMantra !== null && statoMantra.postiRimanenti <= 0;
 
-  const [ruoloFiltro, setRuoloFiltro] = useState<RoleKey | "tutti">("tutti");
   const [statoFiltro, setStatoFiltro] = useState<FiltroStato>("disponibile");
   const [ricerca, setRicerca] = useState("");
   const [soloPreferiti, setSoloPreferiti] = useState(false);

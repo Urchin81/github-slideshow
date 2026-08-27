@@ -255,7 +255,11 @@ ruoli ancora da coprire nella tua squadra.
   `lib/bipartiteMatching.ts`) già usato per la copertura dei moduli, con due
   slot sintetici (titolare + sostituto) per ruolo — così un giocatore
   "impegnato" a coprire un ruolo non risulta disponibile anche per un altro
-  (`lib/coperturaRuoli.ts`).
+  (`lib/coperturaRuoli.ts`). Ogni badge è anche un **filtro cliccabile**: apre
+  la tabella giocatori su quel ruolo (stesso effetto del `<select>` Ruolo
+  dentro la tabella, sollevato in `app/page.tsx` così i due possono
+  controllarsi a vicenda), chiudendo un eventuale filtro ballottaggio già
+  aperto.
 - **Layout a tre colonne**: pannello Budget (250px, i ruoli nel "Piano di
   spesa" usano la stessa letterina colorata P/D/C/A vista altrove, non il nome
   esteso) e "La mia rosa" (310px) — un compromesso tra le due, abbastanza
