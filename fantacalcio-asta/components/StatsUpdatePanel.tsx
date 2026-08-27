@@ -117,6 +117,21 @@ export function StatsUpdatePanel() {
     setBallottaggiInCorso(false);
   }
 
+  /** Vero durante una qualsiasi delle importazioni: disabilita tutti i pulsanti per evitare richieste sovrapposte. */
+  const operazioneInCorso = inCorso !== null || infortuniInCorso || ballottaggiInCorso;
+
+  // Un solo pulsante per le tre operazioni "veloci/generali" (infortunati, ballottaggi/
+  // fuoriclasse, poi le statistiche FPEDIA per l'intero listino), in sequenza — cosi'
+  // non serve premerle una per una. Le prime due sono poche richieste totali e finiscono
+  // in fretta; le statistiche FPEDIA restano l'unica a fare una richiesta per giocatore
+  // (quindi il passo piu' lento), messa per ultima cosi' i risultati veloci si vedono subito.
+  async function aggiornaTutto() {
+    if (operazioneInCorso) return;
+    await aggiornaInfortunati();
+    await aggiornaBallottaggi();
+    await aggiornaStatistiche("tutti");
+  }
+
   async function aggiornaStatistiche(ambito: Ambito) {
     setInCorso(ambito);
     const perQuotazione = [...players].sort((a, b) => b.quotazione - a.quotazione);
@@ -165,10 +180,32 @@ export function StatsUpdatePanel() {
 
   return (
     <div className="bg-white rounded-lg shadow p-4 flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-slate-100">
+        <button
+          onClick={aggiornaTutto}
+          disabled={operazioneInCorso}
+          className="text-sm bg-emerald-700 text-white rounded px-4 py-2 font-semibold disabled:opacity-50"
+          title="Fa tutto in sequenza: infortunati, ballottaggi/fuoriclasse (veloci), poi le statistiche FPEDIA complete — senza premere i pulsanti singolarmente"
+        >
+          {operazioneInCorso
+            ? infortuniInCorso
+              ? "⚡ Infortunati..."
+              : ballottaggiInCorso
+              ? "⚡ Ballottaggi/Fuoriclasse..."
+              : `⚡ Statistiche FPEDIA... (${progresso?.fatti ?? 0}/${progresso?.totale ?? 0})`
+            : "⚡ Importa tutto"}
+        </button>
+        <span className="text-xs text-slate-400 w-full">
+          Un solo pulsante per infortunati, ballottaggi/fuoriclasse e statistiche FPEDIA (tutti i giocatori) in
+          sequenza. Le prime due sono poche richieste e finiscono in fretta; le statistiche FPEDIA restano una
+          richiesta per giocatore e possono richiedere diversi minuti — vengono fatte per ultime.
+        </span>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={() => aggiornaStatistiche("campione")}
-          disabled={inCorso !== null}
+          disabled={operazioneInCorso}
           className="text-sm bg-amber-500 text-white rounded px-3 py-1.5 disabled:opacity-50"
           title={`Prova solo su ${CAMPIONE_N} giocatori sparsi nel listino, per verificare che la ricerca funzioni prima di lanciarla su tutti`}
         >
@@ -176,14 +213,14 @@ export function StatsUpdatePanel() {
         </button>
         <button
           onClick={() => aggiornaStatistiche("tutti")}
-          disabled={inCorso !== null}
+          disabled={operazioneInCorso}
           className="text-sm bg-slate-900 text-white rounded px-3 py-1.5 disabled:opacity-50"
         >
           {inCorso === "tutti" ? "Aggiornamento in corso..." : "Aggiorna statistiche FPEDIA (tutti)"}
         </button>
         <button
           onClick={() => aggiornaStatistiche("top200")}
-          disabled={inCorso !== null}
+          disabled={operazioneInCorso}
           className="text-sm bg-slate-200 rounded px-3 py-1.5 disabled:opacity-50"
         >
           {inCorso === "top200" ? "Aggiornamento in corso..." : `Aggiorna statistiche FPEDIA (top ${TOP_N})`}
@@ -230,7 +267,7 @@ export function StatsUpdatePanel() {
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
         <button
           onClick={aggiornaInfortunati}
-          disabled={infortuniInCorso}
+          disabled={operazioneInCorso}
           className="text-sm bg-red-600 text-white rounded px-3 py-1.5 disabled:opacity-50"
           title="Legge le 4 liste infortunati di FPEDIA (una per ruolo) e marca/smarca il cerotto rosso su ogni giocatore"
         >
@@ -247,7 +284,7 @@ export function StatsUpdatePanel() {
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
         <button
           onClick={aggiornaBallottaggi}
-          disabled={ballottaggiInCorso}
+          disabled={operazioneInCorso}
           className="text-sm bg-amber-600 text-white rounded px-3 py-1.5 disabled:opacity-50"
           title="Legge la pagina guida-asta di FPEDIA (tutte le squadre) e marca/smarca la corona fuoriclasse e il flag ballottaggio su ogni giocatore"
         >

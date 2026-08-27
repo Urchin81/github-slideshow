@@ -27,20 +27,27 @@ function BadgeBallottaggio({
   players: Player[];
   onFiltraBallottaggio: (id: string) => void;
 }) {
-  if (!ballottaggio) return null;
-  const disponibili = ballottaggio.avversari.filter(
-    (a) => players.find((p) => p.id === a.playerId)?.stato === "disponibile"
-  ).length;
+  const disponibili = ballottaggio
+    ? ballottaggio.avversari.filter((a) => players.find((p) => p.id === a.playerId)?.stato === "disponibile").length
+    : 0;
+  const attivo = disponibili > 0;
 
   return (
     <button
-      onClick={() => onFiltraBallottaggio(id)}
-      className="relative inline-flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 text-slate-500 shrink-0"
-      title={`${disponibili} avversari del ballottaggio ancora disponibili — clicca per filtrarli`}
+      onClick={attivo ? () => onFiltraBallottaggio(id) : undefined}
+      disabled={!attivo}
+      className={`relative inline-flex items-center justify-center w-6 h-6 rounded shrink-0 ${
+        attivo ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"
+      }`}
+      title={
+        attivo
+          ? `${disponibili} avversari del ballottaggio ancora disponibili — clicca per filtrarli`
+          : "Nessun sostituto in ballottaggio ancora disponibile"
+      }
     >
-      <Armchair size={14} />
-      {disponibili > 0 && (
-        <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold">
+      <Armchair size={14} className={attivo ? "text-slate-600" : "text-slate-300"} />
+      {attivo && (
+        <span className="absolute -top-1 -right-1 bg-slate-700 text-white text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold">
           {disponibili}
         </span>
       )}
