@@ -328,16 +328,18 @@ ruoli ancora da coprire nella tua squadra.
     dorata** in alto a sinistra sulla foto (tabella, riquadro "in asta",
     pop-up Moduli Mantra) — diversa dal cerotto rosso degli infortunati (in
     basso), così i due badge non si sovrappongono.
-  - **Icona panchina (ballottaggio)**: in tabella è la prima colonna dopo ★,
-    allineata per ogni riga (non solo per i disponibili); in "La mia rosa"
-    è accanto al prezzo. **Grigio chiaro** e non cliccabile quando non ci
-    sono sostituti disponibili (nessun ballottaggio, o tutti i contendenti
-    già presi); **grigio scuro col numero** di sostituti ancora disponibili
-    altrimenti (in tabella il tooltip elenca comunque tutti i contendenti
-    con la loro percentuale FPEDIA, anche quelli già presi). Cliccandoci
-    sopra filtra la tabella sui soli contendenti ancora disponibili di quel
-    giocatore (un chip in alto permette di uscire dal filtro tornando alla
-    vista normale).
+  - **Icona panchina (ballottaggio)**: in tabella è sotto il martelletto
+    (colonna Azioni), solo per i giocatori ancora disponibili, col conteggio
+    "disponibili/totale contendenti" (es. "2/3" se uno dei tre è già stato
+    preso) e il tooltip con l'elenco completo dei contendenti e la loro
+    percentuale FPEDIA. In "La mia rosa" è invece una colonna allineata
+    subito dopo ★ su ogni riga (non solo il prezzo accanto): **grigio
+    chiaro** e non cliccabile quando non ci sono sostituti disponibili
+    (nessun ballottaggio, o tutti i contendenti già presi), **grigio scuro
+    col numero** di sostituti ancora disponibili altrimenti. Cliccandoci
+    sopra (in entrambi i punti) filtra la tabella sui soli contendenti
+    ancora disponibili di quel giocatore (un chip in alto permette di
+    uscire dal filtro tornando alla vista normale).
   - **Importa tutto**: un unico pulsante "⚡ Importa tutto" (sopra gli altri,
     nello stesso pannello) esegue in sequenza infortunati, ballottaggi/
     fuoriclasse (entrambi pochi richieste, veloci) e infine le statistiche

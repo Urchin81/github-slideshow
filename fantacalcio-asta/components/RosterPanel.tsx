@@ -95,8 +95,11 @@ function RigaGiocatore({
 
   return (
     <li className="flex justify-between items-center gap-1">
-      <span className="flex items-center gap-1.5 min-w-0 truncate">
-        <FavoriteStar id={id} preferito={preferito} />
+      <span className="flex items-center gap-1 min-w-0 truncate">
+        <span className="w-4 flex justify-center shrink-0">
+          <FavoriteStar id={id} preferito={preferito} />
+        </span>
+        <BadgeBallottaggio id={id} ballottaggio={ballottaggio} players={players} onFiltraBallottaggio={onFiltraBallottaggio} />
         <Link href={`/giocatore/${encodeURIComponent(id)}`} className="hover:underline truncate">
           {nome}
         </Link>{" "}
@@ -106,7 +109,6 @@ function RigaGiocatore({
         {extra}
       </span>
       <span className="flex items-center gap-1 shrink-0">
-        <BadgeBallottaggio id={id} ballottaggio={ballottaggio} players={players} onFiltraBallottaggio={onFiltraBallottaggio} />
         {modifica ? (
           <>
             <input

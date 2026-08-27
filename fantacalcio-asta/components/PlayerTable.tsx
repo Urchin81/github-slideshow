@@ -387,34 +387,6 @@ export function PlayerTable({
     );
   }
 
-  /**
-   * Icona panchina, sempre presente (una colonna allineata per tutte le righe): grigio
-   * chiaro e non cliccabile quando non ci sono sostituti disponibili (nessun ballottaggio,
-   * o tutti gli avversari già presi), grigio scuro col numero di disponibili altrimenti —
-   * click apre il filtro dedicato su quei sostituti.
-   */
-  function celleBallottaggio(p: (typeof players)[number]) {
-    const disponibili = contaSostitutiDisponibili(p, players);
-    const attivo = disponibili > 0;
-    return (
-      <button
-        onClick={attivo ? () => setFiltroBallottaggioId(p.id) : undefined}
-        title={p.ballottaggio ? tooltipBallottaggio(p) : "Nessun ballottaggio"}
-        disabled={!attivo}
-        className={`relative inline-flex items-center justify-center w-6 h-6 rounded ${
-          attivo ? "hover:bg-slate-200 cursor-pointer" : "cursor-default"
-        }`}
-      >
-        <Armchair size={14} className={attivo ? "text-slate-600" : "text-slate-200"} />
-        {attivo && (
-          <span className="absolute -top-1 -right-1 bg-slate-700 text-white text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold">
-            {disponibili}
-          </span>
-        )}
-      </button>
-    );
-  }
-
   function celleFCPedia(p: (typeof players)[number]) {
     const voci = vociFantasolditaLista(p);
     if (voci.length === 0) return <span className="text-slate-300">—</span>;
@@ -744,9 +716,6 @@ export function PlayerTable({
               >
                 <span className="inline-flex items-center gap-0.5">★{indicatoreOrdinamento("preferiti")}</span>
               </th>
-              <th className="pb-2" title="Sostituti in ballottaggio ancora disponibili">
-                <Armchair size={12} className="inline-block" />
-              </th>
               <th
                 className="pb-2 cursor-pointer select-none hover:text-slate-600"
                 onClick={() => alternaOrdinamento("ruolo")}
@@ -826,7 +795,6 @@ export function PlayerTable({
                   <td className="py-1.5">
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>
-                  <td className="py-1.5">{celleBallottaggio(p)}</td>
                   <td className="py-1.5">{celleRuolo(p.ruolo, p.ruoliMantra)}</td>
                   <td className="py-1.5">
                     <span className="relative inline-block">
@@ -883,13 +851,27 @@ export function PlayerTable({
                   <td className="py-1.5 text-right">
                     {p.stato === "disponibile" ? (
                       inAsta ? null : (
-                        <button
-                          onClick={() => apriAsta(p.id)}
-                          title="Giocatore in asta: mostra i giocatori con ruoli compatibili ancora disponibili"
-                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 text-slate-600"
-                        >
-                          <Gavel size={16} />
-                        </button>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <button
+                            onClick={() => apriAsta(p.id)}
+                            title="Giocatore in asta: mostra i giocatori con ruoli compatibili ancora disponibili"
+                            className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-slate-100 text-slate-600"
+                          >
+                            <Gavel size={16} />
+                          </button>
+                          {p.ballottaggio && (
+                            <button
+                              onClick={() => setFiltroBallottaggioId(p.id)}
+                              title={tooltipBallottaggio(p)}
+                              className="flex flex-col items-center leading-none hover:bg-slate-100 rounded px-1 py-0.5 -mt-0.5"
+                            >
+                              <span className="text-[9px] font-bold text-amber-600">
+                                {contaSostitutiDisponibili(p, players)}/{p.ballottaggio.avversari.length}
+                              </span>
+                              <Armchair size={13} className="text-slate-400" />
+                            </button>
+                          )}
+                        </div>
                       )
                     ) : (
                       <span className="inline-flex items-center gap-1.5">
@@ -950,7 +932,6 @@ export function PlayerTable({
                   </td>
                 </tr>
                 <tr className={`border-b border-slate-50 ${inAsta ? "bg-amber-50/60" : zebra}`}>
-                  <td />
                   <td />
                   <td />
                   <td colSpan={3} className="pb-1.5">
