@@ -8,6 +8,7 @@ import { FpediaStats, FpediaPillola } from "@/lib/types";
 import { computeLivelliRelativiFpedia, getSuggerimentiAsta } from "@/lib/suggestions";
 import { matchNews } from "@/lib/matchNews";
 import type { NewsFeedError, RawNewsItem } from "@/app/api/news/route";
+import { eDellaStagioneCorrente } from "@/lib/stagione";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
 import {
@@ -133,6 +134,9 @@ export default function GiocatorePage() {
     );
   }
 
+  // matchNews scarta già le notizie di stagioni passate ad ogni aggiornamento, ma
+  // questo filtra anche dati salvati prima che quel controllo esistesse.
+  const notizieStagioneCorrente = (player.notizie ?? []).filter((n) => eDellaStagioneCorrente(n.data));
   const pillole = player.fpedia?.pillole ?? [];
   const stagionePrecedente = trovaStagionePiuRecente(pillole);
   const pilloleGenerali = pillole.filter((p) => !STAGIONE_REGEX.test(p.label));
@@ -454,13 +458,13 @@ export default function GiocatorePage() {
                 {erroreNotizie ?? esitoNotizie}
               </p>
             )}
-            {(!player.notizie || player.notizie.length === 0) && (
+            {notizieStagioneCorrente.length === 0 && (
               <p className="text-slate-400 text-sm italic text-center">
-                Nessuna notizia trovata. Usa l&apos;icona di aggiornamento qui sopra.
+                Nessuna notizia della stagione corrente. Usa l&apos;icona di aggiornamento qui sopra.
               </p>
             )}
             <ul>
-              {(player.notizie ?? []).map((n, i) => (
+              {notizieStagioneCorrente.map((n, i) => (
                 <li key={i} className="border-t border-slate-300 pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
                   {isSafeHttpUrl(n.link) ? (
                     <a

@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { AlarmClock, Armchair, ChevronDown, ChevronUp, Euro, Gavel, Newspaper, NotebookText, Wand2 } from "lucide-react";
 import {
   LivelloFpedia,
+  NewsItem,
   Player,
   RUOLI,
   RUOLI_MANTRA,
@@ -19,6 +20,7 @@ import {
 import { computeMantraStato, getSuggerimentiAsta, simulaAcquisto, valutaRischioSforamento } from "@/lib/suggestions";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { classeBordoTitolarita } from "@/lib/titolarita";
+import { eDellaStagioneCorrente } from "@/lib/stagione";
 import {
   computeLivelloUrgenza,
   computePercentualeUrgenza,
@@ -152,9 +154,17 @@ function tooltipBallottaggio(p: Player): string {
   return `Ballottaggio\n${righe.join("\n")}`;
 }
 
+/**
+ * Notizie del giocatore ancora della stagione corrente: matchNews scarta già
+ * quelle vecchie ad ogni aggiornamento, ma questo filtra anche dati salvati
+ * prima che quel controllo esistesse, senza dover rilanciare l'aggiornamento.
+ */
+function notizieStagioneCorrente(p: Player): NewsItem[] {
+  return (p.notizie ?? []).filter((n) => eDellaStagioneCorrente(n.data));
+}
+
 /** Anteprima delle ultime notizie del giocatore, per il tooltip dell'icona giornale in tabella. */
-function tooltipNotizie(p: Player): string {
-  const notizie = p.notizie ?? [];
+function tooltipNotizie(notizie: NewsItem[]): string {
   if (notizie.length === 0) return "";
   const righe = notizie.map((n) => {
     const data = n.data ? new Date(n.data).toLocaleDateString("it-IT") : null;
@@ -1020,8 +1030,8 @@ export function PlayerTable({
                       <Link href={`/giocatore/${encodeURIComponent(p.id)}`} className="hover:underline">
                         {p.nome}
                       </Link>
-                      {p.notizie && p.notizie.length > 0 && (
-                        <span title={tooltipNotizie(p)} className="shrink-0">
+                      {notizieStagioneCorrente(p).length > 0 && (
+                        <span title={tooltipNotizie(notizieStagioneCorrente(p))} className="shrink-0">
                           <Newspaper size={12} className="text-slate-400" />
                         </span>
                       )}

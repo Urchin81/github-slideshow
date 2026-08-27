@@ -1,5 +1,6 @@
 import { RawNewsItem } from "@/app/api/news/route";
 import { NewsItem, Player, normalizeText } from "./types";
+import { eDellaStagioneCorrente } from "./stagione";
 
 function derivaTrend(testoCombinato: string): string | undefined {
   if (/infortun/.test(testoCombinato)) return "Infortunato";
@@ -12,11 +13,13 @@ function derivaTrend(testoCombinato: string): string | undefined {
 
 /**
  * Incrocia gli articoli RSS gia' scaricati con l'elenco di giocatori da
- * aggiornare: cerca il nome del giocatore nel testo di titolo+estratto,
- * prende le 3 notizie piu' recenti e deduce (in modo euristico, sulla base
- * di parole chiave) rigorista/tiratore punizioni/angoli e un trend qualitativo.
- * I flag booleani vengono rafforzati (OR) rispetto al valore gia' noto, cosi'
- * un giro senza nuove menzioni non cancella un'informazione trovata in passato.
+ * aggiornare: cerca il nome del giocatore nel testo di titolo+estratto, scarta
+ * gli articoli di stagioni passate (non utili per l'asta in corso), prende le
+ * 3 notizie piu' recenti tra quelle rimaste e deduce (in modo euristico, sulla
+ * base di parole chiave) rigorista/tiratore punizioni/angoli e un trend
+ * qualitativo. I flag booleani vengono rafforzati (OR) rispetto al valore
+ * gia' noto, cosi' un giro senza nuove menzioni non cancella un'informazione
+ * trovata in passato.
  */
 export function matchNews(players: Player[], rawItems: RawNewsItem[]): Record<string, Partial<Player>> {
   const now = new Date().toISOString();
@@ -31,7 +34,9 @@ export function matchNews(players: Player[], rawItems: RawNewsItem[]): Record<st
     const nomeNormalizzato = normalizeText(player.nome);
     if (!nomeNormalizzato) continue;
 
-    const corrispondenze = itemsConTesto.filter(({ testo }) => testo.includes(nomeNormalizzato));
+    const corrispondenze = itemsConTesto
+      .filter(({ testo }) => testo.includes(nomeNormalizzato))
+      .filter(({ item }) => eDellaStagioneCorrente(item.data));
     if (corrispondenze.length === 0) continue;
 
     corrispondenze.sort(

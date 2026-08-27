@@ -437,10 +437,18 @@ ruoli ancora da coprire nella tua squadra.
     `POST /api/news` + `matchNews` di `NewsUpdatePanel.tsx`) solo per questo
     giocatore, senza dover lanciare un giro su tutto il listino da Settings.
   - **Icona notizie in tabella**: subito dopo il nome, solo per i giocatori
-    che hanno almeno una notizia, compare una piccola icona giornale; il
-    tooltip al passaggio del mouse (`title` nativo del browser) mostra
-    titolo, fonte e data delle notizie salvate, senza dover aprire la scheda
-    del giocatore.
+    che hanno almeno una notizia **della stagione corrente**, compare una
+    piccola icona giornale; il tooltip al passaggio del mouse (`title`
+    nativo del browser) mostra titolo, fonte e data delle notizie salvate,
+    senza dover aprire la scheda del giocatore.
+  - **Solo notizie della stagione corrente**: sia `matchNews` (ad ogni
+    aggiornamento) sia la visualizzazione (icona in tabella, box "Ultime
+    notizie" nella scheda) scartano gli articoli di stagioni passate — una
+    notizia di marzo non aiuta a valutare un giocatore per l'asta della
+    stagione nuova. La "stagione corrente" è definita come 1° luglio -> 30
+    giugno dell'anno successivo (`lib/stagione.ts`, stessa convenzione delle
+    etichette "2025-2026" delle pillole FPEDIA), così le notizie di
+    calciomercato di piena estate restano visibili.
   - **Caratteristiche a colpo d'occhio in tabella**: sotto nome e squadra di
     ogni giocatore nella tabella compare sempre, su sfondo grigio chiaro, la
     stessa fila di icone lineari (rigorista, tiratore di punizioni/angoli,
