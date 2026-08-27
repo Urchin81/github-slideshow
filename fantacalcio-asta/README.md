@@ -122,6 +122,15 @@ ruoli ancora da coprire nella tua squadra.
   locale nella finestra: non tocca lo stato dell'asta, e "Ripristina
   automatica" torna in qualsiasi momento alla formazione (tra quelle
   proposte) attualmente selezionata, scartando le modifiche manuali.
+- **Le 3 formazioni titolari più forti**: nell'elenco "Moduli" del pannello
+  Budget, i moduli completamente schierabili con la rosa attuale vengono
+  classificati per "valore" — la somma di (ALG FCP × quotazione) dei titolari
+  nella miglior formazione possibile per quel modulo (`computeClassificaValoreModuli`
+  in `lib/suggestions.ts`, che riusa `generaCombinazioniPerPunteggio`) — e le
+  prime 3 di questa classifica ricevono un **bordo verde**: un indicatore
+  diverso da "più vicino al completamento" (l'ordine con cui la lista è già
+  ordinata), utile a distinguere la formazione più forte da quella più facile
+  da completare, che non sono necessariamente la stessa.
 - **Urgenza**: un punteggio dinamico, indipendente dall'ALG FCP (quello,
   descritto più sotto insieme alle altre statistiche FPEDIA, misura quanto
   vale il giocatore in assoluto; questo quanto conviene assicurarselo
@@ -135,7 +144,13 @@ ruoli ancora da coprire nella tua squadra.
   - **Bisogno di ruolo**: sale se possiedi ancora pochi giocatori di quel
     ruolo rispetto a quanti te ne servono (Classic: slot configurati in
     Settings; Mantra: riusa i gap dei moduli più vicini al completamento),
-    scende quando il ruolo è già coperto a sufficienza.
+    scende quando il ruolo è già coperto a sufficienza. In Mantra il segnale
+    si smorza ulteriormente in proporzione a quanti giocatori di quel ruolo
+    possiedi già rispetto al **massimo che un qualsiasi modulo potrebbe mai
+    schierarne in contemporanea** (es. "Pc" non supera mai 2 slot nello
+    stesso modulo): un terzo giocatore in un ruolo già saturo a quel tetto
+    non aiuterebbe in nessuna formazione, quindi l'urgenza per lui scende a
+    zero indipendentemente da cosa dicono i gap dei moduli.
   - **Esaurimento fasce**: divide tutti i giocatori di un ruolo (di
     chiunque) in fasce da *numero di partecipanti* ciascuna, ordinate per
     ALG FCP decrescente — la fascia 0 sono i migliori "uno a testa" in

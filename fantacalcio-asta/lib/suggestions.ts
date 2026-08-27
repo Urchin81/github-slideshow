@@ -1,6 +1,6 @@
 import { LivelloFpedia, Player, RUOLI, Ruolo, RuoloMantra, Settings } from "./types";
 import { MODULI_MANTRA, Modulo, SlotModulo } from "./moduliMantra";
-import { costruisciMatchmaker, MatchmakerModulo } from "./bipartiteMatching";
+import { costruisciMatchmaker, generaCombinazioniPerPunteggio, MatchmakerModulo } from "./bipartiteMatching";
 import { livelloRelativoInCampione } from "./percentile";
 
 export { livelloRelativoInCampione } from "./percentile";
@@ -245,6 +245,40 @@ export function computeDettaglioModulo(players: Player[], modulo: Modulo): RigaD
     righe.set(chiave, riga);
   });
   return Array.from(righe.values());
+}
+
+export interface ClassificaModulo {
+  nome: string;
+  /**
+   * Somma di (ALG FCP × quotazione) dei titolari nella miglior formazione possibile per
+   * questo modulo con la rosa attuale — un "valore" che pesa sia la qualità (ALG FCP) sia
+   * il costo/prestigio del giocatore (quotazione), non solo la qualità pura. `null` se il
+   * modulo non è completamente coprbile con la rosa posseduta (non ha senso confrontarne
+   * il valore: non è nemmeno schierabile).
+   */
+  valore: number | null;
+}
+
+/**
+ * Classifica tutti i moduli Mantra per "valore" della miglior formazione titolare
+ * possibile con la rosa attuale (solo tra quelli completamente coprbili), per capire
+ * quale formazione schierare offrirebbe il roster più forte — usata per evidenziare le
+ * prime 3 nel pannello Budget.
+ */
+export function computeClassificaValoreModuli(players: Player[]): ClassificaModulo[] {
+  const posseduti = giocatoriMantraPosseduti(players);
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const valoreGiocatore = (id: string) => {
+    const p = byId.get(id);
+    return (p?.fpedia?.algFcp ?? 0) * (p?.quotazione ?? 0);
+  };
+
+  return MODULI_MANTRA.map((modulo) => {
+    const matcher = costruisciMatchmaker(modulo.slot, posseduti);
+    if (matcher.coperti < matcher.totale) return { nome: modulo.nome, valore: null };
+    const combinazioni = generaCombinazioniPerPunteggio(modulo.slot, posseduti, valoreGiocatore, 1);
+    return { nome: modulo.nome, valore: combinazioni[0]?.punteggioTotale ?? null };
+  });
 }
 
 const MODULI_CONSIDERATI = 3;

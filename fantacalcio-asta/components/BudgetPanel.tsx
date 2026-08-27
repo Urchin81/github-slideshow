@@ -5,6 +5,7 @@ import { AlertTriangle, Calculator, ShieldAlert, Users, Wallet } from "lucide-re
 import { RUOLI, RUOLI_MANTRA, RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL } from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
+  computeClassificaValoreModuli,
   computeCoperturaModuli,
   computeDettaglioModulo,
   computeMantraStato,
@@ -140,6 +141,17 @@ function PannelloMantra() {
   );
   const coperturaRuoli = useMemo(() => computeCoperturaRuoliMantra(players), [players]);
 
+  // Le 3 formazioni titolari più forti (schierabili con la rosa attuale) per valore
+  // complessivo (ALG FCP × quotazione dei titolari): evidenziate con un bordo verde,
+  // per distinguere "più vicino al completamento" (ordine della lista) da "più forte".
+  const top3Moduli = useMemo(() => {
+    const classifica = computeClassificaValoreModuli(players)
+      .filter((m): m is { nome: string; valore: number } => m.valore !== null)
+      .sort((a, b) => b.valore - a.valore)
+      .slice(0, 3);
+    return new Set(classifica.map((m) => m.nome));
+  }, [players]);
+
   return (
     <>
       <div className="flex justify-between items-baseline mb-1">
@@ -199,12 +211,21 @@ function PannelloMantra() {
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>
       <ul className="text-sm space-y-1">
-        {coperture.map((m) => (
-          <li key={m.nome} className="relative group">
+        {coperture.map((m) => {
+          const inTop3 = top3Moduli.has(m.nome);
+          return (
+          <li
+            key={m.nome}
+            className={`relative group rounded ${inTop3 ? "border-2 border-green-500" : ""}`}
+          >
             <button
               onClick={() => setModuloAperto(moduliByNome.get(m.nome) ?? null)}
               className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-1 -mx-1 py-0.5"
-              title={`Vedi ${m.nome} in campo`}
+              title={
+                inTop3
+                  ? `Vedi ${m.nome} in campo — tra le 3 formazioni titolari più forti schierabili con la tua rosa`
+                  : `Vedi ${m.nome} in campo`
+              }
             >
               <span>{m.nome}</span>
               <span className="flex items-center gap-2">
@@ -236,7 +257,8 @@ function PannelloMantra() {
               ))}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <h3 className="text-xs uppercase text-slate-400 mb-1 mt-4">Copertura ruoli</h3>

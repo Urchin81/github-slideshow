@@ -1,5 +1,6 @@
 import { LivelloFpedia, Player, Ruolo, RuoloMantra, Settings } from "./types";
 import { computeCoperturaModuli, computeRoleStats, computeRuoliNecessari } from "./suggestions";
+import { MODULI_MANTRA } from "./moduliMantra";
 import { livelloRelativoInCampione, percentualeRelativaInCampione } from "./percentile";
 
 // ---------------------------------------------------------------------------
@@ -90,13 +91,51 @@ function bisognoRuoloClassic(ruolo: Ruolo, players: Player[], settings: Settings
   return Math.max(0, Math.min(1, 1 - stats.slotOccupati / stats.slotTotali)) * PESO_BISOGNO_RUOLO;
 }
 
-/** Mantra non ha slot fissi per ruolo: riusa computeRuoliNecessari (gap dei moduli piu' vicini al completamento), gia' zero se il ruolo e' coperto abbastanza. */
+/**
+ * Quanti slot un ruolo Mantra puo' occupare al massimo IN CONTEMPORANEA, nel modulo che
+ * lo sfrutta di piu' (es. "Pc" compare al massimo 2 volte nello stesso modulo, in slot
+ * "A/Pc"): oltre questo tetto, possedere un altro giocatore di quel ruolo non aiuta in
+ * NESSUN modulo, qualunque si scelga. Calcolato una sola volta: MODULI_MANTRA e' statico.
+ */
+const MASSIMO_SIMULTANEO_PER_RUOLO: Partial<Record<RuoloMantra, number>> = (() => {
+  const massimi: Partial<Record<RuoloMantra, number>> = {};
+  for (const modulo of MODULI_MANTRA) {
+    const conteggio = new Map<RuoloMantra, number>();
+    for (const slot of modulo.slot) {
+      for (const ruolo of slot) conteggio.set(ruolo, (conteggio.get(ruolo) ?? 0) + 1);
+    }
+    for (const [ruolo, n] of conteggio) massimi[ruolo] = Math.max(massimi[ruolo] ?? 0, n);
+  }
+  return massimi;
+})();
+
+/**
+ * Mantra non ha slot fissi per ruolo: riusa computeRuoliNecessari (gap dei moduli piu'
+ * vicini al completamento), gia' zero se il ruolo e' coperto abbastanza in QUEI moduli —
+ * ma quel segnale da solo non basta: un ruolo puo' restare "necessario" secondo i moduli
+ * piu' vicini pur avendo gia' in rosa piu' giocatori di quanti se ne potrebbero MAI
+ * schierare in contemporanea per quel ruolo specifico (es. un terzo "Pc" quando nessun
+ * modulo ne accetta piu' di due). Il bisogno viene quindi smorzato in proporzione a
+ * quanto ci si avvicina a quel tetto teorico, azzerandosi esattamente quando lo si
+ * raggiunge o supera.
+ */
 function bisognoRuoloMantraMap(players: Player[]): Map<RuoloMantra, number> {
   const necessari = computeRuoliNecessari(computeCoperturaModuli(players));
   const massimo = necessari.reduce((max, r) => Math.max(max, r.punteggio), 0);
   const mappa = new Map<RuoloMantra, number>();
   if (massimo <= 0) return mappa;
-  for (const r of necessari) mappa.set(r.ruolo, (r.punteggio / massimo) * PESO_BISOGNO_RUOLO);
+
+  const posseduti = new Map<RuoloMantra, number>();
+  for (const p of players) {
+    if (p.stato !== "mia") continue;
+    for (const r of p.ruoliMantra ?? []) posseduti.set(r, (posseduti.get(r) ?? 0) + 1);
+  }
+
+  for (const r of necessari) {
+    const tetto = MASSIMO_SIMULTANEO_PER_RUOLO[r.ruolo];
+    const fattoreSaturazione = tetto ? Math.max(0, 1 - (posseduti.get(r.ruolo) ?? 0) / tetto) : 1;
+    mappa.set(r.ruolo, (r.punteggio / massimo) * PESO_BISOGNO_RUOLO * fattoreSaturazione);
+  }
   return mappa;
 }
 
