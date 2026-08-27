@@ -548,13 +548,14 @@ principale per seguire l'asta.
   dell'immagine fornita: verifica i tuoi moduli preferiti nel pannello
   "Moduli (dal più vicino al completamento)" e correggi quell'array se
   qualche slot non corrisponde al tuo schema.
-- **Feed notizie non verificati**: l'elenco di default in `lib/newsSources.ts`
-  è stato scelto in buona fede tra fonti italiane di calcio note per
-  pubblicare RSS pubblici, ma non è stato possibile verificarne la
-  raggiungibilità dall'ambiente in cui è stata sviluppata l'app (rete con
-  accesso esterno limitato). Se un feed non risponde, l'app lo segnala
-  nell'esito dell'aggiornamento senza bloccare gli altri: modifica pure
-  l'elenco con URL che funzionano per te.
+- **Feed notizie**: l'elenco di default in `lib/newsSources.ts` (ANSA Calcio,
+  Gazzetta dello Sport — Serie A e Calciomercato, TuttoMercatoWeb — Ultime
+  notizie e Serie A) è stato verificato manualmente il 27/08/2026 (apertura
+  diretta di ogni URL -> XML valido, nessun redirect a pagina HTML o login),
+  dato che l'accesso in uscita dall'ambiente in cui è stata sviluppata l'app
+  non permette di verificarli in autonomia. Se in futuro un feed smette di
+  rispondere, l'app lo segnala nell'esito dell'aggiornamento senza bloccare
+  gli altri: modifica pure l'elenco con URL che funzionano per te.
 - I flag rigorista/tiratore punizioni/angoli e il trend sono dedotti con
   semplici euristiche testuali sulle notizie trovate: possono contenere falsi
   negativi (nessuna menzione recente) o imprecisioni, e vanno usati come
