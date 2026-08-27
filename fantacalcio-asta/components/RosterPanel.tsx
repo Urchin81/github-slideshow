@@ -47,7 +47,7 @@ function BadgeBallottaggio({
     >
       <Armchair size={14} className={attivo ? "text-slate-600" : "text-slate-300"} />
       {attivo && (
-        <span className="absolute -top-1 -right-1 bg-slate-700 text-white text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold">
+        <span className="absolute -top-1 -right-1 bg-yellow-400 text-slate-900 text-[9px] leading-none rounded-full min-w-[14px] h-[14px] px-0.5 flex items-center justify-center font-bold ring-1 ring-white">
           {disponibili}
         </span>
       )}
@@ -95,7 +95,7 @@ function RigaGiocatore({
 
   return (
     <li className="flex justify-between items-center gap-1">
-      <span className="flex items-center gap-1 min-w-0 truncate">
+      <span className="flex items-center gap-1 min-w-0">
         <span className="w-4 flex justify-center shrink-0">
           <FavoriteStar id={id} preferito={preferito} />
         </span>

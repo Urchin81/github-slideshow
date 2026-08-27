@@ -515,6 +515,47 @@ export function PlayerTable({
             soloPresenti
           />
 
+          {inAstaPlayer.ballottaggio && (
+            <div className="bg-white border border-amber-100 rounded px-2 py-1.5">
+              <div className="text-[10px] uppercase text-slate-400 tracking-wide mb-1 flex items-center gap-1">
+                <Armchair size={11} /> Ballottaggio
+              </div>
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-amber-100 text-amber-800 font-semibold border border-amber-300"
+                  title="Il giocatore in asta"
+                >
+                  {inAstaPlayer.nome} {inAstaPlayer.ballottaggio.percentuale}%
+                </span>
+                {inAstaPlayer.ballottaggio.avversari.map((a) => {
+                  const avversario = players.find((pl) => pl.id === a.playerId);
+                  const stato = avversario?.stato;
+                  return (
+                    <span
+                      key={a.playerId}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border font-medium ${
+                        stato === "mia"
+                          ? "bg-green-100 text-green-800 border-green-300"
+                          : stato === "altrui"
+                          ? "bg-slate-200 text-slate-500 border-slate-300 line-through"
+                          : "bg-white text-slate-600 border-slate-200"
+                      }`}
+                      title={
+                        stato === "mia"
+                          ? "Già nella tua rosa"
+                          : stato === "altrui"
+                          ? "Già preso da altri"
+                          : "Ancora disponibile"
+                      }
+                    >
+                      {a.nome} {a.percentuale}%
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white border-2 border-amber-300 rounded-lg p-3 shadow-sm space-y-3">
             <div className="text-xs uppercase text-amber-700 font-semibold tracking-wide">Valore Asta</div>
             <div className="flex flex-wrap items-center gap-3">

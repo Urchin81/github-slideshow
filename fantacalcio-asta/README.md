@@ -335,11 +335,20 @@ ruoli ancora da coprire nella tua squadra.
     percentuale FPEDIA. In "La mia rosa" è invece una colonna allineata
     subito dopo ★ su ogni riga (non solo il prezzo accanto): **grigio
     chiaro** e non cliccabile quando non ci sono sostituti disponibili
-    (nessun ballottaggio, o tutti i contendenti già presi), **grigio scuro
-    col numero** di sostituti ancora disponibili altrimenti. Cliccandoci
-    sopra (in entrambi i punti) filtra la tabella sui soli contendenti
+    (nessun ballottaggio, o tutti i contendenti già presi), **cerchietto
+    giallo col numero** di sostituti ancora disponibili altrimenti.
+    Cliccandoci sopra (in entrambi i punti) filtra la tabella sui soli
+    contendenti
     ancora disponibili di quel giocatore (un chip in alto permette di
     uscire dal filtro tornando alla vista normale).
+  - **Ballottaggio nel riquadro "Giocatore in asta"**: se il giocatore
+    selezionato ha un ballottaggio, il riquadro amber mostra una riga
+    "Ballottaggio" con una pillola per ognuno dei contendenti (lui incluso,
+    in ambra) e la relativa percentuale FPEDIA — **verde** per chi è già
+    nella tua rosa, **grigio con testo barrato** per chi è già stato preso
+    da altri, bianco/neutro per chi è ancora disponibile — così si vede a
+    colpo d'occhio se conviene aggiudicarselo subito o se il "rivale" è già
+    fuori gioco.
   - **Importa tutto**: un unico pulsante "⚡ Importa tutto" (sopra gli altri,
     nello stesso pannello) esegue in sequenza infortunati, ballottaggi/
     fuoriclasse (entrambi pochi richieste, veloci) e infine le statistiche
