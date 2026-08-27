@@ -61,8 +61,8 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E"], ["M", "C"], ["C"], ["E"],
-      ["T", "A"], ["T", "A"],
+      ["E", "W"], ["M", "C"], ["M"], ["E"],
+      ["T"], ["T", "A"],
       ["A", "Pc"],
     ],
     righe: [[0], [1, 2, 3], [4, 5, 6, 7], [8, 9], [10]],
@@ -72,7 +72,7 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dc"], ["Dc"], ["Dc", "B"],
-      ["E", "W"], ["M"], ["M"], ["C"], ["E", "W"],
+      ["E", "W"], ["M", "C"], ["M"], ["C"], ["E"],
       ["A", "Pc"], ["A", "Pc"],
     ],
     righe: [[0], [1, 2, 3], [4, 5, 6, 7, 8], [9, 10]],
@@ -115,7 +115,7 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dd"], ["Dc"], ["Dc"], ["Ds"],
-      ["E"], ["M", "C"], ["C"], ["E"],
+      ["E", "W"], ["M", "C"], ["C"], ["E"],
       ["A", "Pc"], ["A", "Pc"],
     ],
     righe: [[0], [1, 2, 3, 4], [5, 6, 7, 8], [9, 10]],
@@ -136,7 +136,7 @@ export const MODULI_MANTRA: Modulo[] = [
     slot: [
       ["Por"],
       ["Dd"], ["Dc"], ["Dc"], ["Ds"],
-      ["E"], ["M", "C"], ["C"], ["E", "W"],
+      ["E", "W"], ["M"], ["C"], ["E", "W"],
       ["T", "A"],
       ["A", "Pc"],
     ],
