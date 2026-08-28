@@ -12,13 +12,14 @@ import {
   RUOLO_MANTRA_LABEL,
 } from "@/lib/types";
 import {
+  ColoreBarraGruppoMantra,
   computeBudgetResiduoTotale,
   computeClassificaValoreModuli,
   computeCoperturaModuli,
   computeDettaglioModulo,
+  computeImpattoBudgetGruppiMantra,
   computeMantraStato,
   computeRoleStats,
-  computeSpesaGruppiMantra,
   computeValoreMedioAcquisto,
 } from "@/lib/suggestions";
 import { computeCoperturaRuoliClassic, computeCoperturaRuoliMantra, LivelloCopertura } from "@/lib/coperturaRuoli";
@@ -52,20 +53,41 @@ function coloreBarraAvanzamento(speso: number, budgetPrevisto: number): string {
   return "#16a34a";
 }
 
-/** Barra di avanzamento spesa/budget previsto per un ruolo o un gruppo di ruoli: resta ferma al 100% (rossa) in caso di sforamento, con l'importo dello sforamento a fianco. */
+const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
+  verde: "#16a34a",
+  ambra: "#f59e0b",
+  blu: "#2563eb",
+  rosso: "#dc2626",
+};
+
+/**
+ * Barra di avanzamento spesa/budget previsto per un ruolo o un gruppo di
+ * ruoli: resta ferma al 100% in caso di sforamento, con l'importo dello
+ * sforamento a fianco. In Mantra il colore dello sforamento (blu finché la
+ * Riserva condivisa lo copre, rosso una volta esaurita) arriva da fuori
+ * tramite `coloreOverride`; senza, usa le soglie standard (Classic, che non
+ * ha una Riserva). `penalitaDisponibile`, quando non in sforamento, mostra
+ * quanto della propria quota è eroso dalla Riserva esaurita altrove.
+ */
 function BarraBudgetRuolo({
   label,
   colore,
   speso,
   budgetPrevisto,
+  coloreOverride,
+  penalitaDisponibile,
 }: {
   label: string;
   colore: string;
   speso: number;
   budgetPrevisto: number;
+  coloreOverride?: string;
+  penalitaDisponibile?: number;
 }) {
   const sforato = speso > budgetPrevisto;
   const larghezza = budgetPrevisto > 0 ? Math.min(100, (speso / budgetPrevisto) * 100) : 0;
+  const coloreBarra = coloreOverride ?? coloreBarraAvanzamento(speso, budgetPrevisto);
+  const disponibileEroso = !sforato && (penalitaDisponibile ?? 0) > 0;
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-0.5">
@@ -78,10 +100,37 @@ function BarraBudgetRuolo({
         </span>
       </div>
       <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${larghezza}%`, backgroundColor: coloreBarraAvanzamento(speso, budgetPrevisto) }}
-        />
+        <div className="h-full rounded-full" style={{ width: `${larghezza}%`, backgroundColor: coloreBarra }} />
+      </div>
+      {disponibileEroso && (
+        <p
+          className="text-red-600 font-bold text-xs mt-0.5 text-right"
+          title="La Riserva è esaurita e un altro gruppo ha sforato oltre quanto poteva coprire: la tua quota disponibile si riduce di conseguenza."
+        >
+          disponibile: {budgetPrevisto - speso - (penalitaDisponibile ?? 0)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Barra della Riserva Mantra: parte piena (100%, verde) e scende man mano che copre lo sforamento altrui, fino a esaurirsi (rossa, vuota). */
+function BarraRiserva({ budgetPrevisto, consumata, residua }: { budgetPrevisto: number; consumata: number; residua: number }) {
+  const percentualeResidua = budgetPrevisto > 0 ? Math.max(0, Math.min(100, (residua / budgetPrevisto) * 100)) : 0;
+  const rapportoConsumata = budgetPrevisto > 0 ? consumata / budgetPrevisto : 0;
+  const colore = rapportoConsumata >= 1 ? "#dc2626" : rapportoConsumata > 0.7 ? "#f59e0b" : "#16a34a";
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm mb-0.5">
+        <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: GRUPPO_BUDGET_MANTRA_COLORE.Riserva }}>
+          Riserva
+        </span>
+        <span className="text-slate-500 text-xs" title="Cuscinetto condiviso: copre lo sforamento degli altri gruppi finché non si esaurisce.">
+          {consumata > 0 ? `${residua} residui / ${budgetPrevisto}` : `${budgetPrevisto} disponibili`}
+        </span>
+      </div>
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${percentualeResidua}%`, backgroundColor: colore }} />
       </div>
     </div>
   );
@@ -166,7 +215,7 @@ function PannelloMantra({
   const settings = useAuctionStore((s) => s.settings);
   const stato = computeMantraStato(players, settings);
   const coperture = computeCoperturaModuli(players);
-  const spesaGruppi = computeSpesaGruppiMantra(players, settings);
+  const impattoBudget = computeImpattoBudgetGruppiMantra(players, settings);
   const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
   const mieiMantra = players.filter((p) => p.stato === "mia");
   const moduliByNome = new Map(MODULI_MANTRA.map((m) => [m.nome, m]));
@@ -218,15 +267,22 @@ function PannelloMantra({
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per gruppo di ruoli</h3>
       <div className="space-y-2 mb-4">
-        {spesaGruppi.map((g) => (
+        {impattoBudget.gruppi.map((g) => (
           <BarraBudgetRuolo
             key={g.gruppo}
             label={g.label}
             colore={GRUPPO_BUDGET_MANTRA_COLORE[g.gruppo]}
             speso={g.speso}
             budgetPrevisto={g.budgetPrevisto}
+            coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
+            penalitaDisponibile={g.penalitaDisponibile}
           />
         ))}
+        <BarraRiserva
+          budgetPrevisto={impattoBudget.riserva.budgetPrevisto}
+          consumata={impattoBudget.riserva.consumata}
+          residua={impattoBudget.riserva.residua}
+        />
       </div>
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>

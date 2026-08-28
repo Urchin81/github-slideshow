@@ -346,6 +346,105 @@ export function computeSpesaGruppiMantra(players: Player[], settings: Settings):
   }));
 }
 
+/**
+ * Colore semantico della barra di un gruppo in sforamento: "blu" mentre la
+ * Riserva (condivisa tra tutti i gruppi) riesce ancora a coprire lo
+ * sforamento complessivo, "rosso" una volta che la Riserva è esaurita.
+ * Verde/ambra restano le soglie normali (70%/100%) per chi non sfora.
+ */
+export type ColoreBarraGruppoMantra = "verde" | "ambra" | "blu" | "rosso";
+
+export interface ImpattoGruppoMantra extends SpesaGruppoMantra {
+  colore: ColoreBarraGruppoMantra;
+  /**
+   * Crediti "eroso" dal budget disponibile di questo gruppo (non in
+   * sforamento) perché la Riserva è esaurita e un altro gruppo ha sforato
+   * oltre quanto la Riserva poteva coprire: 0 se non si applica. Distribuito
+   * proporzionalmente alla percentuale di budget di ciascun gruppo non in
+   * sforamento (vedi computeImpattoBudgetGruppiMantra).
+   */
+  penalitaDisponibile: number;
+}
+
+export interface RiservaMantra {
+  budgetPrevisto: number;
+  /** Quanta Riserva è stata assorbita finora dallo sforamento complessivo degli altri gruppi (mai oltre budgetPrevisto). */
+  consumata: number;
+  /** budgetPrevisto - consumata: parte in una barra che parte piena (100%) e scende fino a esaurirsi. */
+  residua: number;
+}
+
+export interface ImpattoBudgetGruppiMantra {
+  /** I 7 gruppi di ruolo (esclusa Riserva), nello stesso ordine di GRUPPI_BUDGET_MANTRA. */
+  gruppi: ImpattoGruppoMantra[];
+  riserva: RiservaMantra;
+}
+
+/**
+ * Modella la Riserva come cuscinetto condiviso: lo sforamento di un gruppo
+ * di ruolo attinge per primo dalla Riserva (barra del gruppo blu, Riserva che
+ * scende) invece di segnare subito rosso. Una volta che la Riserva è
+ * esaurita, il gruppo in sforamento diventa rosso e — se sfora un ALTRO
+ * gruppo — la parte di sforamento che la Riserva non può più coprire viene
+ * "tolta" al budget disponibile dei gruppi non in sforamento, in proporzione
+ * alla percentuale di budget di ciascuno (metodo del resto più grande per
+ * l'arrotondamento: le unità in eccesso vanno ai gruppi con percentuale più
+ * alta) — per rendere visibile che il totale a disposizione è uno solo.
+ */
+export function computeImpattoBudgetGruppiMantra(players: Player[], settings: Settings): ImpattoBudgetGruppiMantra {
+  const base = computeSpesaGruppiMantra(players, settings);
+  const riservaBase = base.find((g) => g.gruppo === "Riserva")!;
+  const gruppiRuolo = base.filter((g) => g.gruppo !== "Riserva");
+
+  const sforamentoTotale = gruppiRuolo.reduce((sum, g) => sum + Math.max(0, g.speso - g.budgetPrevisto), 0);
+  const riservaBudget = riservaBase.budgetPrevisto;
+  const riservaConsumata = Math.min(sforamentoTotale, riservaBudget);
+  const riservaResidua = Math.max(0, riservaBudget - sforamentoTotale);
+  const riservaEsaurita = riservaResidua <= 0 && sforamentoTotale > 0;
+  const scopertoOltreRiserva = Math.max(0, sforamentoTotale - riservaBudget);
+
+  const penalita = new Map<GruppoBudgetMantra, number>();
+  if (riservaEsaurita && scopertoOltreRiserva > 0) {
+    const nonSforanti = gruppiRuolo.filter((g) => g.speso <= g.budgetPrevisto);
+    const totalePercentualeNonSforanti = nonSforanti.reduce(
+      (sum, g) => sum + settings.mantra.percentualeBudgetGruppi[g.gruppo],
+      0
+    );
+    if (nonSforanti.length > 0 && totalePercentualeNonSforanti > 0) {
+      const quote = nonSforanti.map((g) => {
+        const percentuale = settings.mantra.percentualeBudgetGruppi[g.gruppo];
+        const esatta = (scopertoOltreRiserva * percentuale) / totalePercentualeNonSforanti;
+        return { gruppo: g.gruppo, percentuale, base: Math.floor(esatta) };
+      });
+      let resto = Math.round(scopertoOltreRiserva) - quote.reduce((sum, q) => sum + q.base, 0);
+      // Arrotondamento: le unità in eccesso vanno ai gruppi con percentuale più alta.
+      const perPercentualeDecrescente = [...quote].sort((a, b) => b.percentuale - a.percentuale);
+      for (let i = 0; i < perPercentualeDecrescente.length && resto > 0; i++) {
+        perPercentualeDecrescente[i].base += 1;
+        resto -= 1;
+      }
+      for (const q of quote) penalita.set(q.gruppo, q.base);
+    }
+  }
+
+  const gruppi: ImpattoGruppoMantra[] = gruppiRuolo.map((g) => {
+    const sforato = g.speso > g.budgetPrevisto;
+    let colore: ColoreBarraGruppoMantra;
+    if (!sforato) {
+      const rapporto = g.budgetPrevisto > 0 ? g.speso / g.budgetPrevisto : 0;
+      colore = rapporto > 0.7 ? "ambra" : "verde";
+    } else {
+      colore = riservaEsaurita ? "rosso" : "blu";
+    }
+    return { ...g, colore, penalitaDisponibile: penalita.get(g.gruppo) ?? 0 };
+  });
+
+  return {
+    gruppi,
+    riserva: { budgetPrevisto: riservaBudget, consumata: riservaConsumata, residua: riservaResidua },
+  };
+}
+
 function getSuggerimentiAstaMantra(players: Player[], settings: Settings): SuggerimentoAsta[] {
   const stato = computeMantraStato(players, settings);
   const { coperture, matchers } = calcolaCoperturaModuli(players);

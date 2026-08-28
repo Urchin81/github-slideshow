@@ -64,9 +64,19 @@ ruoli ancora da coprire nella tua squadra.
   per ogni ruolo (Classic) o gruppo (Mantra) mostra quanto hai speso rispetto
   al budget pianificato in Settings — verde fino al 70% del budget,
   gialla fino al 100%, rossa oltre: superato il budget la barra resta ferma al
-  100% (rossa) con l'importo dello sforamento a fianco. "Riserva" (Mantra) non
-  ha una spesa calcolabile automaticamente (nessun ruolo vi è collegato) e
-  resta sempre a 0.
+  100% con l'importo dello sforamento a fianco.
+  - **"Riserva" come cuscinetto condiviso (Mantra)**: non ha una spesa
+    propria (nessun ruolo vi è collegato) — la sua barra parte piena al 100%
+    e scende via via che copre lo sforamento complessivo degli altri gruppi.
+    Finché la Riserva ha margine, il gruppo che sfora è **blu** (coperto);
+    una volta che la Riserva si esaurisce (barra a 0), il gruppo che sfora
+    diventa **rosso**. Da quel momento, la parte di sforamento che la Riserva
+    non riesce più a coprire viene sottratta al budget disponibile dei gruppi
+    ancora entro budget — mostrato come "disponibile: N" in rosso
+    grassetto sotto la loro barra — distribuita in proporzione alla
+    percentuale di budget di ciascuno (arrotondamento a resto più grande:
+    le unità in eccesso vanno ai gruppi con percentuale più alta), per
+    ricordare che il totale a disposizione resta uno solo.
 - **Moduli tattici (Mantra)**: la dashboard calcola, con un algoritmo di
   matching (non un modello AI/LLM: deterministico e istantaneo, vedi sotto),
   quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa attuale riesce
