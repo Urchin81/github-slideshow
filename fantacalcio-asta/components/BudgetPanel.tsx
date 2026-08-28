@@ -315,7 +315,7 @@ function PannelloMantra({
       )}
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per gruppo di ruoli</h3>
-      <div className="space-y-2 mb-4">
+      <div className="space-y-3 mb-4">
         {impattoBudget.gruppi.map((g) => (
           <BarraBudgetRuolo
             key={g.gruppo}

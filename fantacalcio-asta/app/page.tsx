@@ -47,7 +47,7 @@ export default function Home() {
       <div className="flex flex-wrap gap-4 items-start">
         <ResetButton />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_310px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[270px_1fr_290px] gap-4">
         <BudgetPanel ruoloFiltro={ruoloFiltro} onFiltraRuolo={filtraPerRuolo} />
         <PlayerTable
           filtroBallottaggioId={filtroBallottaggioId}

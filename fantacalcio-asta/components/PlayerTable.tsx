@@ -447,7 +447,7 @@ export function PlayerTable({
     : null;
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-white rounded-lg shadow p-4 flex flex-col">
       {inAstaPlayer ? (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm space-y-3">
           <div className="flex items-center gap-2">
@@ -918,7 +918,7 @@ export function PlayerTable({
         </p>
       )}
 
-      <div className="overflow-auto max-h-[75vh]">
+      <div className="flex-1 min-h-0 overflow-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-400 [&>th]:sticky [&>th]:top-0 [&>th]:bg-white [&>th]:z-10 [&>th]:border-b [&>th]:border-slate-100">

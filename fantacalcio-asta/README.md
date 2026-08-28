@@ -316,10 +316,13 @@ ruoli ancora da coprire nella tua squadra.
   dentro la tabella, sollevato in `app/page.tsx` così i due possono
   controllarsi a vicenda), chiudendo un eventuale filtro ballottaggio già
   aperto.
-- **Layout a tre colonne**: pannello Budget (250px, i ruoli nelle barre di
+- **Layout a tre colonne**: pannello Budget (270px, i ruoli nelle barre di
   budget usano la stessa letterina colorata P/D/C/A vista altrove, non il
-  nome esteso) e "La mia rosa" (310px) — un compromesso tra le due, abbastanza
-  larghe entrambe da non tagliare né sovrapporre i rispettivi testi.
+  nome esteso) e "La mia rosa" (290px) — un compromesso tra le due, abbastanza
+  larghe entrambe da non tagliare né sovrapporre i rispettivi testi. La
+  colonna centrale con la lista giocatori si estende sempre in altezza fino
+  al fondo del suo riquadro (anche quando ha poche righe), invece di fermarsi
+  a metà quando le colonne laterali sono più alte.
 - **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
   budget residuo diviso per i giocatori che mancano ancora per completare una
   rosa valida — **tenendo conto del minimo di portieri richiesto** (in
