@@ -69,8 +69,9 @@ const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
  * sforamento a fianco. In Mantra il colore dello sforamento (blu finché la
  * Riserva condivisa lo copre, rosso una volta esaurita) arriva da fuori
  * tramite `coloreOverride`; senza, usa le soglie standard (Classic, che non
- * ha una Riserva). `penalitaDisponibile`, quando non in sforamento, mostra
- * quanto della propria quota è eroso dalla Riserva esaurita altrove.
+ * ha una Riserva). `penalitaDisponibile`, quando non in sforamento, sostituisce
+ * il budget massimo mostrato (secondo numero di "speso / massimo") con quello
+ * già ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte.
  */
 function BarraBudgetRuolo({
   label,
@@ -91,6 +92,7 @@ function BarraBudgetRuolo({
   const larghezza = budgetPrevisto > 0 ? Math.min(100, (speso / budgetPrevisto) * 100) : 0;
   const coloreBarra = coloreOverride ?? coloreBarraAvanzamento(speso, budgetPrevisto);
   const disponibileEroso = !sforato && (penalitaDisponibile ?? 0) > 0;
+  const budgetMassimoMostrato = budgetPrevisto - (penalitaDisponibile ?? 0);
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-0.5">
@@ -98,21 +100,23 @@ function BarraBudgetRuolo({
           {label}
         </span>
         <span className={sforato ? "text-red-600 font-semibold text-xs" : "text-slate-500 text-xs"}>
-          {speso} / {budgetPrevisto}
+          {speso} /{" "}
+          {disponibileEroso ? (
+            <span
+              className="text-red-600 font-bold"
+              title="La Riserva è esaurita e un altro gruppo ha sforato oltre quanto poteva coprire: il tuo budget massimo si riduce di conseguenza."
+            >
+              {budgetMassimoMostrato}
+            </span>
+          ) : (
+            budgetPrevisto
+          )}
           {sforato && ` (sforato di ${speso - budgetPrevisto})`}
         </span>
       </div>
       <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${larghezza}%`, backgroundColor: coloreBarra }} />
       </div>
-      {disponibileEroso && (
-        <p
-          className="text-red-600 font-bold text-xs mt-0.5 text-right"
-          title="La Riserva è esaurita e un altro gruppo ha sforato oltre quanto poteva coprire: la tua quota disponibile si riduce di conseguenza."
-        >
-          disponibile: {budgetPrevisto - speso - (penalitaDisponibile ?? 0)}
-        </p>
-      )}
     </div>
   );
 }
