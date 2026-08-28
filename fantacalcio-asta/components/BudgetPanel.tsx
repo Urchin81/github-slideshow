@@ -44,11 +44,14 @@ function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
   );
 }
 
+/** Rosso più tenue (Tailwind red-400) per il riempimento delle barre in sforamento: segnala il superamento senza il rosso acceso, riservato al testo di avviso. */
+const ROSSO_SFORAMENTO_BARRA = "#f87171";
+
 /** Verde fino al 70% del budget previsto, giallo fino al 100%, rosso oltre. */
 function coloreBarraAvanzamento(speso: number, budgetPrevisto: number): string {
   if (budgetPrevisto <= 0) return "#94a3b8";
   const rapporto = speso / budgetPrevisto;
-  if (rapporto > 1) return "#dc2626";
+  if (rapporto > 1) return ROSSO_SFORAMENTO_BARRA;
   if (rapporto > 0.7) return "#f59e0b";
   return "#16a34a";
 }
@@ -57,7 +60,7 @@ const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
   verde: "#16a34a",
   ambra: "#f59e0b",
   blu: "#2563eb",
-  rosso: "#dc2626",
+  rosso: ROSSO_SFORAMENTO_BARRA,
 };
 
 /**
@@ -118,7 +121,7 @@ function BarraBudgetRuolo({
 function BarraRiserva({ budgetPrevisto, consumata, residua }: { budgetPrevisto: number; consumata: number; residua: number }) {
   const percentualeResidua = budgetPrevisto > 0 ? Math.max(0, Math.min(100, (residua / budgetPrevisto) * 100)) : 0;
   const rapportoConsumata = budgetPrevisto > 0 ? consumata / budgetPrevisto : 0;
-  const colore = rapportoConsumata >= 1 ? "#dc2626" : rapportoConsumata > 0.7 ? "#f59e0b" : "#16a34a";
+  const colore = rapportoConsumata >= 1 ? ROSSO_SFORAMENTO_BARRA : rapportoConsumata > 0.7 ? "#f59e0b" : "#16a34a";
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-0.5">
