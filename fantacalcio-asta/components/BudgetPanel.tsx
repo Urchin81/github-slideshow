@@ -114,7 +114,9 @@ const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
  * senza, usa le soglie standard (Classic, che non ha una Riserva).
  * `penalitaDisponibile`, quando non in sforamento, sostituisce il budget
  * massimo mostrato (secondo numero di "speso / massimo") con quello già
- * ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte.
+ * ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte — e
+ * la barra stessa (larghezza e colore) segue quel massimo ridotto, non più
+ * quello nominale iniziale.
  */
 function BarraBudgetRuolo({
   labelContent,
@@ -130,10 +132,16 @@ function BarraBudgetRuolo({
   penalitaDisponibile?: number;
 }) {
   const sforato = speso > budgetPrevisto;
-  const larghezza = budgetPrevisto > 0 ? Math.min(100, (speso / budgetPrevisto) * 100) : 0;
-  const coloreBarra = coloreOverride ?? coloreBarraAvanzamento(speso, budgetPrevisto);
   const disponibileEroso = !sforato && (penalitaDisponibile ?? 0) > 0;
   const budgetMassimoMostrato = budgetPrevisto - (penalitaDisponibile ?? 0);
+  // Quando la Riserva erosa riduce il massimo effettivo, la barra segue quel massimo
+  // (non quello nominale iniziale): stesse soglie verde/ambra/rosso di sempre, ricalcolate
+  // sul nuovo denominatore, così una barra "8/8" risulta piena e non ferma a metà.
+  const denominatoreBarra = disponibileEroso ? budgetMassimoMostrato : budgetPrevisto;
+  const larghezza = denominatoreBarra > 0 ? Math.min(100, (speso / denominatoreBarra) * 100) : 0;
+  const coloreBarra = disponibileEroso
+    ? coloreBarraAvanzamento(speso, denominatoreBarra)
+    : coloreOverride ?? coloreBarraAvanzamento(speso, budgetPrevisto);
   return (
     <div>
       <div className="flex items-center justify-between gap-2 text-sm mb-0.5">
