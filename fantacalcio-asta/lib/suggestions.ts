@@ -325,9 +325,10 @@ export interface SpesaGruppoMantra {
 /**
  * Spesa reale (non una stima) per ciascun gruppo di budget Mantra
  * (lib/types.ts, GRUPPI_BUDGET_MANTRA), confrontata col budget pianificato in
- * Settings: un giocatore multi-ruolo viene contato su un solo gruppo
- * (gruppoBudgetMantraGiocatore). "Riserva" non è legata a ruoli quindi non ha
- * mai spesa attribuita.
+ * Settings (percentuale del budget totale, come RoleConfig.percentualeBudget
+ * in Classic — cambia in crediti insieme a budgetTotale): un giocatore
+ * multi-ruolo viene contato su un solo gruppo (gruppoBudgetMantraGiocatore).
+ * "Riserva" non è legata a ruoli quindi non ha mai spesa attribuita.
  */
 export function computeSpesaGruppiMantra(players: Player[], settings: Settings): SpesaGruppoMantra[] {
   const speso = new Map<GruppoBudgetMantra, number>();
@@ -340,7 +341,7 @@ export function computeSpesaGruppiMantra(players: Player[], settings: Settings):
   return GRUPPI_BUDGET_MANTRA.map((gruppo) => ({
     gruppo,
     label: GRUPPO_BUDGET_MANTRA_LABEL[gruppo],
-    budgetPrevisto: settings.mantra.budgetGruppi[gruppo],
+    budgetPrevisto: Math.round((settings.budgetTotale * settings.mantra.percentualeBudgetGruppi[gruppo]) / 100),
     speso: speso.get(gruppo) ?? 0,
   }));
 }

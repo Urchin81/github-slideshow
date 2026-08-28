@@ -31,11 +31,30 @@ ruoli ancora da coprire nella tua squadra.
   solo un numero minimo e massimo di giocatori totali da acquistare — oltre il
   massimo, "Preso da me" si disabilita. Si imposta anche il **numero di
   partecipanti all'asta** (default 8). In Mantra si imposta anche un
-  **budget in crediti per 8 gruppi di ruoli** (Por, Dc/B/Dd/Ds, E, M, C,
+  **budget in percentuale per 8 gruppi di ruoli** (Por, Dc/B/Dd/Ds, E, M, C,
   W/T/A, Pc, più "Riserva" — una quota libera non legata a un ruolo): i 7
   gruppi coprono tutti i 12 ruoli Mantra senza sovrapposizioni (un giocatore
-  multi-ruolo conta su un solo gruppo, il primo che copre) e sono pensati per
-  sommare al budget totale, con un avviso (non bloccante) se non corrispondono.
+  multi-ruolo conta su un solo gruppo, il primo che copre), sono in
+  percentuale del budget totale (come i ruoli Classic: cambiando il budget
+  totale cambia anche il valore in crediti mostrato accanto a ogni gruppo) e
+  sono pensati per sommare a 100%, con un avviso (non bloccante) se non
+  corrispondono.
+  - **Strategie predefinite**: tre bottoni ("Conservativa", "Bilanciata" —
+    quella consigliata, "Aggressiva") impostano di colpo le percentuali dei 8
+    gruppi secondo tre distribuzioni tipiche, riportate sopra i bottoni in una
+    tabella di confronto (Titolarità, Bonus potenziali, Flessibilità Mantra,
+    Rischio asta, Rischio infortuni, Capacità di cogliere value, Adatta a 12
+    partecipanti) con valutazioni a stelle e rischio Basso/Medio/Alto
+    colorato (verde/ambra/rosso). Restano comunque modificabili gruppo per
+    gruppo dopo aver scelto un preset.
+  - **Preferiti per gruppo**: sotto ogni gruppo (tranne "Riserva", non legata
+    a ruoli) un campo di ricerca suggerisce, mentre scrivi, i giocatori del
+    listino idonei a quel gruppo; selezionandone uno lo aggiunge ai preferiti
+    (la stessa stellina ★ della tabella giocatori/pagina asta — lo stato
+    `preferito` sopravvive al reset dell'asta). Il collegamento è
+    bidirezionale: un giocatore reso preferito dalla stellina altrove compare
+    automaticamente qui, come "chip" rimovibile con una "×" (che toglie il
+    preferito, non lo elimina dal listino).
 - **Budget per ruolo/gruppo**: nel pannello Budget, una barra di avanzamento
   per ogni ruolo (Classic) o gruppo (Mantra) mostra quanto hai speso rispetto
   al budget pianificato in Settings — verde fino al 70% del budget,

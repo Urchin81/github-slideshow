@@ -279,12 +279,35 @@ export interface RoleConfig {
   percentualeBudget: number;
 }
 
+/**
+ * Tre distribuzioni di budget tra i gruppi di ruoli Mantra suggerite in
+ * Settings (bottoni "Conservativa"/"Bilanciata"/"Aggressiva"): percentuali
+ * del budget totale, così che restino valide qualunque sia budgetTotale.
+ * Derivate dagli esempi a crediti (base 300) forniti dall'utente,
+ * mantenendo la stessa proporzione tra gruppi.
+ */
+export type StrategiaBudgetMantra = "conservativa" | "bilanciata" | "aggressiva";
+
+export const STRATEGIE_BUDGET_MANTRA: StrategiaBudgetMantra[] = ["conservativa", "bilanciata", "aggressiva"];
+
+export const STRATEGIA_BUDGET_MANTRA_LABEL: Record<StrategiaBudgetMantra, string> = {
+  conservativa: "Conservativa",
+  bilanciata: "Bilanciata",
+  aggressiva: "Aggressiva",
+};
+
+export const PERCENTUALE_BUDGET_GRUPPI_STRATEGIA: Record<StrategiaBudgetMantra, Record<GruppoBudgetMantra, number>> = {
+  conservativa: { Por: 4, Difesa: 12.67, E: 9.33, M: 4, C: 12.67, WTA: 24, Pc: 30, Riserva: 3.33 },
+  bilanciata: { Por: 3.33, Difesa: 10, E: 8.33, M: 3.33, C: 11.67, WTA: 26.67, Pc: 33.33, Riserva: 3.33 },
+  aggressiva: { Por: 2.33, Difesa: 8, E: 6.67, M: 2.67, C: 8.67, WTA: 28.33, Pc: 40, Riserva: 3.33 },
+};
+
 /** In Mantra non ci sono slot fissi per ruolo: solo un numero minimo/massimo di giocatori totali. */
 export interface MantraConfig {
   minGiocatori: number;
   maxGiocatori: number;
-  /** Budget pianificato (in crediti) per ciascun gruppo di ruoli, per il pannello Budget: idealmente somma a budgetTotale. */
-  budgetGruppi: Record<GruppoBudgetMantra, number>;
+  /** Percentuale del budget totale pianificata per ciascun gruppo di ruoli (come RoleConfig.percentualeBudget in Classic): il pannello Budget la converte in crediti in base a budgetTotale per mostrare quanto hai speso rispetto al previsto. */
+  percentualeBudgetGruppi: Record<GruppoBudgetMantra, number>;
 }
 
 export interface Settings {
@@ -309,16 +332,7 @@ export const DEFAULT_SETTINGS: Settings = {
   mantra: {
     minGiocatori: 25,
     maxGiocatori: 30,
-    budgetGruppi: {
-      Por: 25,
-      Difesa: 75,
-      E: 50,
-      M: 40,
-      C: 60,
-      WTA: 140,
-      Pc: 90,
-      Riserva: 20,
-    },
+    percentualeBudgetGruppi: { ...PERCENTUALE_BUDGET_GRUPPI_STRATEGIA.bilanciata },
   },
 };
 

@@ -5,11 +5,55 @@ import {
   GRUPPI_BUDGET_MANTRA,
   GRUPPO_BUDGET_MANTRA_COLORE,
   GRUPPO_BUDGET_MANTRA_LABEL,
+  PERCENTUALE_BUDGET_GRUPPI_STRATEGIA,
   RUOLI,
   RUOLO_LABEL,
   Settings,
+  STRATEGIA_BUDGET_MANTRA_LABEL,
+  STRATEGIE_BUDGET_MANTRA,
+  StrategiaBudgetMantra,
 } from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
+import { PreferitiGruppoMantra } from "./PreferitiGruppoMantra";
+
+type RigaConfronto =
+  | { etichetta: string; tipo: "stelle"; valori: Record<StrategiaBudgetMantra, number> }
+  | { etichetta: string; tipo: "rischio"; valori: Record<StrategiaBudgetMantra, "Basso" | "Medio" | "Alto"> };
+
+// Confronto tra le 3 strategie di budget suggerite dall'utente, riportato così com'è.
+const CONFRONTO_STRATEGIE: RigaConfronto[] = [
+  { etichetta: "Titolarità", tipo: "stelle", valori: { conservativa: 5, bilanciata: 4.5, aggressiva: 3 } },
+  { etichetta: "Bonus potenziali", tipo: "stelle", valori: { conservativa: 3, bilanciata: 4.5, aggressiva: 5 } },
+  { etichetta: "Flessibilità Mantra", tipo: "stelle", valori: { conservativa: 4, bilanciata: 5, aggressiva: 4 } },
+  { etichetta: "Rischio asta", tipo: "rischio", valori: { conservativa: "Basso", bilanciata: "Medio", aggressiva: "Alto" } },
+  {
+    etichetta: "Rischio infortuni",
+    tipo: "rischio",
+    valori: { conservativa: "Basso", bilanciata: "Medio", aggressiva: "Alto" },
+  },
+  {
+    etichetta: "Capacità di cogliere value",
+    tipo: "stelle",
+    valori: { conservativa: 3, bilanciata: 5, aggressiva: 3 },
+  },
+  { etichetta: "Adatta a 12", tipo: "stelle", valori: { conservativa: 4, bilanciata: 5, aggressiva: 3 } },
+];
+
+function Stelle({ valore }: { valore: number }) {
+  const piene = Math.floor(valore);
+  const mezza = valore - piene >= 0.5;
+  return (
+    <span className="text-amber-400 whitespace-nowrap" title={`${valore}/5`}>
+      {"★".repeat(piene)}
+      {mezza && <span className="text-[10px] align-top">½</span>}
+    </span>
+  );
+}
+
+function Rischio({ livello }: { livello: "Basso" | "Medio" | "Alto" }) {
+  const colore = livello === "Basso" ? "text-green-600" : livello === "Medio" ? "text-amber-600" : "text-red-600";
+  return <span className={`${colore} font-medium`}>{livello}</span>;
+}
 
 export function SettingsForm() {
   const settings = useAuctionStore((s) => s.settings);
@@ -25,7 +69,10 @@ export function SettingsForm() {
   }, [settings]);
 
   const totalePercentualeClassic = RUOLI.reduce((sum, r) => sum + local.ruoli[r].percentualeBudget, 0);
-  const totaleCreditiMantra = GRUPPI_BUDGET_MANTRA.reduce((sum, g) => sum + (local.mantra.budgetGruppi[g] ?? 0), 0);
+  const totalePercentualeMantra = GRUPPI_BUDGET_MANTRA.reduce(
+    (sum, g) => sum + (local.mantra.percentualeBudgetGruppi[g] ?? 0),
+    0
+  );
 
   function handleSave() {
     setSettings(local);
@@ -186,58 +233,116 @@ export function SettingsForm() {
 
           <h3 className="text-sm font-medium mt-4 mb-1">Budget per gruppo di ruoli</h3>
           <p className="text-xs text-slate-500 mb-2">
-            In Mantra il budget non si pianifica per singolo ruolo ma per questi gruppi (usati nel pannello
-            Budget per mostrare quanto hai speso rispetto al previsto). &quot;Riserva&quot; è una quota
-            libera, non legata a un ruolo.
+            In Mantra il budget non si pianifica per singolo ruolo ma per questi gruppi, in percentuale del
+            budget totale (usati nel pannello Budget, in crediti, per mostrare quanto hai speso rispetto al
+            previsto — cambiando il budget totale cambia anche il valore in crediti). &quot;Riserva&quot; è
+            una quota libera, non legata a un ruolo.
           </p>
-          <table className="w-full text-sm mb-2">
-            <thead>
-              <tr className="text-left text-slate-400">
-                <th className="pb-1">Gruppo</th>
-                <th className="pb-1">Crediti</th>
-              </tr>
-            </thead>
-            <tbody>
-              {GRUPPI_BUDGET_MANTRA.map((gruppo) => (
-                <tr key={gruppo}>
-                  <td className="py-1">
-                    <span
-                      className="text-white rounded px-1.5 text-xs"
-                      style={{ backgroundColor: GRUPPO_BUDGET_MANTRA_COLORE[gruppo] }}
-                    >
-                      {GRUPPO_BUDGET_MANTRA_LABEL[gruppo]}
-                    </span>
-                  </td>
-                  <td className="py-1">
+
+          <div className="overflow-x-auto mb-3">
+            <table className="text-xs mb-2 min-w-full">
+              <thead>
+                <tr className="text-slate-400">
+                  <th className="text-left pb-1 font-normal"></th>
+                  {STRATEGIE_BUDGET_MANTRA.map((s) => (
+                    <th key={s} className="text-center pb-1 px-2 font-semibold text-slate-600 whitespace-nowrap">
+                      {STRATEGIA_BUDGET_MANTRA_LABEL[s]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {CONFRONTO_STRATEGIE.map((riga) => (
+                  <tr key={riga.etichetta} className="border-t border-slate-100">
+                    <td className="py-1 pr-2 text-slate-500 whitespace-nowrap">{riga.etichetta}</td>
+                    {STRATEGIE_BUDGET_MANTRA.map((s) => (
+                      <td key={s} className="py-1 px-2 text-center">
+                        {riga.tipo === "stelle" ? (
+                          <Stelle valore={riga.valori[s]} />
+                        ) : (
+                          <Rischio livello={riga.valori[s]} />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-3">
+            {STRATEGIE_BUDGET_MANTRA.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() =>
+                  setLocal({
+                    ...local,
+                    mantra: {
+                      ...local.mantra,
+                      percentualeBudgetGruppi: { ...PERCENTUALE_BUDGET_GRUPPI_STRATEGIA[s] },
+                    },
+                  })
+                }
+                className="text-sm border border-slate-300 rounded px-3 py-1.5 hover:bg-slate-50"
+              >
+                {STRATEGIA_BUDGET_MANTRA_LABEL[s]}
+                {s === "bilanciata" && (
+                  <span className="ml-1.5 text-[10px] bg-amber-100 text-amber-700 rounded px-1 py-0.5 align-middle">
+                    consigliata
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {GRUPPI_BUDGET_MANTRA.map((gruppo) => {
+            const percentuale = local.mantra.percentualeBudgetGruppi[gruppo];
+            const crediti = Math.round((local.budgetTotale * percentuale) / 100);
+            return (
+              <div key={gruppo} className="border border-slate-200 rounded-lg p-2.5 mb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className="text-white rounded px-1.5 text-xs shrink-0"
+                    style={{ backgroundColor: GRUPPO_BUDGET_MANTRA_COLORE[gruppo] }}
+                  >
+                    {GRUPPO_BUDGET_MANTRA_LABEL[gruppo]}
+                  </span>
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="number"
                       min={0}
-                      value={local.mantra.budgetGruppi[gruppo]}
+                      max={100}
+                      step={0.1}
+                      value={percentuale}
                       onChange={(e) =>
                         setLocal({
                           ...local,
                           mantra: {
                             ...local.mantra,
-                            budgetGruppi: {
-                              ...local.mantra.budgetGruppi,
+                            percentualeBudgetGruppi: {
+                              ...local.mantra.percentualeBudgetGruppi,
                               [gruppo]: Number(e.target.value) || 0,
                             },
                           },
                         })
                       }
-                      className="border border-slate-200 rounded px-2 py-1 w-20"
+                      className="border border-slate-200 rounded px-2 py-1 w-20 text-right"
                     />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <span className="text-xs text-slate-400">%</span>
+                    <span className="text-xs text-slate-500 w-20 text-right">≈ {crediti} cr.</span>
+                  </div>
+                </div>
+                {gruppo !== "Riserva" && <PreferitiGruppoMantra gruppo={gruppo} />}
+              </div>
+            );
+          })}
+
           <p
-            className={`text-xs ${
-              totaleCreditiMantra === local.budgetTotale ? "text-slate-400" : "text-amber-600"
-            }`}
+            className={`text-xs ${Math.abs(totalePercentualeMantra - 100) < 0.5 ? "text-slate-400" : "text-amber-600"}`}
           >
-            Totale: {totaleCreditiMantra} {totaleCreditiMantra !== local.budgetTotale && `(consigliato: ${local.budgetTotale})`}
+            Totale percentuali: {Math.round(totalePercentualeMantra * 100) / 100}%{" "}
+            {Math.abs(totalePercentualeMantra - 100) >= 0.5 && "(consigliato: 100%)"}
           </p>
         </div>
       )}
