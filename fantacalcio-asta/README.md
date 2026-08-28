@@ -61,16 +61,16 @@ ruoli ancora da coprire nella tua squadra.
     dalla stellina altrove compare automaticamente qui, come "chip" rimovibile
     con una "×" (che toglie il preferito, non lo elimina dal listino).
 - **Budget per ruolo/gruppo (pannello Budget)**: una barra di avanzamento
-  per ogni ruolo (Classic) o gruppo (Mantra) mostra quanto hai speso rispetto
-  al budget pianificato in Settings — verde fino al 70% del budget,
-  gialla fino al 100%, un rosso tenue oltre (il rosso pieno resta solo per il
-  testo di avviso): superato il budget la barra resta ferma al 100% con
-  l'importo dello sforamento a fianco.
+  per ogni ruolo (Classic) o gruppo (Mantra), invertita — parte piena al
+  100% (verde) e **scende** via via che spendi in quel ruolo/gruppo, passando
+  ad ambra oltre il 70% speso, fino a esaurirsi (0%, grigia) quando il
+  budget è finito. Se sfori, la barra resta vuota (grigia) e ci scrive dentro
+  "sfori di N" invece di colorarla oltre il 100%.
   - **"Riserva" come cuscinetto condiviso (Mantra)**: non ha una spesa
     propria (nessun ruolo vi è collegato) — la sua barra parte piena al 100%
     e scende via via che copre lo sforamento complessivo degli altri gruppi.
-    Finché la Riserva ha margine, il gruppo che sfora è **blu** (coperto);
-    una volta che la Riserva si esaurisce (barra a 0), il gruppo che sfora
+    Finché la Riserva ha margine, il testo "sfori di N" del gruppo che sfora
+    è **blu** (coperto); una volta che la Riserva si esaurisce (barra a 0),
     diventa **rosso**. Da quel momento, la parte di sforamento che la Riserva
     non riesce più a coprire viene sottratta al budget massimo dei gruppi
     ancora entro budget — il secondo numero di "speso / massimo" si riduce e

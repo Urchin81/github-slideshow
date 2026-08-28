@@ -83,40 +83,24 @@ function RigaRuoliGruppo({
   );
 }
 
-/** Rosso più tenue (Tailwind red-400) per il riempimento delle barre in sforamento: segnala il superamento senza il rosso acceso, riservato al testo di avviso. */
+/** Rosso più tenue (Tailwind red-400) usato solo per la Riserva esaurita: segnala l'esaurimento senza il rosso acceso, riservato al testo di sforamento. */
 const ROSSO_SFORAMENTO_BARRA = "#f87171";
 
-/** Verde fino al 70% del budget previsto, giallo fino al 100%, rosso oltre. */
-function coloreBarraAvanzamento(speso: number, budgetPrevisto: number): string {
-  if (budgetPrevisto <= 0) return "#94a3b8";
-  const rapporto = speso / budgetPrevisto;
-  if (rapporto > 1) return ROSSO_SFORAMENTO_BARRA;
-  if (rapporto > 0.7) return "#f59e0b";
-  return "#16a34a";
-}
-
-const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
-  verde: "#16a34a",
-  ambra: "#f59e0b",
-  blu: "#2563eb",
-  rosso: ROSSO_SFORAMENTO_BARRA,
-};
-
 /**
- * Barra di avanzamento spesa/budget previsto per un ruolo o un gruppo di
- * ruoli: resta ferma al 100% in caso di sforamento, con l'importo dello
- * sforamento a fianco. `labelContent` sopra la barra è o l'etichetta del
- * singolo ruolo (Classic) o, in Mantra, i badge dei ruoli del gruppo — mai a
- * capo — invece di un'unica etichetta col nome del gruppo (es.
- * "Dc/B/Dd/Ds"), per non ripetere gli stessi ruoli in due punti diversi. In
- * Mantra il colore dello sforamento (blu finché la Riserva condivisa lo
- * copre, rosso una volta esaurita) arriva da fuori tramite `coloreOverride`;
- * senza, usa le soglie standard (Classic, che non ha una Riserva).
- * `penalitaDisponibile`, quando non in sforamento, sostituisce il budget
- * massimo mostrato (secondo numero di "speso / massimo") con quello già
- * ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte — e
- * la barra stessa (larghezza e colore) segue quel massimo ridotto, non più
- * quello nominale iniziale.
+ * Barra di avanzamento budget di un ruolo o gruppo di ruoli, invertita come
+ * quella della Riserva: parte piena al 100% (verde) e scende via via che si
+ * spende, passando ad ambra oltre il 70% speso, fino a esaurirsi (0%,
+ * grigia) quando il budget è finito. In caso di sforamento resta vuota
+ * (grigia) e mostra "sfori di N" scritto dentro la barra stessa, invece di
+ * colorarla oltre il 100% — il colore di quel testo (rosso, o blu finché la
+ * Riserva condivisa in Mantra copre lo sforamento) arriva da `coloreOverride`.
+ * `labelContent` sopra la barra è o l'etichetta del singolo ruolo (Classic)
+ * o, in Mantra, i badge dei ruoli del gruppo — mai a capo — invece di
+ * un'unica etichetta col nome del gruppo (es. "Dc/B/Dd/Ds"), per non
+ * ripetere gli stessi ruoli in due punti diversi. `penalitaDisponibile`,
+ * quando non in sforamento, sostituisce il budget massimo mostrato (secondo
+ * numero di "speso / massimo") con quello già ridotto dall'erosione, in
+ * rosso — e la barra segue quel massimo ridotto, non più quello nominale.
  */
 function BarraBudgetRuolo({
   labelContent,
@@ -128,20 +112,20 @@ function BarraBudgetRuolo({
   labelContent: React.ReactNode;
   speso: number;
   budgetPrevisto: number;
-  coloreOverride?: string;
+  coloreOverride?: ColoreBarraGruppoMantra;
   penalitaDisponibile?: number;
 }) {
   const sforato = speso > budgetPrevisto;
   const disponibileEroso = !sforato && (penalitaDisponibile ?? 0) > 0;
   const budgetMassimoMostrato = budgetPrevisto - (penalitaDisponibile ?? 0);
   // Quando la Riserva erosa riduce il massimo effettivo, la barra segue quel massimo
-  // (non quello nominale iniziale): stesse soglie verde/ambra/rosso di sempre, ricalcolate
-  // sul nuovo denominatore, così una barra "8/8" risulta piena e non ferma a metà.
+  // (non quello nominale iniziale): stesse soglie verde/ambra di sempre, ricalcolate
+  // sul nuovo denominatore, così una barra "8/8" risulta vuota (esaurita) e non a metà.
   const denominatoreBarra = disponibileEroso ? budgetMassimoMostrato : budgetPrevisto;
-  const larghezza = denominatoreBarra > 0 ? Math.min(100, (speso / denominatoreBarra) * 100) : 0;
-  const coloreBarra = disponibileEroso
-    ? coloreBarraAvanzamento(speso, denominatoreBarra)
-    : coloreOverride ?? coloreBarraAvanzamento(speso, budgetPrevisto);
+  const percentualeSpesa = denominatoreBarra > 0 ? (speso / denominatoreBarra) * 100 : speso > 0 ? 100 : 0;
+  const percentualeResidua = Math.max(0, 100 - percentualeSpesa);
+  const coloreBarra = percentualeSpesa > 70 ? "#f59e0b" : "#16a34a";
+  const coloreTestoSforamento = coloreOverride === "blu" ? "text-blue-700" : "text-red-600";
   return (
     <div>
       <div className="flex items-center justify-between gap-2 text-sm mb-0.5">
@@ -158,11 +142,17 @@ function BarraBudgetRuolo({
           ) : (
             budgetPrevisto
           )}
-          {sforato && ` (sforato di ${speso - budgetPrevisto})`}
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${larghezza}%`, backgroundColor: coloreBarra }} />
+      <div className="relative w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${percentualeResidua}%`, backgroundColor: coloreBarra }} />
+        {sforato && (
+          <span
+            className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold ${coloreTestoSforamento}`}
+          >
+            sfori di {speso - budgetPrevisto}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -183,7 +173,7 @@ function BarraRiserva({ budgetPrevisto, consumata, residua }: { budgetPrevisto: 
           {consumata > 0 ? `${residua} residui / ${budgetPrevisto}` : `${budgetPrevisto} disponibili`}
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+      <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${percentualeResidua}%`, backgroundColor: colore }} />
       </div>
     </div>
@@ -337,7 +327,7 @@ function PannelloMantra({
             }
             speso={g.speso}
             budgetPrevisto={g.budgetPrevisto}
-            coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
+            coloreOverride={g.colore}
             penalitaDisponibile={g.penalitaDisponibile}
           />
         ))}
