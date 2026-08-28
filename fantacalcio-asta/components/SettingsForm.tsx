@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RUOLI, RUOLO_LABEL, Settings } from "@/lib/types";
+import {
+  GRUPPI_BUDGET_MANTRA,
+  GRUPPO_BUDGET_MANTRA_COLORE,
+  GRUPPO_BUDGET_MANTRA_LABEL,
+  RUOLI,
+  RUOLO_LABEL,
+  Settings,
+} from "@/lib/types";
 import { useAuctionStore } from "@/lib/store";
 
 export function SettingsForm() {
@@ -18,6 +25,7 @@ export function SettingsForm() {
   }, [settings]);
 
   const totalePercentualeClassic = RUOLI.reduce((sum, r) => sum + local.ruoli[r].percentualeBudget, 0);
+  const totaleCreditiMantra = GRUPPI_BUDGET_MANTRA.reduce((sum, g) => sum + (local.mantra.budgetGruppi[g] ?? 0), 0);
 
   function handleSave() {
     setSettings(local);
@@ -175,6 +183,62 @@ export function SettingsForm() {
           {local.mantra.minGiocatori > local.mantra.maxGiocatori && (
             <p className="text-xs text-amber-600 mt-2">Il minimo non dovrebbe superare il massimo.</p>
           )}
+
+          <h3 className="text-sm font-medium mt-4 mb-1">Budget per gruppo di ruoli</h3>
+          <p className="text-xs text-slate-500 mb-2">
+            In Mantra il budget non si pianifica per singolo ruolo ma per questi gruppi (usati nel pannello
+            Budget per mostrare quanto hai speso rispetto al previsto). &quot;Riserva&quot; è una quota
+            libera, non legata a un ruolo.
+          </p>
+          <table className="w-full text-sm mb-2">
+            <thead>
+              <tr className="text-left text-slate-400">
+                <th className="pb-1">Gruppo</th>
+                <th className="pb-1">Crediti</th>
+              </tr>
+            </thead>
+            <tbody>
+              {GRUPPI_BUDGET_MANTRA.map((gruppo) => (
+                <tr key={gruppo}>
+                  <td className="py-1">
+                    <span
+                      className="text-white rounded px-1.5 text-xs"
+                      style={{ backgroundColor: GRUPPO_BUDGET_MANTRA_COLORE[gruppo] }}
+                    >
+                      {GRUPPO_BUDGET_MANTRA_LABEL[gruppo]}
+                    </span>
+                  </td>
+                  <td className="py-1">
+                    <input
+                      type="number"
+                      min={0}
+                      value={local.mantra.budgetGruppi[gruppo]}
+                      onChange={(e) =>
+                        setLocal({
+                          ...local,
+                          mantra: {
+                            ...local.mantra,
+                            budgetGruppi: {
+                              ...local.mantra.budgetGruppi,
+                              [gruppo]: Number(e.target.value) || 0,
+                            },
+                          },
+                        })
+                      }
+                      className="border border-slate-200 rounded px-2 py-1 w-20"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p
+            className={`text-xs ${
+              totaleCreditiMantra === local.budgetTotale ? "text-slate-400" : "text-amber-600"
+            }`}
+          >
+            Totale: {totaleCreditiMantra} {totaleCreditiMantra !== local.budgetTotale && `(consigliato: ${local.budgetTotale})`}
+          </p>
         </div>
       )}
 

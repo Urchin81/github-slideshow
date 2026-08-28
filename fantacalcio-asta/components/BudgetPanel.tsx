@@ -1,18 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calculator, ShieldAlert, Users, Wallet } from "lucide-react";
-import { RUOLI, RUOLI_MANTRA, RUOLO_COLORE, RUOLO_LABEL, RUOLO_MANTRA_COLORE, RUOLO_MANTRA_LABEL } from "@/lib/types";
+import { AlertTriangle } from "lucide-react";
+import {
+  GRUPPO_BUDGET_MANTRA_COLORE,
+  RUOLI,
+  RUOLI_MANTRA,
+  RUOLO_COLORE,
+  RUOLO_LABEL,
+  RUOLO_MANTRA_COLORE,
+  RUOLO_MANTRA_LABEL,
+} from "@/lib/types";
 import {
   computeBudgetResiduoTotale,
   computeClassificaValoreModuli,
   computeCoperturaModuli,
   computeDettaglioModulo,
   computeMantraStato,
-  computePianoSpesaMantra,
   computeRoleStats,
+  computeSpesaGruppiMantra,
   computeValoreMedioAcquisto,
-  SOGLIA_RAPPORTO_CONSIGLIATO,
 } from "@/lib/suggestions";
 import { computeCoperturaRuoliClassic, computeCoperturaRuoliMantra, LivelloCopertura } from "@/lib/coperturaRuoli";
 import { coloreSfondoSlot, MODULI_MANTRA, Modulo } from "@/lib/moduliMantra";
@@ -33,6 +40,50 @@ function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
       size={12}
       className={livello === "assente" ? "text-red-600" : "text-amber-500"}
     />
+  );
+}
+
+/** Verde fino al 70% del budget previsto, giallo fino al 100%, rosso oltre. */
+function coloreBarraAvanzamento(speso: number, budgetPrevisto: number): string {
+  if (budgetPrevisto <= 0) return "#94a3b8";
+  const rapporto = speso / budgetPrevisto;
+  if (rapporto > 1) return "#dc2626";
+  if (rapporto > 0.7) return "#f59e0b";
+  return "#16a34a";
+}
+
+/** Barra di avanzamento spesa/budget previsto per un ruolo o un gruppo di ruoli: resta ferma al 100% (rossa) in caso di sforamento, con l'importo dello sforamento a fianco. */
+function BarraBudgetRuolo({
+  label,
+  colore,
+  speso,
+  budgetPrevisto,
+}: {
+  label: string;
+  colore: string;
+  speso: number;
+  budgetPrevisto: number;
+}) {
+  const sforato = speso > budgetPrevisto;
+  const larghezza = budgetPrevisto > 0 ? Math.min(100, (speso / budgetPrevisto) * 100) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm mb-0.5">
+        <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: colore }}>
+          {label}
+        </span>
+        <span className={sforato ? "text-red-600 font-semibold text-xs" : "text-slate-500 text-xs"}>
+          {speso} / {budgetPrevisto}
+          {sforato && ` (sforato di ${speso - budgetPrevisto})`}
+        </span>
+      </div>
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${larghezza}%`, backgroundColor: coloreBarraAvanzamento(speso, budgetPrevisto) }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -65,53 +116,21 @@ function PannelloClassic({
         <span className="text-slate-500">Valore medio disponibile</span>
         <span className="font-medium">{Math.round(valoreMedioAcquisto)}</span>
       </div>
-      <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
-      <table className="w-full text-xs mb-4 table-fixed">
-        <thead>
-          <tr className="text-left text-slate-400">
-            <th className="pb-1 w-8">Ruolo</th>
-            <th className="pb-1 text-right" title="Slot occupati / slot totali per questo ruolo">
-              <Users size={13} className="inline-block" />
-            </th>
-            <th className="pb-1 text-right" title="Budget residuo assegnato a questo ruolo">
-              <Wallet size={13} className="inline-block" />
-            </th>
-            <th className="pb-1 text-right" title="Media disponibile per ogni slot ancora da riempire in questo ruolo">
-              <Calculator size={13} className="inline-block" />
-            </th>
-            <th className="pb-1 text-right" title="Tetto prudente: soglia (+30% della media) oltre la quale conviene evitare di sforare per questo ruolo">
-              <ShieldAlert size={13} className="inline-block" />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {RUOLI.map((ruolo) => {
-            const s = roleStats[ruolo];
-            return (
-              <tr key={ruolo} className="border-t border-slate-100">
-                <td className="py-1" title={RUOLO_LABEL[ruolo]}>
-                  <span
-                    className="text-white rounded px-1"
-                    style={{ backgroundColor: RUOLO_COLORE[ruolo] }}
-                  >
-                    {ruolo}
-                  </span>
-                </td>
-                <td className="py-1 text-right">
-                  {s.slotOccupati}/{s.slotTotali}
-                </td>
-                <td className="py-1 text-right">{Math.round(s.budgetResiduoRuolo)}</td>
-                <td className="py-1 text-right font-medium">
-                  {s.slotRimanenti > 0 ? Math.round(s.prezzoMedioDisponibile) : "—"}
-                </td>
-                <td className="py-1 text-right text-slate-500">
-                  {s.slotRimanenti > 0 ? Math.round(s.prezzoMedioDisponibile * SOGLIA_RAPPORTO_CONSIGLIATO) : "—"}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per ruolo</h3>
+      <div className="space-y-2 mb-4">
+        {RUOLI.map((ruolo) => {
+          const s = roleStats[ruolo];
+          return (
+            <BarraBudgetRuolo
+              key={ruolo}
+              label={ruolo}
+              colore={RUOLO_COLORE[ruolo]}
+              speso={Math.round(s.spesoRuolo)}
+              budgetPrevisto={Math.round(s.budgetRuolo)}
+            />
+          );
+        })}
+      </div>
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Copertura ruoli</h3>
       <ul className="text-sm flex flex-wrap gap-1.5">
@@ -147,7 +166,7 @@ function PannelloMantra({
   const settings = useAuctionStore((s) => s.settings);
   const stato = computeMantraStato(players, settings);
   const coperture = computeCoperturaModuli(players);
-  const pianoSpesa = computePianoSpesaMantra(players, settings);
+  const spesaGruppi = computeSpesaGruppiMantra(players, settings);
   const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
   const mieiMantra = players.filter((p) => p.stato === "mia");
   const moduliByNome = new Map(MODULI_MANTRA.map((m) => [m.nome, m]));
@@ -197,35 +216,18 @@ function PannelloMantra({
         </p>
       )}
 
-      {pianoSpesa.length > 0 && (
-        <>
-          <h3 className="text-xs uppercase text-slate-400 mb-1">Piano di spesa per ruolo residuo</h3>
-          <ul className="text-sm space-y-1 mb-4">
-            {pianoSpesa.map((v) => (
-              <li key={v.ruolo} className="flex items-center justify-between">
-                <span
-                  className="text-white rounded px-1 text-xs"
-                  style={{ backgroundColor: RUOLO_MANTRA_COLORE[v.ruolo] }}
-                >
-                  {v.ruolo}
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-12 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <span
-                      className="block h-full"
-                      style={{
-                        width: `${Math.min(100, (v.quotaBudgetSuggerita / stato.budgetResiduo) * 100)}%`,
-                        backgroundColor: RUOLO_MANTRA_COLORE[v.ruolo],
-                      }}
-                    />
-                  </span>
-                  <span className="text-slate-400 text-xs">{v.quotaBudgetSuggerita}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per gruppo di ruoli</h3>
+      <div className="space-y-2 mb-4">
+        {spesaGruppi.map((g) => (
+          <BarraBudgetRuolo
+            key={g.gruppo}
+            label={g.label}
+            colore={GRUPPO_BUDGET_MANTRA_COLORE[g.gruppo]}
+            speso={g.speso}
+            budgetPrevisto={g.budgetPrevisto}
+          />
+        ))}
+      </div>
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Moduli (dal più vicino al completamento)</h3>
       <ul className="text-sm space-y-1">

@@ -30,7 +30,19 @@ ruoli ancora da coprire nella tua squadra.
   sono slot fissi per ruolo** (sempre acquistabile qualsiasi ruolo): si imposta
   solo un numero minimo e massimo di giocatori totali da acquistare — oltre il
   massimo, "Preso da me" si disabilita. Si imposta anche il **numero di
-  partecipanti all'asta** (default 8).
+  partecipanti all'asta** (default 8). In Mantra si imposta anche un
+  **budget in crediti per 8 gruppi di ruoli** (Por, Dc/B/Dd/Ds, E, M, C,
+  W/T/A, Pc, più "Riserva" — una quota libera non legata a un ruolo): i 7
+  gruppi coprono tutti i 12 ruoli Mantra senza sovrapposizioni (un giocatore
+  multi-ruolo conta su un solo gruppo, il primo che copre) e sono pensati per
+  sommare al budget totale, con un avviso (non bloccante) se non corrispondono.
+- **Budget per ruolo/gruppo**: nel pannello Budget, una barra di avanzamento
+  per ogni ruolo (Classic) o gruppo (Mantra) mostra quanto hai speso rispetto
+  al budget pianificato in Settings — verde fino al 70% del budget,
+  gialla fino al 100%, rossa oltre: superato il budget la barra resta ferma al
+  100% (rossa) con l'importo dello sforamento a fianco. "Riserva" (Mantra) non
+  ha una spesa calcolabile automaticamente (nessun ruolo vi è collegato) e
+  resta sempre a 0.
 - **Moduli tattici (Mantra)**: la dashboard calcola, con un algoritmo di
   matching (non un modello AI/LLM: deterministico e istantaneo, vedi sotto),
   quanti slot degli 11 moduli in `lib/moduliMantra.ts` la rosa attuale riesce
@@ -244,12 +256,11 @@ ruoli ancora da coprire nella tua squadra.
   (ambra = attenzione, rosso = sforamento) insieme a un simulatore "cosa
   succede se" che mostra, prima di confermare, come cambierebbero budget
   residuo, slot/posti rimanenti e media/slot dopo l'acquisto (in Mantra,
-  anche quali moduli aiuterebbe a sbloccare). Nel pannello Budget, un "Piano
-  di spesa per ruolo residuo" mostra lo stesso tetto prudente per ogni ruolo
-  (Classic) o una ripartizione approssimativa del budget residuo tra i ruoli
-  Mantra più richiesti dai moduli vicini al completamento (Mantra) — una
-  guida, non una prenotazione rigida.
-- **Copertura ruoli**: sotto il piano di spesa, il pannello Budget elenca
+  anche quali moduli aiuterebbe a sbloccare). Nel pannello Budget, "Budget
+  per ruolo"/"Budget per gruppo di ruoli" (vedi sopra) mostra invece quanto
+  hai già speso rispetto al budget pianificato in Settings, con le barre
+  colorate per soglia.
+- **Copertura ruoli**: sotto il budget per ruolo/gruppo, il pannello Budget elenca
   **tutti** i ruoli (P/D/C/A in Classic, tutti i ruoli Mantra in Mantra) con
   un'icona di avviso su quelli senza un doppione nella tua rosa — nessun
   titolare (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio"
@@ -264,9 +275,9 @@ ruoli ancora da coprire nella tua squadra.
   dentro la tabella, sollevato in `app/page.tsx` così i due possono
   controllarsi a vicenda), chiudendo un eventuale filtro ballottaggio già
   aperto.
-- **Layout a tre colonne**: pannello Budget (250px, i ruoli nel "Piano di
-  spesa" usano la stessa letterina colorata P/D/C/A vista altrove, non il nome
-  esteso) e "La mia rosa" (310px) — un compromesso tra le due, abbastanza
+- **Layout a tre colonne**: pannello Budget (250px, i ruoli nelle barre di
+  budget usano la stessa letterina colorata P/D/C/A vista altrove, non il
+  nome esteso) e "La mia rosa" (310px) — un compromesso tra le due, abbastanza
   larghe entrambe da non tagliare né sovrapporre i rispettivi testi.
 - **Valore medio disponibile**: nel pannello Budget, accanto a "Residuo", il
   budget residuo diviso per i giocatori che mancano ancora per completare una

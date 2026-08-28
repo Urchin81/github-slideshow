@@ -193,6 +193,52 @@ export function lineaMantraGiocatore(ruoliMantra: RuoloMantra[] | undefined): Li
 }
 
 /**
+ * Gruppi di ruoli Mantra per la pianificazione del budget in Settings/Budget:
+ * in Mantra non ci sono slot fissi per ruolo, quindi il budget non si divide
+ * per singolo ruolo (come in Classic) ma per questi 7 gruppi, che assieme
+ * coprono tutti i 12 RUOLI_MANTRA senza sovrapposizioni, più "Riserva" — una
+ * quota libera non legata a un ruolo, per rinforzi extra: non ha una "spesa"
+ * calcolabile automaticamente (nessun giocatore vi appartiene) e nel pannello
+ * Budget resta sempre a 0% speso.
+ */
+export type GruppoBudgetMantra = "Por" | "Difesa" | "E" | "M" | "C" | "WTA" | "Pc" | "Riserva";
+
+export const GRUPPI_BUDGET_MANTRA: GruppoBudgetMantra[] = ["Por", "Difesa", "E", "M", "C", "WTA", "Pc", "Riserva"];
+
+export const GRUPPO_BUDGET_MANTRA_LABEL: Record<GruppoBudgetMantra, string> = {
+  Por: "Por",
+  Difesa: "Dc/B/Dd/Ds",
+  E: "E",
+  M: "M",
+  C: "C",
+  WTA: "W/T/A",
+  Pc: "Pc",
+  Riserva: "Riserva",
+};
+
+/** Ruoli Mantra coperti da ciascun gruppo di budget (Riserva esclusa: non è legata a ruoli). */
+export const GRUPPO_BUDGET_MANTRA_RUOLI: Record<Exclude<GruppoBudgetMantra, "Riserva">, RuoloMantra[]> = {
+  Por: ["Por"],
+  Difesa: ["Dc", "B", "Dd", "Ds"],
+  E: ["E"],
+  M: ["M"],
+  C: ["C"],
+  WTA: ["W", "T", "A"],
+  Pc: ["Pc"],
+};
+
+/** Gruppo di budget di un giocatore Mantra multi-ruolo: il primo gruppo (nell'ordine di GRUPPI_BUDGET_MANTRA) che uno dei suoi ruoli copre. */
+export function gruppoBudgetMantraGiocatore(
+  ruoliMantra: RuoloMantra[] | undefined
+): Exclude<GruppoBudgetMantra, "Riserva"> | undefined {
+  if (!ruoliMantra || ruoliMantra.length === 0) return undefined;
+  return GRUPPI_BUDGET_MANTRA.find(
+    (gruppo): gruppo is Exclude<GruppoBudgetMantra, "Riserva"> =>
+      gruppo !== "Riserva" && GRUPPO_BUDGET_MANTRA_RUOLI[gruppo].some((r) => ruoliMantra.includes(r))
+  );
+}
+
+/**
  * Colore per ruolo Mantra, usato ovunque compaiano le etichette dei ruoli
  * (rosa, tabella, moduli) cosi' che lo stesso ruolo sia sempre riconoscibile
  * allo stesso colore: portiere ambra, resto della difesa verde,
@@ -216,6 +262,18 @@ export const RUOLO_MANTRA_COLORE: Record<RuoloMantra, string> = {
   Pc: "#dc2626",
 };
 
+/** Colore rappresentativo di ciascun gruppo di budget Mantra: quello del suo primo ruolo (RUOLO_MANTRA_COLORE). "Riserva" non è legata a un ruolo, colore neutro. */
+export const GRUPPO_BUDGET_MANTRA_COLORE: Record<GruppoBudgetMantra, string> = {
+  Por: RUOLO_MANTRA_COLORE.Por,
+  Difesa: RUOLO_MANTRA_COLORE.Dc,
+  E: RUOLO_MANTRA_COLORE.E,
+  M: RUOLO_MANTRA_COLORE.M,
+  C: RUOLO_MANTRA_COLORE.C,
+  WTA: RUOLO_MANTRA_COLORE.W,
+  Pc: RUOLO_MANTRA_COLORE.Pc,
+  Riserva: "#64748b",
+};
+
 export interface RoleConfig {
   slot: number;
   percentualeBudget: number;
@@ -225,6 +283,8 @@ export interface RoleConfig {
 export interface MantraConfig {
   minGiocatori: number;
   maxGiocatori: number;
+  /** Budget pianificato (in crediti) per ciascun gruppo di ruoli, per il pannello Budget: idealmente somma a budgetTotale. */
+  budgetGruppi: Record<GruppoBudgetMantra, number>;
 }
 
 export interface Settings {
@@ -249,6 +309,16 @@ export const DEFAULT_SETTINGS: Settings = {
   mantra: {
     minGiocatori: 25,
     maxGiocatori: 30,
+    budgetGruppi: {
+      Por: 25,
+      Difesa: 75,
+      E: 50,
+      M: 40,
+      C: 60,
+      WTA: 140,
+      Pc: 90,
+      Riserva: 20,
+    },
   },
 };
 

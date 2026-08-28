@@ -1,4 +1,15 @@
-import { LivelloFpedia, Player, RUOLI, Ruolo, RuoloMantra, Settings } from "./types";
+import {
+  GRUPPI_BUDGET_MANTRA,
+  GRUPPO_BUDGET_MANTRA_LABEL,
+  GruppoBudgetMantra,
+  gruppoBudgetMantraGiocatore,
+  LivelloFpedia,
+  Player,
+  RUOLI,
+  Ruolo,
+  RuoloMantra,
+  Settings,
+} from "./types";
 import { MODULI_MANTRA, Modulo, SlotModulo } from "./moduliMantra";
 import { costruisciMatchmaker, generaCombinazioniPerPunteggio, MatchmakerModulo } from "./bipartiteMatching";
 import { livelloRelativoInCampione } from "./percentile";
@@ -304,34 +315,33 @@ export function computeRuoliNecessari(coperture: ModuloCoverage[], topN = MODULI
     .sort((a, b) => b.punteggio - a.punteggio);
 }
 
-export interface VoceSpesaMantra {
-  ruolo: RuoloMantra;
-  punteggioNecessita: number;
-  /** Quota del budget residuo suggerita per questo ruolo, proporzionale alla sua necessità nei moduli più vicini al completamento. */
-  quotaBudgetSuggerita: number;
+export interface SpesaGruppoMantra {
+  gruppo: GruppoBudgetMantra;
+  label: string;
+  budgetPrevisto: number;
+  speso: number;
 }
 
 /**
- * In Mantra non ci sono slot fissi per ruolo, quindi un piano di spesa non
- * puo' essere una partizione rigida del budget come in Classic: qui si
- * distribuisce il budget residuo proporzionalmente a quanto ogni ruolo e'
- * richiesto dai moduli piu' vicini al completamento (computeRuoliNecessari).
- * E' volutamente una guida approssimativa, non una prenotazione — i ruoli
- * Mantra si sovrappongono (un W puo' riempire anche uno slot W/A), quindi le
- * quote non sommano necessariamente al budget residuo.
+ * Spesa reale (non una stima) per ciascun gruppo di budget Mantra
+ * (lib/types.ts, GRUPPI_BUDGET_MANTRA), confrontata col budget pianificato in
+ * Settings: un giocatore multi-ruolo viene contato su un solo gruppo
+ * (gruppoBudgetMantraGiocatore). "Riserva" non è legata a ruoli quindi non ha
+ * mai spesa attribuita.
  */
-export function computePianoSpesaMantra(players: Player[], settings: Settings, topN = 5): VoceSpesaMantra[] {
-  const stato = computeMantraStato(players, settings);
-  if (stato.postiRimanenti <= 0 || stato.budgetResiduo <= 0) return [];
-
-  const necessari = computeRuoliNecessari(computeCoperturaModuli(players)).filter((r) => r.punteggio > 0);
-  const totale = necessari.reduce((sum, r) => sum + r.punteggio, 0);
-  if (totale === 0) return [];
-
-  return necessari.slice(0, topN).map((r) => ({
-    ruolo: r.ruolo,
-    punteggioNecessita: r.punteggio,
-    quotaBudgetSuggerita: Math.round((r.punteggio / totale) * stato.budgetResiduo),
+export function computeSpesaGruppiMantra(players: Player[], settings: Settings): SpesaGruppoMantra[] {
+  const speso = new Map<GruppoBudgetMantra, number>();
+  for (const p of players) {
+    if (p.stato !== "mia") continue;
+    const gruppo = gruppoBudgetMantraGiocatore(p.ruoliMantra);
+    if (!gruppo) continue;
+    speso.set(gruppo, (speso.get(gruppo) ?? 0) + (p.prezzoPagato ?? 0));
+  }
+  return GRUPPI_BUDGET_MANTRA.map((gruppo) => ({
+    gruppo,
+    label: GRUPPO_BUDGET_MANTRA_LABEL[gruppo],
+    budgetPrevisto: settings.mantra.budgetGruppi[gruppo],
+    speso: speso.get(gruppo) ?? 0,
   }));
 }
 
