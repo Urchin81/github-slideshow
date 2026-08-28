@@ -300,10 +300,12 @@ ruoli ancora da coprire nella tua squadra.
   (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio" se quel
   giocatore salta un turno — o una spunta verde quando è coperto. In Classic
   resta una sezione **"Copertura ruoli"** a parte, con tutti e 4 i ruoli
-  (P/D/C/A); in **Mantra i badge sono annidati sotto il gruppo di budget a
-  cui appartengono** (es. sotto "Dc/B/Dd/Ds" compaiono in linea Dc, B, Dd,
-  Ds), invece di stare in un elenco separato — così budget e copertura dello
-  stesso gruppo si leggono insieme. In Mantra un giocatore multi-ruolo non
+  (P/D/C/A); in **Mantra i badge sostituiscono l'etichetta del gruppo sopra la
+  sua barra di budget** — es. sopra la barra di "Dc/B/Dd/Ds" compaiono in
+  linea, senza andare mai a capo, i badge Dc, B, Dd, Ds (ciascuno con la
+  propria icona) al posto del nome del gruppo — invece di ripetere gli stessi
+  ruoli sia come etichetta del gruppo sia in un elenco separato sotto. In
+  Mantra un giocatore multi-ruolo non
   viene mai contato due volte su due ruoli diversi: il conteggio riusa lo
   stesso matching bipartito massimo (algoritmo di Kuhn,
   `lib/bipartiteMatching.ts`) già usato per la copertura dei moduli, con due

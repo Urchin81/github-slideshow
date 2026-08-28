@@ -45,7 +45,12 @@ function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
   );
 }
 
-/** Ruoli Mantra di un gruppo, in linea sotto la sua barra di budget: stesso badge/icona/filtro già usato per la copertura ruoli. */
+/**
+ * Ruoli Mantra di un gruppo, sostituisce l'etichetta del gruppo sopra la sua
+ * barra di budget: un badge per ruolo (mai a capo), con la stessa
+ * icona/tooltip/filtro della copertura ruoli, invece di ripetere il nome del
+ * gruppo (es. "Dc/B/Dd/Ds") e i ruoli singoli in due punti diversi.
+ */
 function RigaRuoliGruppo({
   ruoli,
   coperturaRuoli,
@@ -58,13 +63,13 @@ function RigaRuoliGruppo({
   onFiltraRuolo: (ruolo: RoleKey) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5 mt-1">
+    <div className="flex flex-nowrap items-center gap-1 min-w-0">
       {ruoli.map((r) => (
         <button
           key={r}
           onClick={() => onFiltraRuolo(r)}
           title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]} — clicca per filtrare la tabella su questo ruolo`}
-          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border hover:bg-slate-50 ${
+          className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 border shrink-0 hover:bg-slate-50 ${
             ruoloFiltro === r ? "border-slate-900" : "border-slate-200"
           }`}
         >
@@ -100,23 +105,25 @@ const HEX_COLORE_BARRA_GRUPPO: Record<ColoreBarraGruppoMantra, string> = {
 /**
  * Barra di avanzamento spesa/budget previsto per un ruolo o un gruppo di
  * ruoli: resta ferma al 100% in caso di sforamento, con l'importo dello
- * sforamento a fianco. In Mantra il colore dello sforamento (blu finché la
- * Riserva condivisa lo copre, rosso una volta esaurita) arriva da fuori
- * tramite `coloreOverride`; senza, usa le soglie standard (Classic, che non
- * ha una Riserva). `penalitaDisponibile`, quando non in sforamento, sostituisce
- * il budget massimo mostrato (secondo numero di "speso / massimo") con quello
- * già ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte.
+ * sforamento a fianco. `labelContent` sopra la barra è o l'etichetta del
+ * singolo ruolo (Classic) o, in Mantra, i badge dei ruoli del gruppo — mai a
+ * capo — invece di un'unica etichetta col nome del gruppo (es.
+ * "Dc/B/Dd/Ds"), per non ripetere gli stessi ruoli in due punti diversi. In
+ * Mantra il colore dello sforamento (blu finché la Riserva condivisa lo
+ * copre, rosso una volta esaurita) arriva da fuori tramite `coloreOverride`;
+ * senza, usa le soglie standard (Classic, che non ha una Riserva).
+ * `penalitaDisponibile`, quando non in sforamento, sostituisce il budget
+ * massimo mostrato (secondo numero di "speso / massimo") con quello già
+ * ridotto dall'erosione, in rosso, invece di aggiungere una riga a parte.
  */
 function BarraBudgetRuolo({
-  label,
-  colore,
+  labelContent,
   speso,
   budgetPrevisto,
   coloreOverride,
   penalitaDisponibile,
 }: {
-  label: string;
-  colore: string;
+  labelContent: React.ReactNode;
   speso: number;
   budgetPrevisto: number;
   coloreOverride?: string;
@@ -129,11 +136,9 @@ function BarraBudgetRuolo({
   const budgetMassimoMostrato = budgetPrevisto - (penalitaDisponibile ?? 0);
   return (
     <div>
-      <div className="flex items-center justify-between text-sm mb-0.5">
-        <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: colore }}>
-          {label}
-        </span>
-        <span className={sforato ? "text-red-600 font-semibold text-xs" : "text-slate-500 text-xs"}>
+      <div className="flex items-center justify-between gap-2 text-sm mb-0.5">
+        {labelContent}
+        <span className={`shrink-0 ${sforato ? "text-red-600 font-semibold text-xs" : "text-slate-500 text-xs"}`}>
           {speso} /{" "}
           {disponibileEroso ? (
             <span
@@ -213,8 +218,11 @@ function PannelloClassic({
           return (
             <BarraBudgetRuolo
               key={ruolo}
-              label={ruolo}
-              colore={RUOLO_COLORE[ruolo]}
+              labelContent={
+                <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[ruolo] }}>
+                  {ruolo}
+                </span>
+              }
               speso={Math.round(s.spesoRuolo)}
               budgetPrevisto={Math.round(s.budgetRuolo)}
             />
@@ -307,24 +315,23 @@ function PannelloMantra({
       )}
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per gruppo di ruoli</h3>
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 mb-4">
         {impattoBudget.gruppi.map((g) => (
-          <div key={g.gruppo}>
-            <BarraBudgetRuolo
-              label={g.label}
-              colore={GRUPPO_BUDGET_MANTRA_COLORE[g.gruppo]}
-              speso={g.speso}
-              budgetPrevisto={g.budgetPrevisto}
-              coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
-              penalitaDisponibile={g.penalitaDisponibile}
-            />
-            <RigaRuoliGruppo
-              ruoli={GRUPPO_BUDGET_MANTRA_RUOLI[g.gruppo]}
-              coperturaRuoli={coperturaRuoli}
-              ruoloFiltro={ruoloFiltro}
-              onFiltraRuolo={onFiltraRuolo}
-            />
-          </div>
+          <BarraBudgetRuolo
+            key={g.gruppo}
+            labelContent={
+              <RigaRuoliGruppo
+                ruoli={GRUPPO_BUDGET_MANTRA_RUOLI[g.gruppo]}
+                coperturaRuoli={coperturaRuoli}
+                ruoloFiltro={ruoloFiltro}
+                onFiltraRuolo={onFiltraRuolo}
+              />
+            }
+            speso={g.speso}
+            budgetPrevisto={g.budgetPrevisto}
+            coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
+            penalitaDisponibile={g.penalitaDisponibile}
+          />
         ))}
         <BarraRiserva
           budgetPrevisto={impattoBudget.riserva.budgetPrevisto}
