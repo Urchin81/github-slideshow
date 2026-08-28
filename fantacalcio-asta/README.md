@@ -295,11 +295,15 @@ ruoli ancora da coprire nella tua squadra.
   per ruolo"/"Budget per gruppo di ruoli" (vedi sopra) mostra invece quanto
   hai già speso rispetto al budget pianificato in Settings, con le barre
   colorate per soglia.
-- **Copertura ruoli**: sotto il budget per ruolo/gruppo, il pannello Budget elenca
-  **tutti** i ruoli (P/D/C/A in Classic, tutti i ruoli Mantra in Mantra) con
-  un'icona di avviso su quelli senza un doppione nella tua rosa — nessun
-  titolare (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio"
-  se quel giocatore salta un turno. In Mantra un giocatore multi-ruolo non
+- **Copertura ruoli**: un badge per ogni ruolo mostra un'icona di avviso
+  (triangolo) quando non ha un doppione nella tua rosa — nessun titolare
+  (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio" se quel
+  giocatore salta un turno — o una spunta verde quando è coperto. In Classic
+  resta una sezione **"Copertura ruoli"** a parte, con tutti e 4 i ruoli
+  (P/D/C/A); in **Mantra i badge sono annidati sotto il gruppo di budget a
+  cui appartengono** (es. sotto "Dc/B/Dd/Ds" compaiono in linea Dc, B, Dd,
+  Ds), invece di stare in un elenco separato — così budget e copertura dello
+  stesso gruppo si leggono insieme. In Mantra un giocatore multi-ruolo non
   viene mai contato due volte su due ruoli diversi: il conteggio riusa lo
   stesso matching bipartito massimo (algoritmo di Kuhn,
   `lib/bipartiteMatching.ts`) già usato per la copertura dei moduli, con due

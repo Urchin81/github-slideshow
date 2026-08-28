@@ -1,15 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Check } from "lucide-react";
 import {
   GRUPPO_BUDGET_MANTRA_COLORE,
+  GRUPPO_BUDGET_MANTRA_RUOLI,
   RUOLI,
-  RUOLI_MANTRA,
   RUOLO_COLORE,
   RUOLO_LABEL,
   RUOLO_MANTRA_COLORE,
   RUOLO_MANTRA_LABEL,
+  RuoloMantra,
 } from "@/lib/types";
 import {
   ColoreBarraGruppoMantra,
@@ -35,12 +36,45 @@ const TOOLTIP_COPERTURA: Record<LivelloCopertura, string> = {
 };
 
 function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
-  if (livello === "coperto") return null;
+  if (livello === "coperto") return <Check size={12} className="text-green-600" />;
   return (
     <AlertTriangle
       size={12}
       className={livello === "assente" ? "text-red-600" : "text-amber-500"}
     />
+  );
+}
+
+/** Ruoli Mantra di un gruppo, in linea sotto la sua barra di budget: stesso badge/icona/filtro già usato per la copertura ruoli. */
+function RigaRuoliGruppo({
+  ruoli,
+  coperturaRuoli,
+  ruoloFiltro,
+  onFiltraRuolo,
+}: {
+  ruoli: RuoloMantra[];
+  coperturaRuoli: Record<RuoloMantra, LivelloCopertura>;
+  ruoloFiltro: RoleKey | "tutti";
+  onFiltraRuolo: (ruolo: RoleKey) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1">
+      {ruoli.map((r) => (
+        <button
+          key={r}
+          onClick={() => onFiltraRuolo(r)}
+          title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]} — clicca per filtrare la tabella su questo ruolo`}
+          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border hover:bg-slate-50 ${
+            ruoloFiltro === r ? "border-slate-900" : "border-slate-200"
+          }`}
+        >
+          <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
+            {r}
+          </span>
+          <IconaCopertura livello={coperturaRuoli[r]} />
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -273,17 +307,24 @@ function PannelloMantra({
       )}
 
       <h3 className="text-xs uppercase text-slate-400 mb-1">Budget per gruppo di ruoli</h3>
-      <div className="space-y-2 mb-4">
+      <div className="space-y-3 mb-4">
         {impattoBudget.gruppi.map((g) => (
-          <BarraBudgetRuolo
-            key={g.gruppo}
-            label={g.label}
-            colore={GRUPPO_BUDGET_MANTRA_COLORE[g.gruppo]}
-            speso={g.speso}
-            budgetPrevisto={g.budgetPrevisto}
-            coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
-            penalitaDisponibile={g.penalitaDisponibile}
-          />
+          <div key={g.gruppo}>
+            <BarraBudgetRuolo
+              label={g.label}
+              colore={GRUPPO_BUDGET_MANTRA_COLORE[g.gruppo]}
+              speso={g.speso}
+              budgetPrevisto={g.budgetPrevisto}
+              coloreOverride={HEX_COLORE_BARRA_GRUPPO[g.colore]}
+              penalitaDisponibile={g.penalitaDisponibile}
+            />
+            <RigaRuoliGruppo
+              ruoli={GRUPPO_BUDGET_MANTRA_RUOLI[g.gruppo]}
+              coperturaRuoli={coperturaRuoli}
+              ruoloFiltro={ruoloFiltro}
+              onFiltraRuolo={onFiltraRuolo}
+            />
+          </div>
         ))}
         <BarraRiserva
           budgetPrevisto={impattoBudget.riserva.budgetPrevisto}
@@ -348,26 +389,6 @@ function PannelloMantra({
           </li>
           );
         })}
-      </ul>
-
-      <h3 className="text-xs uppercase text-slate-400 mb-1 mt-4">Copertura ruoli</h3>
-      <ul className="text-sm flex flex-wrap gap-1.5">
-        {RUOLI_MANTRA.map((r) => (
-          <li key={r}>
-            <button
-              onClick={() => onFiltraRuolo(r)}
-              title={`${RUOLO_MANTRA_LABEL[r]} — ${TOOLTIP_COPERTURA[coperturaRuoli[r]]} — clicca per filtrare la tabella su questo ruolo`}
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border hover:bg-slate-50 ${
-                ruoloFiltro === r ? "border-slate-900" : "border-slate-200"
-              }`}
-            >
-              <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
-                {r}
-              </span>
-              <IconaCopertura livello={coperturaRuoli[r]} />
-            </button>
-          </li>
-        ))}
       </ul>
 
       {moduloAperto && (

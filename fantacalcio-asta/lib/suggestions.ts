@@ -354,7 +354,9 @@ export function computeSpesaGruppiMantra(players: Player[], settings: Settings):
  */
 export type ColoreBarraGruppoMantra = "verde" | "ambra" | "blu" | "rosso";
 
-export interface ImpattoGruppoMantra extends SpesaGruppoMantra {
+export interface ImpattoGruppoMantra extends Omit<SpesaGruppoMantra, "gruppo"> {
+  /** Esclude "Riserva": impattoBudget.gruppi copre solo i 7 gruppi legati a ruoli (la Riserva ha una resa a parte, vedi RiservaMantra). */
+  gruppo: Exclude<GruppoBudgetMantra, "Riserva">;
   colore: ColoreBarraGruppoMantra;
   /**
    * Crediti "eroso" dal budget disponibile di questo gruppo (non in
@@ -394,7 +396,9 @@ export interface ImpattoBudgetGruppiMantra {
 export function computeImpattoBudgetGruppiMantra(players: Player[], settings: Settings): ImpattoBudgetGruppiMantra {
   const base = computeSpesaGruppiMantra(players, settings);
   const riservaBase = base.find((g) => g.gruppo === "Riserva")!;
-  const gruppiRuolo = base.filter((g) => g.gruppo !== "Riserva");
+  const gruppiRuolo = base.filter(
+    (g): g is SpesaGruppoMantra & { gruppo: Exclude<GruppoBudgetMantra, "Riserva"> } => g.gruppo !== "Riserva"
+  );
 
   const sforamentoTotale = gruppiRuolo.reduce((sum, g) => sum + Math.max(0, g.speso - g.budgetPrevisto), 0);
   const riservaBudget = riservaBase.budgetPrevisto;
