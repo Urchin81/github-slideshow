@@ -85,6 +85,9 @@ function RigaRuoliGruppo({
 
 /** Rosso più tenue (Tailwind red-400) usato solo per la Riserva esaurita: segnala l'esaurimento senza il rosso acceso, riservato al testo di sforamento. */
 const ROSSO_SFORAMENTO_BARRA = "#f87171";
+/** Verde e ambra chiari (Tailwind green-400/amber-300) per il riempimento delle barre budget: meno acceso del verde/ambra usato altrove (es. i ruoli), per non competere col testo di sforamento. */
+const VERDE_BARRA = "#4ade80";
+const AMBRA_BARRA = "#fcd34d";
 
 /**
  * Barra di avanzamento budget di un ruolo o gruppo di ruoli, invertita come
@@ -101,6 +104,8 @@ const ROSSO_SFORAMENTO_BARRA = "#f87171";
  * quando non in sforamento, sostituisce il budget massimo mostrato (secondo
  * numero di "speso / massimo") con quello già ridotto dall'erosione, in
  * rosso — e la barra segue quel massimo ridotto, non più quello nominale.
+ * La barra resta sottile finché il budget non è esaurito: si ingrossa solo
+ * in caso di sforamento, per fare spazio al testo scritto al suo interno.
  */
 function BarraBudgetRuolo({
   labelContent,
@@ -124,7 +129,7 @@ function BarraBudgetRuolo({
   const denominatoreBarra = disponibileEroso ? budgetMassimoMostrato : budgetPrevisto;
   const percentualeSpesa = denominatoreBarra > 0 ? (speso / denominatoreBarra) * 100 : speso > 0 ? 100 : 0;
   const percentualeResidua = Math.max(0, 100 - percentualeSpesa);
-  const coloreBarra = percentualeSpesa > 70 ? "#f59e0b" : "#16a34a";
+  const coloreBarra = percentualeSpesa > 70 ? AMBRA_BARRA : VERDE_BARRA;
   const coloreTestoSforamento = coloreOverride === "blu" ? "text-blue-700" : "text-red-600";
   return (
     <div>
@@ -144,7 +149,7 @@ function BarraBudgetRuolo({
           )}
         </span>
       </div>
-      <div className="relative w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+      <div className={`relative w-full bg-slate-100 rounded-full overflow-hidden ${sforato ? "h-4" : "h-1.5"}`}>
         <div className="h-full rounded-full" style={{ width: `${percentualeResidua}%`, backgroundColor: coloreBarra }} />
         {sforato && (
           <span
@@ -158,11 +163,11 @@ function BarraBudgetRuolo({
   );
 }
 
-/** Barra della Riserva Mantra: parte piena (100%, verde) e scende man mano che copre lo sforamento altrui, fino a esaurirsi (rossa, vuota). */
+/** Barra della Riserva Mantra: parte piena (100%, verde) e scende man mano che copre lo sforamento altrui, fino a esaurirsi (rossa, vuota) — sempre sottile, non scrive mai un importo di sforamento al suo interno. */
 function BarraRiserva({ budgetPrevisto, consumata, residua }: { budgetPrevisto: number; consumata: number; residua: number }) {
   const percentualeResidua = budgetPrevisto > 0 ? Math.max(0, Math.min(100, (residua / budgetPrevisto) * 100)) : 0;
   const rapportoConsumata = budgetPrevisto > 0 ? consumata / budgetPrevisto : 0;
-  const colore = rapportoConsumata >= 1 ? ROSSO_SFORAMENTO_BARRA : rapportoConsumata > 0.7 ? "#f59e0b" : "#16a34a";
+  const colore = rapportoConsumata >= 1 ? ROSSO_SFORAMENTO_BARRA : rapportoConsumata > 0.7 ? AMBRA_BARRA : VERDE_BARRA;
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-0.5">
@@ -173,7 +178,7 @@ function BarraRiserva({ budgetPrevisto, consumata, residua }: { budgetPrevisto: 
           {consumata > 0 ? `${residua} residui / ${budgetPrevisto}` : `${budgetPrevisto} disponibili`}
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${percentualeResidua}%`, backgroundColor: colore }} />
       </div>
     </div>

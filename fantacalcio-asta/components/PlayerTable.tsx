@@ -1001,10 +1001,12 @@ export function PlayerTable({
           <tbody>
             {righe.map((p, i) => {
               const inAsta = inAstaPlayer?.id === p.id;
-              const zebra = i % 2 === 1 ? "bg-slate-50/70" : "bg-white";
+              // Alternanza calcolata sull'indice di "righe" (già filtrata/ordinata): resta coerente
+              // riga dopo riga qualunque sia il filtro attivo, invece di riflettere l'elenco completo.
+              const zebra = i % 2 === 1 ? "bg-slate-100" : "bg-white";
               return (
                 <Fragment key={p.id}>
-                <tr className={inAsta ? "bg-amber-50/60" : `${zebra} hover:bg-slate-100`}>
+                <tr className={inAsta ? "bg-amber-50/60" : `${zebra} hover:bg-slate-200`}>
                   <td className="py-1.5">
                     <FavoriteStar id={p.id} preferito={p.preferito} />
                   </td>

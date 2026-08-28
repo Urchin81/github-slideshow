@@ -62,10 +62,11 @@ ruoli ancora da coprire nella tua squadra.
     con una "×" (che toglie il preferito, non lo elimina dal listino).
 - **Budget per ruolo/gruppo (pannello Budget)**: una barra di avanzamento
   per ogni ruolo (Classic) o gruppo (Mantra), invertita — parte piena al
-  100% (verde) e **scende** via via che spendi in quel ruolo/gruppo, passando
-  ad ambra oltre il 70% speso, fino a esaurirsi (0%, grigia) quando il
-  budget è finito. Se sfori, la barra resta vuota (grigia) e ci scrive dentro
-  "sfori di N" invece di colorarla oltre il 100%.
+  100% (verde chiaro) e **scende** via via che spendi in quel ruolo/gruppo,
+  passando ad ambra chiaro oltre il 70% speso, fino a esaurirsi (0%, grigia)
+  quando il budget è finito. Resta sottile finché il budget non è esaurito;
+  se sfori, si ingrossa quel tanto che serve a scrivere "sfori di N" dentro
+  la barra stessa (rimasta vuota/grigia), invece di colorarla oltre il 100%.
   - **"Riserva" come cuscinetto condiviso (Mantra)**: non ha una spesa
     propria (nessun ruolo vi è collegato) — la sua barra parte piena al 100%
     e scende via via che copre lo sforamento complessivo degli altri gruppi.
@@ -102,11 +103,14 @@ ruoli ancora da coprire nella tua squadra.
   rappresentate nell'header solo da un'icona (sveglia per Urgenza, martelletto
   d'asta per Azioni), con tooltip per il nome esteso — stesso stile compatto
   già usato per FCP/€. Le righe alternano uno sfondo bianco e uno grigio
-  chiarissimo per distinguerle più facilmente a colpo d'occhio (il giocatore
-  "in asta" resta evidenziato in ambra, ha sempre la priorità sullo sfondo a
-  righe alterne). L'intestazione resta visibile ("sticky") mentre si scorre
-  l'elenco verso il basso, cosí si vede sempre a quale colonna corrisponde
-  ogni valore.
+  chiaro (ben distinguibile, non solo accennato) per separare un giocatore
+  dall'altro a colpo d'occhio — l'alternanza segue l'ordine della lista già
+  filtrata/ordinata mostrata a schermo, quindi resta corretta riga dopo riga
+  qualunque filtro sia attivo, non quella del listino completo (il giocatore
+  "in asta" resta comunque evidenziato in ambra, con sempre la priorità sullo
+  sfondo a righe alterne). L'intestazione resta visibile ("sticky") mentre si
+  scorre l'elenco verso il basso, cosí si vede sempre a quale colonna
+  corrisponde ogni valore.
 - **Ordinamento cliccando sugli header**: ogni header ordinabile (★, Ruolo,
   Nome, Squadra, €, bacchetta FCP, blocco note FCP, Urgenza) ordina
   l'elenco al click, con una freccetta che indica quale colonna è attiva e in
