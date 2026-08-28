@@ -318,7 +318,7 @@ ruoli ancora da coprire nella tua squadra.
   aperto.
 - **Layout a tre colonne**: pannello Budget (270px, i ruoli nelle barre di
   budget usano la stessa letterina colorata P/D/C/A vista altrove, non il
-  nome esteso) e "La mia rosa" (290px) — un compromesso tra le due, abbastanza
+  nome esteso) e "La mia rosa" (330px) — un compromesso tra le due, abbastanza
   larghe entrambe da non tagliare né sovrapporre i rispettivi testi. La
   colonna centrale con la lista giocatori si estende sempre in altezza fino
   al fondo del suo riquadro (anche quando ha poche righe), invece di fermarsi
