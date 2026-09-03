@@ -11,6 +11,7 @@ import type { NewsFeedError, RawNewsItem } from "@/app/api/news/route";
 import { eDellaStagioneCorrente } from "@/lib/stagione";
 import { computeLivelliFantasolidita, vociFantasolidita } from "@/lib/fantasolidita";
 import { COLORE_LIVELLO, LEGENDA_LIVELLI, classeLivello } from "@/lib/livelloColori";
+import { livelloFasciaConsigli } from "@/lib/fasceConsigli";
 import {
   computeLivelloUrgenza,
   computePercentualeUrgenza,
@@ -246,7 +247,47 @@ export default function GiocatorePage() {
                   </div>
                 </div>
               )}
+
+              {(player.fpedia?.presenze !== undefined || player.fpedia?.fantamedia !== undefined) && (
+                <div className="text-center">
+                  <div className="text-[10px] uppercase text-slate-400 tracking-wide">Quest&apos;anno</div>
+                  <div className="flex items-center gap-2">
+                    {player.fpedia?.presenze !== undefined && (
+                      <span
+                        className="inline-block rounded px-1.5 font-bold bg-slate-100 text-slate-700"
+                        title="Partite giocate quest'anno"
+                      >
+                        {player.fpedia.presenze} PG
+                      </span>
+                    )}
+                    {player.fpedia?.fantamedia !== undefined && (
+                      <span
+                        className="inline-block rounded px-1.5 font-bold bg-slate-100 text-slate-700"
+                        title="FantaMedia di quest'anno"
+                      >
+                        FM {player.fpedia.fantamedia.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {player.fasciaConsigli && (
+              <div className="bg-white border border-amber-100 rounded px-2 py-1.5 text-xs">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[10px] uppercase text-slate-400 tracking-wide">Consigli</span>
+                  <span
+                    className={`inline-block rounded px-1.5 font-bold ${classeLivello(
+                      livelloFasciaConsigli(player.fasciaConsigli)
+                    )}`}
+                  >
+                    {player.fasciaConsigli}
+                  </span>
+                </div>
+                {player.commentoConsigli && <p className="text-slate-600">{player.commentoConsigli}</p>}
+              </div>
+            )}
 
             <CaratteristicheGiocatore
               player={player}

@@ -130,6 +130,10 @@ export interface Player {
   ordineRigorista?: 1 | 2 | 3;
   /** Posizione (1°/2°/3°) tra i tiratori di punizione/calci piazzati della squadra secondo le probabili formazioni importate. */
   ordineCalciPiazzati?: 1 | 2 | 3;
+  /** Fascia di valutazione da una guida "consigli fantacalcio" importata (vedi lib/consigli.ts), es. "Top", "Low cost 1ª fascia". */
+  fasciaConsigli?: string;
+  /** Commento/nota della stessa guida esterna importata insieme alla fascia, se presente. */
+  commentoConsigli?: string;
   /** Sintesi qualitativa dedotta dalle notizie (es. "Titolare fisso", "In dubbio"). */
   trendVoti?: string;
   notizie?: NewsItem[];

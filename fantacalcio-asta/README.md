@@ -290,11 +290,12 @@ ruoli ancora da coprire nella tua squadra.
   quanto vale il giocatore, non quanto è probabile che scenda in campo) —
   ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP e Urgenza (vedi
   sopra). Un riquadro **"Quest'anno"** a destra di Urgenza (solo se almeno
-  uno dei due dati è disponibile) mostra partite giocate e FantaMedia della
-  stagione in corso: la FantaMedia — non la semplice Media Voto, che non
-  include bonus/malus — è scrapata dall'etichetta "Fanta Media AAAA-AAAA" di
-  FPEDIA (`fpedia.fantamedia` in `lib/fpedia.ts`/`lib/types.ts`), non dal
-  grafico a barre come le altre statistiche stagionali. A differenza della
+  uno dei due dati è disponibile, identico nella scheda giocatore) mostra
+  partite giocate e FantaMedia della stagione in corso: la FantaMedia — non
+  la semplice Media Voto, che non include bonus/malus — è scrapata
+  dall'etichetta "Fanta Media AAAA-AAAA" di FPEDIA (`fpedia.fantamedia` in
+  `lib/fpedia.ts`/`lib/types.ts`), non dal grafico a barre come le altre
+  statistiche stagionali. A differenza della
   fila di icone sempre-tutte-visibili altrove nell'app, qui compaiono
   **solo le caratteristiche effettivamente presenti**, ognuna con l'etichetta testuale accanto
   all'icona invece del solo tooltip (qui c'è spazio, e serve capire a colpo
@@ -474,6 +475,26 @@ ruoli ancora da coprire nella tua squadra.
     **corona dorata** in alto a sinistra sulla foto (tabella, riquadro "in asta",
     pop-up Moduli Mantra) — diversa dal cerotto rosso degli infortunati (in
     basso), così i due badge non si sovrappongono.
+  - **Consigli fantacalcio (fasce e commenti)**: il pannello "Consigli
+    fantacalcio" importa un CSV esterno (delimitatore `;`, tipico degli export
+    in locale italiana) con le colonne Giocatore, Fascia e Commento — il
+    Ruolo, se presente, viene ignorato, l'abbinamento ai giocatori del
+    listino avviene solo per nome. Riusa lo stesso matcher cognome (+
+    iniziale per gli omonimi) di FPEDIA/infortunati
+    (`trovaVoceGiocatoreInIndice` in `lib/indiceGiocatori.ts`), con
+    un'aggiunta in `lib/consigli.ts`: quando il CSV disambigua un omonimo con
+    più di una lettera (es. "Martinez Jo.", "Ederson D.S." — il listino
+    ufficiale ne usa sempre una sola, es. "Adekunle A.") il suffisso viene
+    troncato alla prima lettera prima di cercare, altrimenti quella riga non
+    troverebbe mai un match. Fascia e commento compaiono, se presenti, in un
+    riquadro **"Consigli"** subito sotto il box con foto/quotazione/FCP/
+    Urgenza/Quest'anno e sopra le Caratteristiche — sia nella scheda
+    giocatore sia nel riquadro "in asta" — con la fascia colorata secondo lo
+    stesso semaforo a 5 livelli di FPEDIA (scala completa e mappatura in
+    `lib/fasceConsigli.ts`, separato da `lib/consigli.ts` apposta per non
+    portarsi dietro il parser — e con esso l'intera libreria xlsx — nelle
+    pagine che devono solo mostrare la fascia). Un reimport azzera fascia/
+    commento di chi non è più nel file, così non restano dati vecchi appesi.
   - **Icona panchina (ballottaggio)**: in tabella è sotto il martelletto
     (colonna Azioni), solo per i giocatori ancora disponibili, col conteggio
     "disponibili/totale contendenti" (es. "2/3" se uno dei tre è già stato

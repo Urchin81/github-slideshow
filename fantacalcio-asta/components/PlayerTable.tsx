@@ -29,6 +29,7 @@ import {
   DettaglioUrgenza,
 } from "@/lib/urgenza";
 import { classeLivello } from "@/lib/livelloColori";
+import { livelloFasciaConsigli } from "@/lib/fasceConsigli";
 import { isSafeHttpUrl } from "@/lib/url";
 import { useAuctionStore } from "@/lib/store";
 import { FavoriteStar } from "./FavoriteStar";
@@ -585,6 +586,22 @@ export function PlayerTable({
               </div>
             )}
           </div>
+
+          {inAstaPlayer.fasciaConsigli && (
+            <div className="bg-white border border-amber-100 rounded px-2 py-1.5 text-xs">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] uppercase text-slate-400 tracking-wide">Consigli</span>
+                <span
+                  className={`inline-block rounded px-1.5 font-bold ${classeLivello(
+                    livelloFasciaConsigli(inAstaPlayer.fasciaConsigli)
+                  )}`}
+                >
+                  {inAstaPlayer.fasciaConsigli}
+                </span>
+              </div>
+              {inAstaPlayer.commentoConsigli && <p className="text-slate-600">{inAstaPlayer.commentoConsigli}</p>}
+            </div>
+          )}
 
           <CaratteristicheGiocatore
             player={inAstaPlayer}

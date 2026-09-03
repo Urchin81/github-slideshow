@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import { findColumn, leggiRigheFile, normalizeHeader, serializzaCsv } from "./csv";
 import { Player, Ruolo, RUOLI, RuoloMantra, RUOLI_MANTRA } from "./types";
 
 export interface TitolareFormazione {
@@ -28,21 +28,6 @@ export interface FormazioneSquadra {
 const ROLE_SET = new Set<string>(RUOLI);
 const ROLE_MANTRA_SET = new Set<string>(RUOLI_MANTRA);
 
-function normalizeHeader(cell: unknown): string {
-  return String(cell ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/\./g, "");
-}
-
-function findColumn(header: string[], candidates: string[]): number {
-  for (const candidate of candidates) {
-    const idx = header.findIndex((h) => h === candidate);
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
-
 /** Confronto tollerante ad accenti/maiuscole/spazi, usato sia per abbinare i rigoristi/calci
  * piazzati importati ai giocatori del listino, sia per riconoscere in "Probabili formazioni"
  * chi è già stato acquistato. */
@@ -71,12 +56,6 @@ const COLONNE_CSV = [
 const [IDX_SQUADRA, IDX_MODULO, IDX_RUOLO, IDX_RUOLO_MANTRA, IDX_NOME, IDX_TITOLARE, IDX_GRUPPO, IDX_ORDINE, IDX_ORDINE_RIGORISTA, IDX_ORDINE_CALCI_PIAZZATI, IDX_NOTA] = COLONNE_CSV.map(
   (_, i) => i
 );
-
-function csvEscape(value: string): string {
-  if (value === "") return "";
-  if (/[",\n;]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-  return value;
-}
 
 function rigaVuota(squadra: string, modulo: string, nome: string): string[] {
   const riga = new Array(COLONNE_CSV.length).fill("");
@@ -137,74 +116,7 @@ export function serializzaFormazioniCsv(formazioni: FormazioneSquadra[]): string
     righe.push(...righeSquadra);
   }
 
-  // BOM UTF-8 iniziale: senza, Excel e la stessa libreria xlsx in lettura interpretano il
-  // file come Latin-1, corrompendo nomi con accenti (es. "Soulè" -> "SoulÃ¨") al reimport.
-  return "﻿" + righe.map((r) => r.map(csvEscape).join(",")).join("\n") + "\n";
-}
-
-/** File .xlsx/.xls veri iniziano con la firma ZIP "PK" o quella OLE compound: un CSV testuale no. */
-function isFileZipXlsx(fileBuffer: ArrayBuffer): boolean {
-  const bytes = new Uint8Array(fileBuffer.slice(0, 4));
-  const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b; // "PK"
-  const isOle = bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0;
-  return isZip || isOle;
-}
-
-function leggiRigheXlsx(fileBuffer: ArrayBuffer): unknown[][] {
-  const workbook = XLSX.read(fileBuffer, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  return XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: "" });
-}
-
-/**
- * Parser CSV manuale (RFC4180: virgolette, virgole/newline nei campi) invece di appoggiarsi
- * a XLSX.read per il testo: quella via interpreta come date campi tipo "4-3-3" o "3-5-2"
- * (3 numeri separati da trattino = pattern data) trasformandoli in numeri seriali Excel
- * (es. "37714"), corrompendo silenziosamente la colonna Modulo.
- */
-function leggiRigheCsvTestuale(fileBuffer: ArrayBuffer): string[][] {
-  let testo = new TextDecoder("utf-8").decode(fileBuffer);
-  if (testo.charCodeAt(0) === 0xfeff) testo = testo.slice(1);
-
-  const righe: string[][] = [];
-  let riga: string[] = [];
-  let campo = "";
-  let dentroVirgolette = false;
-  for (let i = 0; i < testo.length; i++) {
-    const c = testo[i];
-    if (dentroVirgolette) {
-      if (c === '"') {
-        if (testo[i + 1] === '"') {
-          campo += '"';
-          i++;
-        } else {
-          dentroVirgolette = false;
-        }
-      } else {
-        campo += c;
-      }
-    } else if (c === '"') {
-      dentroVirgolette = true;
-    } else if (c === ",") {
-      riga.push(campo);
-      campo = "";
-    } else if (c === "\n") {
-      riga.push(campo);
-      righe.push(riga);
-      riga = [];
-      campo = "";
-    } else if (c === "\r") {
-      // ignorato, il "\n" che segue chiude comunque la riga
-    } else {
-      campo += c;
-    }
-  }
-  if (campo.length > 0 || riga.length > 0) {
-    riga.push(campo);
-    righe.push(riga);
-  }
-  return righe.filter((r) => !(r.length === 1 && r[0] === ""));
+  return serializzaCsv(righe);
 }
 
 interface Riga {
@@ -231,7 +143,7 @@ interface Riga {
  * per lo schema completo.
  */
 export function parseFormazioniCsv(fileBuffer: ArrayBuffer): FormazioneSquadra[] {
-  const rows: unknown[][] = isFileZipXlsx(fileBuffer) ? leggiRigheXlsx(fileBuffer) : leggiRigheCsvTestuale(fileBuffer);
+  const rows: unknown[][] = leggiRigheFile(fileBuffer);
 
   if (rows.length === 0) return [];
   const header = rows[0].map(normalizeHeader);

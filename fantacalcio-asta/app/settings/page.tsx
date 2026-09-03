@@ -2,6 +2,7 @@ import { ImportListino } from "@/components/ImportListino";
 import { SettingsForm } from "@/components/SettingsForm";
 import { NewsUpdatePanel } from "@/components/NewsUpdatePanel";
 import { StatsUpdatePanel } from "@/components/StatsUpdatePanel";
+import { ImportConsigli } from "@/components/ImportConsigli";
 
 export default function SettingsPage() {
   return (
@@ -13,6 +14,7 @@ export default function SettingsPage() {
         <div className="space-y-3">
           <NewsUpdatePanel />
           <StatsUpdatePanel />
+          <ImportConsigli />
         </div>
       </div>
     </div>
