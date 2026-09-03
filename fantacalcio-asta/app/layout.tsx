@@ -19,6 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/" className="hover:underline">
                 Asta
               </a>
+              <a href="/formazioni" className="hover:underline">
+                Probabili formazioni
+              </a>
               <a href="/moduli" className="hover:underline">
                 Moduli Mantra
               </a>

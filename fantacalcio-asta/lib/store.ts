@@ -1,12 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_SETTINGS, Player, Settings } from "./types";
+import { FormazioneSquadra } from "./formazioni";
 
 interface AuctionState {
   players: Player[];
   settings: Settings;
+  formazioni: FormazioneSquadra[];
   loadPlayers: (players: Player[]) => void;
   setSettings: (settings: Settings) => void;
+  setFormazioni: (formazioni: FormazioneSquadra[]) => void;
+  salvaFormazioneSquadra: (formazione: FormazioneSquadra) => void;
+  eliminaFormazioneSquadra: (squadra: string) => void;
   assignToMe: (id: string, prezzoPagato: number) => void;
   assignToOthers: (id: string, prezzoPagato?: number) => void;
   resetPlayer: (id: string) => void;
@@ -20,8 +25,21 @@ export const useAuctionStore = create<AuctionState>()(
     (set) => ({
       players: [],
       settings: DEFAULT_SETTINGS,
+      formazioni: [],
       loadPlayers: (players) => set({ players }),
       setSettings: (settings) => set({ settings }),
+      setFormazioni: (formazioni) => set({ formazioni }),
+      // Sostituisce la squadra con lo stesso nome se già presente (creazione/modifica dal modulo), altrimenti la aggiunge.
+      salvaFormazioneSquadra: (formazione) =>
+        set((state) => {
+          const idx = state.formazioni.findIndex((f) => f.squadra === formazione.squadra);
+          if (idx === -1) return { formazioni: [...state.formazioni, formazione] };
+          const next = [...state.formazioni];
+          next[idx] = formazione;
+          return { formazioni: next };
+        }),
+      eliminaFormazioneSquadra: (squadra) =>
+        set((state) => ({ formazioni: state.formazioni.filter((f) => f.squadra !== squadra) })),
       assignToMe: (id, prezzoPagato) =>
         set((state) => ({
           players: state.players.map((p) => (p.id === id ? { ...p, stato: "mia", prezzoPagato } : p)),

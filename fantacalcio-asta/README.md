@@ -94,6 +94,19 @@ ruoli ancora da coprire nella tua squadra.
   potrebbero contenere qualche imprecisione di dettaglio — l'array `slot` in
   quel file è fatto apposta per essere facile da correggere se noti qualcosa
   che non corrisponde al tuo schema.
+- **Probabili formazioni** (tab dedicato accanto ad "Asta"): una scheda per
+  ogni squadra di Serie A con modulo, titolari disposti su un campo in
+  miniatura per linea di ruolo (portiere in basso, attacco in alto, come le
+  infografiche "probabili formazioni" di fine mercato) e i ballottaggi aperti
+  per ogni posizione (il candidato favorito in grassetto). "+ Nuova squadra"
+  e "Modifica" su una scheda aprono lo stesso modulo per creare/aggiornare
+  titolari e ballottaggi a mano. "Esporta CSV"/"Importa CSV" salvano e
+  ricaricano tutte le squadre in blocco (formato in `lib/formazioni.ts`: una
+  riga per titolare, più righe raggruppate da `GruppoBallottaggio`/`Ordine`
+  per ogni ballottaggio — "Esporta CSV" con dati caricati produce un file
+  pronto da usare come modello). Dati indipendenti dal listino quotazioni:
+  servono solo da riferimento per valutare le probabilità di impiego durante
+  l'asta, non influenzano suggerimenti o budget.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
   disponibile), Quotazione (header con il solo simbolo €), FCP×2 (icona
