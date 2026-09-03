@@ -44,8 +44,20 @@ function haTag(p: Player, label: string): boolean {
 // Esportato cosi' la tabella puo' riusare le stesse definizioni per filtrare la lista
 // quando si clicca su un'icona.
 export const CARATTERISTICHE: Caratteristica[] = [
-  { chiave: "rigorista", Icona: Target, label: "Rigorista", positiva: true, presente: (p) => !!p.rigorista || haTag(p, "Rigorista") },
-  { chiave: "punizioni", Icona: Footprints, label: "Tiratore punizioni", positiva: true, presente: (p) => !!p.tiratorePunizioni },
+  {
+    chiave: "rigorista",
+    Icona: Target,
+    label: "Rigorista",
+    positiva: true,
+    presente: (p) => !!p.rigorista || !!p.ordineRigorista || haTag(p, "Rigorista"),
+  },
+  {
+    chiave: "punizioni",
+    Icona: Footprints,
+    label: "Tiratore punizioni",
+    positiva: true,
+    presente: (p) => !!p.tiratorePunizioni || !!p.ordineCalciPiazzati,
+  },
   { chiave: "angoli", Icona: Flag, label: "Tiratore angoli", positiva: true, presente: (p) => !!p.tiratoreAngoli },
   { chiave: "titolare", Icona: Star, label: "Titolare", positiva: true, presente: (p) => haTag(p, "Titolare") },
   { chiave: "goleador", Icona: Goal, label: "Goleador", positiva: true, presente: (p) => haTag(p, "Goleador") },
@@ -65,6 +77,13 @@ export const CARATTERISTICHE: Caratteristica[] = [
   },
   { chiave: "infortunato", Icona: Bandage, label: "Infortunato", positiva: false, presente: (p) => !!p.infortunato },
 ];
+
+/** Oro/argento/bronzo per la medaglietta con l'ordine di tiro (1°/2°/3°) sopra le icone rigorista/punizioni. */
+const MEDAGLIA_COLORE: Record<1 | 2 | 3, string> = {
+  1: "#eab308",
+  2: "#9ca3af",
+  3: "#b45309",
+};
 
 interface Props {
   player: Player;
@@ -94,7 +113,23 @@ export function CaratteristicheGiocatore({
         const attiva = c.presente(player);
         const selezionata = caratteristicaAttiva === c.chiave;
         const colore = attiva ? (c.positiva ? "text-green-600" : "text-red-600") : "text-slate-400";
-        const icona = <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />;
+        // Ordine di tiro (1°/2°/3°) solo per rigorista/punizioni: una medaglietta oro/argento/bronzo sopra l'icona.
+        const ordine = c.chiave === "rigorista" ? player.ordineRigorista : c.chiave === "punizioni" ? player.ordineCalciPiazzati : undefined;
+        const iconaBase = <c.Icona aria-label={c.label} size={14} strokeWidth={2} className={colore} />;
+        const icona = ordine ? (
+          <span className="relative inline-flex">
+            {iconaBase}
+            <span
+              className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full text-white text-[8px] font-bold flex items-center justify-center border border-white shadow leading-none"
+              style={{ backgroundColor: MEDAGLIA_COLORE[ordine] }}
+              title={`${ordine}° ${c.label.toLowerCase()}`}
+            >
+              {ordine}
+            </span>
+          </span>
+        ) : (
+          iconaBase
+        );
         const contenuto = soloPresenti ? (
           <span className="inline-flex items-center gap-1">
             {icona}

@@ -1,11 +1,20 @@
-import { FormazioneSquadra } from "@/lib/formazioni";
+import { FormazioneSquadra, normalizzaNome } from "@/lib/formazioni";
 import { RUOLI, RUOLO_COLORE, RUOLO_LABEL } from "@/lib/types";
+
+const GRIGIO_ACQUISTATO = "#94a3b8";
 
 /**
  * Campo in miniatura come nell'articolo di riferimento: una riga per linea di ruolo
- * (portiere in basso, attacco in alto), con i titolari di quella linea affiancati.
+ * (portiere in basso, attacco in alto), con i titolari di quella linea affiancati. I giocatori
+ * già acquistati (da chiunque) diventano grigi, per non fare l'errore di puntarci ancora.
  */
-function CampoFormazione({ formazione }: { formazione: FormazioneSquadra }) {
+function CampoFormazione({
+  formazione,
+  giocatoriAcquistati,
+}: {
+  formazione: FormazioneSquadra;
+  giocatoriAcquistati: Set<string>;
+}) {
   const righe = [...RUOLI].reverse(); // A, C, D, P dall'alto verso il basso -> portiere in fondo
   return (
     <div className="bg-green-600 rounded relative border-2 border-white/30 py-4 px-2 space-y-3">
@@ -17,16 +26,22 @@ function CampoFormazione({ formazione }: { formazione: FormazioneSquadra }) {
         if (giocatori.length === 0) return null;
         return (
           <div key={ruolo} className="flex justify-center gap-2 flex-wrap relative">
-            {giocatori.map((g, i) => (
-              <span
-                key={i}
-                className="text-white text-[11px] font-semibold rounded px-1.5 py-0.5 shadow text-center leading-tight"
-                style={{ backgroundColor: RUOLO_COLORE[ruolo] }}
-                title={g.ruoloMantra ? `${RUOLO_LABEL[ruolo]} (${g.ruoloMantra})` : RUOLO_LABEL[ruolo]}
-              >
-                {g.nome}
-              </span>
-            ))}
+            {giocatori.map((g, i) => {
+              const acquistato = giocatoriAcquistati.has(normalizzaNome(g.nome));
+              return (
+                <span
+                  key={i}
+                  className="text-white text-[11px] font-semibold rounded px-1.5 py-0.5 shadow text-center leading-tight"
+                  style={{ backgroundColor: acquistato ? GRIGIO_ACQUISTATO : RUOLO_COLORE[ruolo] }}
+                  title={
+                    (g.ruoloMantra ? `${RUOLO_LABEL[ruolo]} (${g.ruoloMantra})` : RUOLO_LABEL[ruolo]) +
+                    (acquistato ? " — già acquistato" : "")
+                  }
+                >
+                  {g.nome}
+                </span>
+              );
+            })}
           </div>
         );
       })}
@@ -36,10 +51,12 @@ function CampoFormazione({ formazione }: { formazione: FormazioneSquadra }) {
 
 export function FormazioneSquadraCard({
   formazione,
+  giocatoriAcquistati,
   onModifica,
   onElimina,
 }: {
   formazione: FormazioneSquadra;
+  giocatoriAcquistati: Set<string>;
   onModifica: () => void;
   onElimina: () => void;
 }) {
@@ -60,7 +77,7 @@ export function FormazioneSquadraCard({
         </div>
       </div>
 
-      <CampoFormazione formazione={formazione} />
+      <CampoFormazione formazione={formazione} giocatoriAcquistati={giocatoriAcquistati} />
 
       {formazione.ballottaggi.length > 0 && (
         <div className="mt-2 space-y-1">
@@ -71,12 +88,17 @@ export function FormazioneSquadraCard({
                 className="inline-block w-2 h-2 rounded-full mr-1 align-middle"
                 style={{ backgroundColor: RUOLO_COLORE[b.ruolo] }}
               />
-              {b.candidati.map((nome, j) => (
-                <span key={j}>
-                  {j > 0 && <span className="text-slate-400"> vs </span>}
-                  <span className={j === 0 ? "font-semibold text-slate-800" : ""}>{nome}</span>
-                </span>
-              ))}
+              {b.candidati.map((nome, j) => {
+                const acquistato = giocatoriAcquistati.has(normalizzaNome(nome));
+                return (
+                  <span key={j}>
+                    {j > 0 && <span className="text-slate-400"> vs </span>}
+                    <span className={acquistato ? "text-slate-400" : j === 0 ? "font-semibold text-slate-800" : ""}>
+                      {nome}
+                    </span>
+                  </span>
+                );
+              })}
               {b.nota && <span className="text-slate-400"> — {b.nota}</span>}
             </p>
           ))}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuctionStore } from "@/lib/store";
-import { FormazioneSquadra, serializzaFormazioniCsv } from "@/lib/formazioni";
+import { FormazioneSquadra, normalizzaNome, serializzaFormazioniCsv } from "@/lib/formazioni";
 import { FormazioneSquadraCard } from "@/components/FormazioneSquadraCard";
 import { FormazioneForm } from "@/components/FormazioneForm";
 import { ImportFormazioni } from "@/components/ImportFormazioni";
@@ -20,6 +20,7 @@ function scaricaCsv(formazioni: FormazioneSquadra[]) {
 
 export default function FormazioniPage() {
   const formazioni = useAuctionStore((s) => s.formazioni);
+  const players = useAuctionStore((s) => s.players);
   const salvaFormazioneSquadra = useAuctionStore((s) => s.salvaFormazioneSquadra);
   const eliminaFormazioneSquadra = useAuctionStore((s) => s.eliminaFormazioneSquadra);
   const [squadraInModifica, setSquadraInModifica] = useState<FormazioneSquadra | null>(null);
@@ -27,6 +28,12 @@ export default function FormazioniPage() {
   const [importAperto, setImportAperto] = useState(false);
 
   const squadreOrdinate = [...formazioni].sort((a, b) => a.squadra.localeCompare(b.squadra));
+
+  // Nomi (normalizzati) dei giocatori già presi, da chiunque: le card li mostrano in grigio.
+  const giocatoriAcquistati = useMemo(
+    () => new Set(players.filter((p) => p.stato !== "disponibile").map((p) => normalizzaNome(p.nome))),
+    [players]
+  );
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -68,8 +75,11 @@ export default function FormazioniPage() {
           <h2 className="font-semibold text-sm mb-2">Importa formazioni da CSV</h2>
           <p className="text-xs text-slate-500 mb-3">
             Colonne attese: Squadra, Modulo, Ruolo, RuoloMantra, Nome, Titolare (SI/NO),
-            GruppoBallottaggio, Ordine, Nota. &quot;Esporta CSV&quot; genera un file con lo stesso
-            formato, utile come modello.
+            GruppoBallottaggio, Ordine, OrdineRigorista, OrdineCalciPiazzati, Nota. &quot;Esporta
+            CSV&quot; genera un file con lo stesso formato, utile come modello. L&apos;ordine
+            rigorista/calci piazzati viene abbinato anche ai giocatori del listino (per nome): li
+            trovi in medaglietta oro/argento/bronzo sopra le rispettive icone nella lista
+            giocatori.
           </p>
           <ImportFormazioni />
         </div>
@@ -85,6 +95,7 @@ export default function FormazioniPage() {
             <FormazioneSquadraCard
               key={f.squadra}
               formazione={f}
+              giocatoriAcquistati={giocatoriAcquistati}
               onModifica={() => setSquadraInModifica(f)}
               onElimina={() => {
                 if (confirm(`Eliminare la formazione di ${f.squadra}?`)) eliminaFormazioneSquadra(f.squadra);

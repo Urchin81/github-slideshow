@@ -104,9 +104,15 @@ ruoli ancora da coprire nella tua squadra.
   ricaricano tutte le squadre in blocco (formato in `lib/formazioni.ts`: una
   riga per titolare, più righe raggruppate da `GruppoBallottaggio`/`Ordine`
   per ogni ballottaggio — "Esporta CSV" con dati caricati produce un file
-  pronto da usare come modello). Dati indipendenti dal listino quotazioni:
-  servono solo da riferimento per valutare le probabilità di impiego durante
-  l'asta, non influenzano suggerimenti o budget.
+  pronto da usare come modello). Il CSV porta anche rigoristi e tiratori di
+  calci piazzati (colonne `OrdineRigorista`/`OrdineCalciPiazzati`, 1°/2°/3°):
+  importandolo, oltre alle squadre, l'app abbina questi ordini per nome ai
+  giocatori già nel listino quotazioni (vedi più sotto). I giocatori già
+  acquistati (da chiunque) compaiono in grigio sia sul campo che nei
+  ballottaggi, cosi' non capita di puntarci ancora per sbaglio. A parte
+  questo abbinamento, i dati restano indipendenti dal listino: servono solo
+  da riferimento per valutare le probabilità di impiego durante l'asta, non
+  influenzano suggerimenti o budget.
 - **Colonne della tabella giocatori**: ★, Ruolo, Foto (da FPEDIA se
   disponibile), Nome, Squadra (con la maglia/stemma prima del nome, se
   disponibile), Quotazione (header con il solo simbolo €), FCP×2 (icona
@@ -549,7 +555,16 @@ ruoli ancora da coprire nella tua squadra.
     tabella si filtra mostrando solo i giocatori con quella caratteristica
     attiva; l'icona cliccata resta evidenziata e appare una etichetta
     "‹caratteristica› ✕" tra i filtri per rimuoverlo in un tocco (o si
-    toglie ricliccando la stessa icona). Nella scheda giocatore la stessa
+    toglie ricliccando la stessa icona).
+  - **Medagliette 1°/2°/3° su rigorista e tiratore punizioni**: quando
+    l'import di "Probabili formazioni" (vedi sopra) trova un ordine
+    rigoristi/calci piazzati per un giocatore, una medaglietta oro/argento/
+    bronzo col numero 1/2/3 compare sopra la rispettiva icona (abbinamento
+    per nome, tollerante ad accenti e maiuscole — vedi
+    `abbinaOrdiniSpecialisti` in `lib/formazioni.ts`; campi
+    `ordineRigorista`/`ordineCalciPiazzati` su `Player`). Un ordine anche
+    solo 2°/3° accende comunque l'icona (è comunque un rigorista/tiratore
+    della squadra), non solo il designato. Nella scheda giocatore la stessa
     fila di icone (non cliccabile) sostituisce l'indicazione testuale dello
     stato d'asta.
   - **Corrispondenza esatta col cognome**: il listino ufficiale ha solo il

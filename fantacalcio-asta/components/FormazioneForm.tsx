@@ -134,6 +134,9 @@ export function FormazioneForm({
       modulo: modulo.trim(),
       titolari: titolariValidi.map(({ nome, ruolo, ruoloMantra }) => ({ nome, ruolo, ruoloMantra })),
       ballottaggi: ballottaggiValidi,
+      // Rigoristi/calci piazzati non si modificano ancora da questo modulo (arrivano dal CSV): si mantengono invariati.
+      rigoristi: formazioneIniziale?.rigoristi ?? [],
+      calciPiazzati: formazioneIniziale?.calciPiazzati ?? [],
     });
   }
 

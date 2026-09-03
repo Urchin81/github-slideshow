@@ -124,6 +124,10 @@ export interface Player {
   rigorista?: boolean;
   tiratorePunizioni?: boolean;
   tiratoreAngoli?: boolean;
+  /** Posizione (1°/2°/3°) tra i rigoristi della squadra secondo le probabili formazioni importate (vedi lib/formazioni.ts). */
+  ordineRigorista?: 1 | 2 | 3;
+  /** Posizione (1°/2°/3°) tra i tiratori di punizione/calci piazzati della squadra secondo le probabili formazioni importate. */
+  ordineCalciPiazzati?: 1 | 2 | 3;
   /** Sintesi qualitativa dedotta dalle notizie (es. "Titolare fisso", "In dubbio"). */
   trendVoti?: string;
   notizie?: NewsItem[];

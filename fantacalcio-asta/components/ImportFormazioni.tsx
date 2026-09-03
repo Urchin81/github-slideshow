@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { parseFormazioniCsv } from "@/lib/formazioni";
+import { abbinaOrdiniSpecialisti, parseFormazioniCsv } from "@/lib/formazioni";
 import { useAuctionStore } from "@/lib/store";
 
 // Stesso limite prudenziale di ImportListino: evita che un file enorme blocchi il parsing.
@@ -10,8 +10,10 @@ const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 export function ImportFormazioni() {
   const formazioni = useAuctionStore((s) => s.formazioni);
   const setFormazioni = useAuctionStore((s) => s.setFormazioni);
+  const players = useAuctionStore((s) => s.players);
+  const applyNewsResults = useAuctionStore((s) => s.applyNewsResults);
   const [errore, setErrore] = useState<string | null>(null);
-  const [caricato, setCaricato] = useState<number | null>(null);
+  const [caricato, setCaricato] = useState<{ squadre: number; giocatoriAggiornati: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -43,7 +45,10 @@ export function ImportFormazioni() {
         return;
       }
       setFormazioni(parsed);
-      setCaricato(parsed.length);
+      const aggiornamentiSpecialisti = abbinaOrdiniSpecialisti(players, parsed);
+      const giocatoriAggiornati = Object.keys(aggiornamentiSpecialisti).length;
+      if (giocatoriAggiornati > 0) applyNewsResults(aggiornamentiSpecialisti);
+      setCaricato({ squadre: parsed.length, giocatoriAggiornati });
     } catch (err) {
       setErrore(err instanceof Error ? err.message : "Errore durante l'importazione del file.");
     } finally {
@@ -62,7 +67,12 @@ export function ImportFormazioni() {
       />
       {errore && <p className="text-red-500 text-sm mt-2">{errore}</p>}
       {caricato !== null && (
-        <p className="text-green-600 text-sm mt-2">{caricato} squadre importate con successo.</p>
+        <p className="text-green-600 text-sm mt-2">
+          {caricato.squadre} squadre importate con successo
+          {caricato.giocatoriAggiornati > 0
+            ? ` — ordine rigorista/calci piazzati aggiornato per ${caricato.giocatoriAggiornati} giocatori del listino (abbinati per nome).`
+            : "."}
+        </p>
       )}
     </div>
   );
