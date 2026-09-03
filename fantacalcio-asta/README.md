@@ -11,8 +11,12 @@ ruoli ancora da coprire nella tua squadra.
   includere la colonna `RM` (ruoli multipli, es. `Dd;E`) e un giocatore resta
   idoneo per tutti i ruoli elencati (non si sceglie un solo slot all'acquisto).
 - **Import listino intelligente**: carica il file Excel/CSV delle quotazioni
-  ufficiali (colonne Ruolo/R, RM, Nome, Squadra, Qt.A, opzionalmente FVM). Se
-  importi un file dopo il primo, l'app confronta il listino gia' caricato con
+  ufficiali (colonne Ruolo/R, RM, Nome, Squadra, Qt.A, opzionalmente FVM). Il
+  riconoscimento delle colonne tollera le abbreviazioni puntate usate da
+  alcuni listini non ufficiali (es. "R.", "Sq.", "R.MANTRA", "QUOT.",
+  "FVM/1000" al posto di "Ruolo", "Squadra", "RM", "Qt.A", "FVM"), quindi non
+  serve che l'intestazione sia identica all'export ufficiale Fantacalcio.it.
+  Se importi un file dopo il primo, l'app confronta il listino gia' caricato con
   quello nuovo e mostra un'anteprima (nuovi/aggiornati/invariati/rimossi, con
   avviso se qualcuno dei rimossi era già nella tua rosa) **prima di toccare
   qualsiasi cosa**, chiedendo come procedere:
@@ -116,9 +120,11 @@ ruoli ancora da coprire nella tua squadra.
   l'elenco al click, con una freccetta che indica quale colonna è attiva e in
   che verso; un secondo click sullo stesso header inverte il verso (es.
   quotazione parte decrescente — i più cari prima — e al secondo click
-  diventa crescente). Il default all'apertura è **ALG FCP** decrescente —
-  l'algoritmo FCP di FantaCalcioPedia è l'indicatore di riferimento per
-  quanto vale un giocatore (a prescindere dal prezzo).
+  diventa crescente). Il default all'apertura è **Quotazione** decrescente:
+  a differenza di ALG FCP (che richiede prima l'aggiornamento delle
+  statistiche FPEDIA, altrimenti tutti i giocatori sono a pari merito) la
+  quotazione è già valorizzata subito dopo l'import del listino, quindi è
+  un ordinamento utile fin da subito.
   L'ordinamento si applica a qualsiasi filtro (Disponibili/Mia
   squadra/Prese da altri/Tutti), non solo ai disponibili.
 - **Bordo colorato per titolarità**: la foto di ogni giocatore (in tabella e

@@ -213,7 +213,10 @@ export function PlayerTable({
   const [inAstaId, setInAstaId] = useState<string | null>(null);
   const [prezzoAstaInput, setPrezzoAstaInput] = useState("0");
   const [caratteristicaFiltro, setCaratteristicaFiltro] = useState<string | null>(null);
-  const [ordinamento, setOrdinamento] = useState<StatoOrdinamento>({ campo: "algFcp", direzione: "desc" });
+  // Quotazione come ordinamento di default: a differenza di ALG FCP è sempre valorizzata già
+  // al primo import del listino, prima ancora di aggiornare le statistiche FPEDIA (che altrimenti
+  // lascerebbero tutti i giocatori a pari merito, mostrando di fatto l'ordine grezzo del file).
+  const [ordinamento, setOrdinamento] = useState<StatoOrdinamento>({ campo: "quotazione", direzione: "desc" });
 
   function toggleCaratteristicaFiltro(chiave: string) {
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));

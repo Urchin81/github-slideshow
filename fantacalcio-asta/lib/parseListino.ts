@@ -32,10 +32,17 @@ const ROLE_MANTRA_ALIASES: Record<string, RuoloMantra> = {
   PC: "Pc",
 };
 
+/**
+ * Alcuni listini (fuori dall'export ufficiale Fantacalcio.it) abbreviano le
+ * intestazioni con un punto (es. "R.", "Sq.", "R.MANTRA"): il punto viene
+ * tolto prima del confronto, così "R." combacia con l'alias "R" senza dover
+ * elencare ogni variante puntata a mano.
+ */
 function normalizeHeader(cell: unknown): string {
   return String(cell ?? "")
     .trim()
-    .toUpperCase();
+    .toUpperCase()
+    .replace(/\./g, "");
 }
 
 function findColumn(header: string[], candidates: string[]): number {
@@ -89,11 +96,11 @@ export function parseListino(fileBuffer: ArrayBuffer): Player[] {
   }
 
   const idxRuolo = findColumn(header, ["R", "RUOLO"]);
-  const idxRuoloMantra = findColumn(header, ["RM"]);
+  const idxRuoloMantra = findColumn(header, ["RM", "RMANTRA"]);
   const idxNome = findColumn(header, ["NOME"]);
-  const idxSquadra = findColumn(header, ["SQUADRA"]);
-  const idxQuotazione = findColumn(header, ["QT.A", "QTA", "QUOTAZIONE"]);
-  const idxFvm = findColumn(header, ["FVM", "FVM M"]);
+  const idxSquadra = findColumn(header, ["SQUADRA", "SQ"]);
+  const idxQuotazione = findColumn(header, ["QTA", "QUOTAZIONE", "QUOT"]);
+  const idxFvm = findColumn(header, ["FVM", "FVM M", "FVM/1000"]);
 
   if (idxRuolo === -1 || idxNome === -1 || idxQuotazione === -1) {
     throw new Error(
