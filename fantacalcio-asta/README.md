@@ -174,7 +174,12 @@ ruoli ancora da coprire nella tua squadra.
   ha un cerchietto blu in basso a sinistra sulla foto col **numero di
   sostituti disponibili**: cliccandolo evidenzia in panchina solo i
   panchinari compatibili (gli altri si attenuano) — un click su uno di loro
-  lo schiera al suo posto. Cliccare invece sulla foto di un titolare apre un
+  lo schiera al suo posto. Accanto, in basso a destra, un cerchietto
+  **rosso** mostra invece quanti **altri titolari già schierati in campo**
+  (in un'altra posizione) sarebbero comunque idonei per questo slot —
+  giocatori "di ruolo compatibile" ma non realmente disponibili come
+  sostituto perché già impegnati altrove; è solo informativo, non
+  cliccabile. Cliccare invece sulla foto di un titolare apre un
   piccolo menu per rimuoverlo dal campo. È anche possibile trascinare
   (drag & drop) un giocatore dal campo alla panchina e viceversa: si entra
   in campo solo se il ruolo del giocatore corrisponde a quello richiesto

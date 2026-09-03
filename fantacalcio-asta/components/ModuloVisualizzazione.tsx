@@ -96,6 +96,8 @@ interface CartaSlotProps {
   slot: SlotModulo;
   player: Player | undefined;
   sostituti: Player[];
+  /** Titolari che occupano un'ALTRA posizione in campo ma sarebbero comunque idonei per questo slot: non disponibili come sostituti perché già impegnati altrove. */
+  conflitti: number;
   aperto: boolean;
   evidenziato: boolean;
   onToggleRimuovi: () => void;
@@ -114,6 +116,7 @@ function CartaSlot({
   slot,
   player,
   sostituti,
+  conflitti,
   aperto,
   evidenziato,
   onToggleRimuovi,
@@ -126,6 +129,7 @@ function CartaSlot({
   compatibile,
 }: CartaSlotProps) {
   const haSostituti = sostituti.length > 0;
+  const haConflitti = conflitti > 0;
 
   return (
     <div
@@ -167,6 +171,14 @@ function CartaSlot({
           >
             {sostituti.length}
           </button>
+        )}
+        {haConflitti && (
+          <span
+            title={`${conflitti} titolare/i con questo ruolo già schierato/i in un'altra posizione`}
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white"
+          >
+            {conflitti}
+          </span>
         )}
       </div>
 
@@ -313,6 +325,16 @@ export function ModuloVisualizzazione({
 
   function sostitutiPer(slotIndex: number): Player[] {
     return panchina.filter((p) => ruoliCompatibiliConSlot(p, modulo.slot[slotIndex]));
+  }
+
+  /** Titolari negli altri slot che sarebbero comunque idonei per slotIndex: non sono
+   * sostituti disponibili perché già impegnati altrove in campo. */
+  function conflittiPer(slotIndex: number): number {
+    return assegnazione.reduce((conteggio, id, idx) => {
+      if (idx === slotIndex || !id) return conteggio;
+      const p = playerById.get(id);
+      return p && ruoliCompatibiliConSlot(p, modulo.slot[slotIndex]) ? conteggio + 1 : conteggio;
+    }, 0);
   }
 
   function scegli(slotIndex: number, nuovoId: string) {
@@ -506,6 +528,7 @@ export function ModuloVisualizzazione({
                     slot={modulo.slot[idx]}
                     player={assegnazione[idx] ? playerById.get(assegnazione[idx] as string) : undefined}
                     sostituti={sostitutiPer(idx)}
+                    conflitti={conflittiPer(idx)}
                     aperto={slotAperto === idx}
                     evidenziato={slotEvidenziato === idx}
                     onToggleRimuovi={() => {
