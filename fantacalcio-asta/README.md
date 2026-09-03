@@ -390,6 +390,10 @@ ruoli ancora da coprire nella tua squadra.
   personale indipendente dallo stato d'asta: "Azzera chiamate" non lo tocca,
   cosí i giocatori su cui vuoi puntare restano segnati anche dopo un reset.
   Nella tabella si può filtrare con "Solo preferiti ★".
+- **Filtro per squadra con un click**: nella colonna Squadra della tabella, il
+  nome di ogni squadra è un pulsante — un click riusa la ricerca testuale per
+  mostrare solo i giocatori di quella squadra (si evidenzia in nero); un
+  secondo click sulla stessa squadra toglie il filtro.
 - **Elimina filtri**: ricerca testuale, ruolo, stato, "Solo preferiti" e il
   filtro per caratteristica (click su un'icona) si combinano tra loro; un
   bottone testuale "Elimina filtri" compare accanto agli altri controlli non

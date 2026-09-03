@@ -225,6 +225,11 @@ export function PlayerTable({
   const filtriAttivi =
     ricerca !== "" || ruoloFiltro !== "tutti" || statoFiltro !== "disponibile" || soloPreferiti || !!caratteristicaFiltro;
 
+  /** Click sulla squadra in tabella: filtra su quella squadra (riusa la ricerca testuale); ricliccare la stessa toglie il filtro. */
+  function filtraPerSquadra(squadra: string) {
+    setRicerca((attuale) => (attuale === squadra ? "" : squadra));
+  }
+
   function eliminaFiltri() {
     setRicerca("");
     setRuoloFiltro("tutti");
@@ -1063,13 +1068,19 @@ export function PlayerTable({
                     </span>
                   </td>
                   <td className="py-1.5 text-slate-500">
-                    <span className="inline-flex items-center gap-1.5">
+                    <button
+                      onClick={() => filtraPerSquadra(p.squadra)}
+                      title={`Filtra per "${p.squadra}"`}
+                      className={`inline-flex items-center gap-1.5 rounded px-1 -mx-1 hover:bg-slate-100 hover:text-slate-900 ${
+                        ricerca === p.squadra ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white" : ""
+                      }`}
+                    >
                       {isSafeHttpUrl(p.fpedia?.squadraLogoUrl) && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.fpedia?.squadraLogoUrl} alt="" className="w-4 h-4 object-contain" />
                       )}
                       {p.squadra}
-                    </span>
+                    </button>
                   </td>
                   <td className="py-1.5 text-center">
                     <span className="inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-slate-100 border border-slate-400 text-slate-700">
