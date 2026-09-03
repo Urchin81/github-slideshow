@@ -222,6 +222,17 @@ export function PlayerTable({
     setCaratteristicaFiltro((attuale) => (attuale === chiave ? null : chiave));
   }
 
+  const filtriAttivi =
+    ricerca !== "" || ruoloFiltro !== "tutti" || statoFiltro !== "disponibile" || soloPreferiti || !!caratteristicaFiltro;
+
+  function eliminaFiltri() {
+    setRicerca("");
+    setRuoloFiltro("tutti");
+    setStatoFiltro("disponibile");
+    setSoloPreferiti(false);
+    setCaratteristicaFiltro(null);
+  }
+
   /** Click su un header: se è già il campo attivo inverte il verso, altrimenti lo seleziona col suo verso di default. */
   function alternaOrdinamento(campo: CampoOrdinamento) {
     setOrdinamento((prev) =>
@@ -909,6 +920,15 @@ export function PlayerTable({
                 ✕
               </button>
             </span>
+          )}
+          {filtriAttivi && (
+            <button
+              onClick={eliminaFiltri}
+              title="Rimuove ricerca, ruolo, stato, preferiti e caratteristica e torna alla vista di default"
+              className="text-xs text-slate-500 hover:text-slate-900 hover:underline whitespace-nowrap"
+            >
+              Elimina filtri
+            </button>
           )}
           <span className="text-sm text-slate-400 ml-auto">{righe.length} giocatori</span>
         </div>
