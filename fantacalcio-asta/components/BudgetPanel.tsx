@@ -35,8 +35,12 @@ const TOOLTIP_COPERTURA: Record<LivelloCopertura, string> = {
   coperto: "Titolare e almeno un sostituto per questo ruolo",
 };
 
-function IconaCopertura({ livello }: { livello: LivelloCopertura }) {
+/** Sotto questo numero di giocatori acquistati, gli alert di copertura ruoli (assente/senza sostituto) restano nascosti: a inizio asta è normale avere quasi tutti i ruoli scoperti, mostrarli subito sarebbe solo rumore. */
+const SOGLIA_GIOCATORI_ALERT_COPERTURA = 13;
+
+function IconaCopertura({ livello, mostraAlert }: { livello: LivelloCopertura; mostraAlert: boolean }) {
   if (livello === "coperto") return <Check size={12} className="text-green-600" />;
+  if (!mostraAlert) return null;
   return (
     <AlertTriangle
       size={12}
@@ -56,11 +60,13 @@ function RigaRuoliGruppo({
   coperturaRuoli,
   ruoloFiltro,
   onFiltraRuolo,
+  mostraAlert,
 }: {
   ruoli: RuoloMantra[];
   coperturaRuoli: Record<RuoloMantra, LivelloCopertura>;
   ruoloFiltro: RoleKey | "tutti";
   onFiltraRuolo: (ruolo: RoleKey) => void;
+  mostraAlert: boolean;
 }) {
   return (
     <div className="flex flex-nowrap items-center gap-1 min-w-0">
@@ -76,7 +82,7 @@ function RigaRuoliGruppo({
           <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_MANTRA_COLORE[r] }}>
             {r}
           </span>
-          <IconaCopertura livello={coperturaRuoli[r]} />
+          <IconaCopertura livello={coperturaRuoli[r]} mostraAlert={mostraAlert} />
         </button>
       ))}
     </div>
@@ -198,6 +204,8 @@ function PannelloClassic({
   const roleStats = computeRoleStats(players, settings);
   const valoreMedioAcquisto = computeValoreMedioAcquisto(players, settings);
   const coperturaRuoli = useMemo(() => computeCoperturaRuoliClassic(players), [players]);
+  const giocatoriPresi = players.filter((p) => p.stato === "mia").length;
+  const mostraAlertCopertura = giocatoriPresi >= SOGLIA_GIOCATORI_ALERT_COPERTURA;
 
   return (
     <>
@@ -247,7 +255,7 @@ function PannelloClassic({
               <span className="text-white rounded px-1 text-xs" style={{ backgroundColor: RUOLO_COLORE[r] }}>
                 {r}
               </span>
-              <IconaCopertura livello={coperturaRuoli[r]} />
+              <IconaCopertura livello={coperturaRuoli[r]} mostraAlert={mostraAlertCopertura} />
             </button>
           </li>
         ))}
@@ -328,6 +336,7 @@ function PannelloMantra({
                 coperturaRuoli={coperturaRuoli}
                 ruoloFiltro={ruoloFiltro}
                 onFiltraRuolo={onFiltraRuolo}
+                mostraAlert={stato.acquistati >= SOGLIA_GIOCATORI_ALERT_COPERTURA}
               />
             }
             speso={g.speso}

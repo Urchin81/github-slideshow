@@ -302,7 +302,11 @@ ruoli ancora da coprire nella tua squadra.
 - **Copertura ruoli**: un badge per ogni ruolo mostra un'icona di avviso
   (triangolo) quando non ha un doppione nella tua rosa — nessun titolare
   (rosso) o titolare senza sostituto (ambra), cioè "in ballottaggio" se quel
-  giocatore salta un turno — o una spunta verde quando è coperto. In Classic
+  giocatore salta un turno — o una spunta verde quando è coperto. I triangoli
+  di avviso restano nascosti finché non hai preso almeno **13 giocatori**
+  (la spunta verde invece compare da subito): a inizio asta è normale avere
+  quasi tutti i ruoli scoperti, mostrare l'avviso da subito sarebbe solo
+  rumore. In Classic
   resta una sezione **"Copertura ruoli"** a parte, con tutti e 4 i ruoli
   (P/D/C/A); in **Mantra i badge sostituiscono l'etichetta del gruppo sopra la
   sua barra di budget** — es. sopra la barra di "Dc/B/Dd/Ds" compaiono in
