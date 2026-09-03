@@ -97,6 +97,8 @@ export interface FpediaStats {
   gol?: number;
   assist?: number;
   mediaVoto?: number;
+  /** FantaMedia della stagione in corso ("Fanta Media AAAA-AAAA" sul sito): a differenza di mediaVoto include bonus/malus, non solo il voto puro. */
+  fantamedia?: number;
   ammonizioni?: number;
   espulsioni?: number;
   presenzePreviste?: [number, number];

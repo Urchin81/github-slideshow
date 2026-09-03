@@ -105,6 +105,13 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     }
   }
 
+  // FantaMedia della stagione in corso (etichetta "Fanta Media AAAA-AAAA:", diversa da "Media
+  // Fanta Voto AAAA-AAAA" delle stagioni passate sopra): non e' nel grafico a barre (che ha solo
+  // MV, il voto puro), quindi si estrae qui dal testo grezzo — senza bisogno di conoscere l'anno
+  // esatto, che cambia ad ogni stagione.
+  const matchFantamedia = html.match(/Fanta Media\s+\d{4}-\d{4}:?\s*(?:<[^>]+>\s*)*([\d.,]+)/i);
+  const fantamedia = matchFantamedia ? numeroPulito(matchFantamedia[1]) : undefined;
+
   // Previsionali (blocco "Presenze previste:" / "Gol previsti:" / "Assist previsti:").
   const blocoPrevisionali = $('.label12:has(strong:contains("Presenze previste:"))').first().html() ?? "";
   const presenzePreviste = range(estraiCampo(blocoPrevisionali, "Presenze previste:"));
@@ -168,6 +175,7 @@ export function parseFpediaHtml(html: string, url: string): FpediaStats {
     gol,
     assist,
     mediaVoto,
+    fantamedia,
     ammonizioni,
     espulsioni,
     presenzePreviste,

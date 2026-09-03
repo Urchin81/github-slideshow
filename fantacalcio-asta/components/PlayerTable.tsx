@@ -560,6 +560,30 @@ export function PlayerTable({
                 </div>
               </div>
             )}
+
+            {(inAstaPlayer.fpedia?.presenze !== undefined || inAstaPlayer.fpedia?.fantamedia !== undefined) && (
+              <div className="text-center">
+                <div className="text-[10px] uppercase text-slate-400 tracking-wide">Quest&apos;anno</div>
+                <div className="flex items-center gap-2">
+                  {inAstaPlayer.fpedia?.presenze !== undefined && (
+                    <span
+                      className="inline-block rounded px-1.5 font-bold bg-slate-100 text-slate-700"
+                      title="Partite giocate quest'anno"
+                    >
+                      {inAstaPlayer.fpedia.presenze} PG
+                    </span>
+                  )}
+                  {inAstaPlayer.fpedia?.fantamedia !== undefined && (
+                    <span
+                      className="inline-block rounded px-1.5 font-bold bg-slate-100 text-slate-700"
+                      title="FantaMedia di quest'anno"
+                    >
+                      FM {inAstaPlayer.fpedia.fantamedia.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <CaratteristicheGiocatore

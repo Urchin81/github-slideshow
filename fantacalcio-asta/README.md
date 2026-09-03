@@ -288,10 +288,15 @@ ruoli ancora da coprire nella tua squadra.
   base all'ALG FCP** (rosso chiaro = scarso, giallo = medio, verde = buono,
   blu = fuoriclasse; diverso dal bordo titolarità della tabella, qui conta
   quanto vale il giocatore, non quanto è probabile che scenda in campo) —
-  ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP e Urgenza
-  (vedi sopra), e — a differenza della fila di icone
-  sempre-tutte-visibili altrove nell'app — **solo le caratteristiche
-  effettivamente presenti**, ognuna con l'etichetta testuale accanto
+  ruolo/i, squadra, quotazione, FVM, ALG FCP/Punteggio FCP e Urgenza (vedi
+  sopra). Un riquadro **"Quest'anno"** a destra di Urgenza (solo se almeno
+  uno dei due dati è disponibile) mostra partite giocate e FantaMedia della
+  stagione in corso: la FantaMedia — non la semplice Media Voto, che non
+  include bonus/malus — è scrapata dall'etichetta "Fanta Media AAAA-AAAA" di
+  FPEDIA (`fpedia.fantamedia` in `lib/fpedia.ts`/`lib/types.ts`), non dal
+  grafico a barre come le altre statistiche stagionali. A differenza della
+  fila di icone sempre-tutte-visibili altrove nell'app, qui compaiono
+  **solo le caratteristiche effettivamente presenti**, ognuna con l'etichetta testuale accanto
   all'icona invece del solo tooltip (qui c'è spazio, e serve capire a colpo
   d'occhio cosa conta per quel giocatore senza dover passare il mouse su ogni
   icona). Sotto, un riquadro stretto **"Valore Asta"** con bordo evidenziato
