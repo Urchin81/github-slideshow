@@ -282,7 +282,10 @@ ruoli ancora da coprire nella tua squadra.
   **né i preferiti** (vedi sotto) — entrambi chiedono conferma prima di agire.
 - **Giocatore in asta (martello 🔨)**: nella tabella, ogni giocatore
   disponibile mostra solo l'icona del martello d'asta. Cliccandoci sopra si
-  entra in modalità "focus" e compare un **riquadro giallo "in asta"** sopra
+  entra in modalità "focus", la pagina scorre automaticamente in cima (il
+  riquadro compare comunque sopra la tabella, ma se il giocatore scelto era
+  in fondo a una lista lunga altrimenti resterebbe fuori dalla vista) e
+  compare un **riquadro giallo "in asta"** sopra
   la tabella con tutto il necessario per seguire il rilancio senza scorrere
   la riga: foto — con il cerotto 🩹 se infortunato e un **bordo colorato in
   base all'ALG FCP** (rosso chiaro = scarso, giallo = medio, verde = buono,
@@ -495,6 +498,10 @@ ruoli ancora da coprire nella tua squadra.
     portarsi dietro il parser — e con esso l'intera libreria xlsx — nelle
     pagine che devono solo mostrare la fascia). Un reimport azzera fascia/
     commento di chi non è più nel file, così non restano dati vecchi appesi.
+    La stessa etichetta colorata compare anche accanto al nome in ogni riga
+    della tabella (non solo nei due riquadri sopra), col commento come
+    tooltip: così si vede a colpo d'occhio la fascia dell'intera lista senza
+    dover aprire ogni giocatore.
   - **Icona panchina (ballottaggio)**: in tabella è sotto il martelletto
     (colonna Azioni), solo per i giocatori ancora disponibili, col conteggio
     "disponibili/totale contendenti" (es. "2/3" se uno dei tre è già stato

@@ -381,6 +381,9 @@ export function PlayerTable({
   function apriAsta(id: string) {
     setInAstaId(id);
     setPrezzoAstaInput("0");
+    // Il riquadro "in asta" compare in cima alla tabella: se la pagina è scrollata (es. si è
+    // scelto un giocatore in fondo alla lista) altrimenti resterebbe fuori dalla vista.
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function chiudiAsta() {
@@ -1104,6 +1107,16 @@ export function PlayerTable({
                       {notizieStagioneCorrente(p).length > 0 && (
                         <span title={tooltipNotizie(notizieStagioneCorrente(p))} className="shrink-0">
                           <Newspaper size={12} className="text-slate-400" />
+                        </span>
+                      )}
+                      {p.fasciaConsigli && (
+                        <span
+                          className={`shrink-0 text-[10px] font-bold rounded px-1 leading-tight ${classeLivello(
+                            livelloFasciaConsigli(p.fasciaConsigli)
+                          )}`}
+                          title={p.commentoConsigli}
+                        >
+                          {p.fasciaConsigli}
                         </span>
                       )}
                     </span>
